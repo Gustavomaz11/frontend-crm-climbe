@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, EyeOff, ArrowRight, Moon, Sun, Loader2 } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
@@ -39,6 +39,50 @@ const Index = () => {
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
 
+  const handleGoogleCallback = useCallback(
+    async (code: string) => {
+      try {
+        const response = await exchangeGoogleCode(code);
+
+        if (!response.success) {
+          toast.error(response.message);
+          return;
+        }
+
+        const { data } = response;
+
+        // Salvar tokens
+        setCookie(null, "@CLIMB:T", data.accessToken, {
+          maxAge: data.expiresIn,
+          path: "/",
+        });
+
+        setCookie(null, "@CLIMB:RT", data.refreshToken, {
+          maxAge: 60 * 60 * 24 * 30,
+          path: "/",
+        });
+
+        // Salvar dados do usuário
+        setBasicUserData({
+          id: data.usuario.id,
+          email: data.usuario.email,
+          nomeCompleto: data.usuario.nomeCompleto,
+        });
+
+        // Salvar role
+        setRole(data.usuario.cargoNome || "USER");
+
+        syncGoogleAccessToken(data.googleAccessToken);
+
+        toast.success(`Bem-vindo, ${data.usuario.nomeCompleto}!`);
+        navigate("/dashboard");
+      } catch {
+        toast.error("Erro ao processar login com Google");
+      }
+    },
+    [exchangeGoogleCode, setBasicUserData, setRole, navigate],
+  );
+
   // Handler para callback do Google OAuth
   useEffect(() => {
     const code = searchParams.get("code");
@@ -50,7 +94,7 @@ const Index = () => {
     } else if (googleOauth === "error") {
       toast.error(`Erro: ${errorMsg || "Falha na autenticação"}`);
     }
-  }, [searchParams]);
+  }, [searchParams, handleGoogleCallback]);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -122,47 +166,6 @@ const Index = () => {
       window.location.href = data.authorizationUrl;
     } catch {
       toast.error("Erro ao iniciar login com Google");
-    }
-  };
-
-  const handleGoogleCallback = async (code: string) => {
-    try {
-      const response = await exchangeGoogleCode(code);
-
-      if (!response.success) {
-        toast.error(response.message);
-        return;
-      }
-
-      const { data } = response;
-
-      // Salvar tokens
-      setCookie(null, "@CLIMB:T", data.accessToken, {
-        maxAge: data.expiresIn,
-        path: "/",
-      });
-
-      setCookie(null, "@CLIMB:RT", data.refreshToken, {
-        maxAge: 60 * 60 * 24 * 30,
-        path: "/",
-      });
-
-      // Salvar dados do usuário
-      setBasicUserData({
-        id: data.usuario.id,
-        email: data.usuario.email,
-        nomeCompleto: data.usuario.nomeCompleto,
-      });
-
-      // Salvar role
-      setRole(data.usuario.cargoNome || "USER");
-
-      syncGoogleAccessToken(data.googleAccessToken);
-
-      toast.success(`Bem-vindo, ${data.usuario.nomeCompleto}!`);
-      navigate("/dashboard");
-    } catch {
-      toast.error("Erro ao processar login com Google");
     }
   };
 
