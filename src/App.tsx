@@ -18,6 +18,7 @@ import Empresas from "./pages/Empresas.tsx";
 import Documentos from "./pages/Documentos.tsx";
 import Contratos from "./pages/Contratos.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import AprovarAcesso from "./pages/AprovarAcesso.tsx";
 
 const App = () => (
   <QueryProvider>
@@ -115,6 +116,15 @@ const App = () => (
               element={
                 <PrivateRoute>
                   <Contratos />
+                </PrivateRoute>
+              }
+            />
+
+            <Route
+              path="/aprovar-acesso"
+              element={
+                <PrivateRoute>
+                  <AprovarAcesso />
                 </PrivateRoute>
               }
             />

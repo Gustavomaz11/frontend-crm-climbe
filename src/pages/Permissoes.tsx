@@ -3,7 +3,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Home, FileText, Calendar as CalendarIcon, Shield, Building2, Settings,
-  LogOut, Sun, Moon, ChevronLeft, ChevronRight, Search, Bell, FileCheck
+  LogOut, Sun, Moon, ChevronLeft, ChevronRight, Search, Bell, FileCheck, UserCheck
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import ClimbLogo from "@/components/login/ClimbLogo";
@@ -15,6 +15,7 @@ const navItems = [
   { icon: Shield, label: "Permissões", path: "/permissoes" },
   { icon: Building2, label: "Empresas", path: "/empresas" },
   { icon: FileCheck, label: "Documentos", path: "/documentos" },
+  { icon: UserCheck, label: "Solicitações", path: "/aprovar-acesso" },
   { icon: Settings, label: "Configurações", path: "/dashboard" },
 ];
 

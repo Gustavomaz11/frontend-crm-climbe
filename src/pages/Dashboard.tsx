@@ -32,6 +32,7 @@ import {
   Briefcase,
   MapPin,
   FileCheck,
+  UserCheck,
 } from "lucide-react";
 
 import ClimbLogo from "@/components/login/ClimbLogo";
@@ -109,6 +110,7 @@ const navItems = [
   { icon: Shield, label: "Permissões", path: "/permissoes" },
   { icon: Building2, label: "Empresas", path: "/empresas" },
   { icon: FileCheck, label: "Documentos", path: "/documentos" },
+  { icon: UserCheck, label: "Solicitações", path: "/aprovar-acesso" },
   { icon: Settings, label: "Configurações", path: "/dashboard" },
 ];
 
