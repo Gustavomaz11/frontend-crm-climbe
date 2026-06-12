@@ -41,15 +41,24 @@ function normalizeEmpresa(empresa: EmpresaApi): Empresa {
   };
 }
 
-interface CreateEmpresaDTO {
-  nome: string;
+export interface CreateEmpresaDTO {
+  razaoSocial: string;
+  nomeFantasia: string;
   cnpj: string;
-  email: string;
-  telefone: string;
-  endereco: string;
+  logradouro: string;
+  numero: string;
+  bairro: string;
   cidade: string;
-  estado: string;
+  uf: string;
   cep: string;
+  telefone: string;
+  email: string;
+  representanteNome: string;
+  representanteCpf: string;
+  representanteContato: string;
+  nome?: string;
+  endereco?: string;
+  estado?: string;
 }
 
 export function useEmpresas() {
@@ -78,7 +87,13 @@ export function useCreateEmpresa() {
 
   return useMutation({
     mutationFn: async (data: CreateEmpresaDTO) => {
-      const response = await api.post<EmpresaApi>("/empresas", data);
+      const payload = {
+        ...data,
+        nome: data.nomeFantasia || data.razaoSocial,
+        endereco: `${data.logradouro}, ${data.numero}`,
+        estado: data.uf,
+      };
+      const response = await api.post<EmpresaApi>("/empresas", payload);
       return normalizeEmpresa(response.data);
     },
     onSuccess: () => {

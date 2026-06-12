@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Home, FileText, Calendar as CalendarIcon, Shield, Building2, Settings,
   LogOut, Sun, Moon, ChevronLeft, ChevronRight, Plus, Search,
-  Clock, MapPin, X, GripVertical, Video, FileCheck, UserCheck
+  Clock, MapPin, X, GripVertical, Video, FileCheck, UserCheck, ScrollText
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import ClimbLogo from "@/components/login/ClimbLogo";
@@ -13,6 +13,7 @@ import { useCreateReuniao, useDeleteReuniao, useEmpresas, useReunioes, useUpdate
 const navItems = [
   { icon: Home, label: "Home", path: "/dashboard" },
   { icon: FileText, label: "Contratos", path: "/contratos" },
+  { icon: ScrollText, label: "Propostas", path: "/propostas" },
   { icon: CalendarIcon, label: "Agenda", path: "/agenda" },
   { icon: Shield, label: "Permissões", path: "/permissoes" },
   { icon: Building2, label: "Empresas", path: "/empresas" },

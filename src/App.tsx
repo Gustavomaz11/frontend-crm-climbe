@@ -17,8 +17,10 @@ import Permissoes from "./pages/Permissoes.tsx";
 import Empresas from "./pages/Empresas.tsx";
 import Documentos from "./pages/Documentos.tsx";
 import Contratos from "./pages/Contratos.tsx";
+import Propostas from "./pages/Propostas.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import AprovarAcesso from "./pages/AprovarAcesso.tsx";
+import CadastroEmpresa from "./pages/CadastroEmpresa.tsx";
 
 const App = () => (
   <QueryProvider>
@@ -104,6 +106,14 @@ const App = () => (
               }
             />
             <Route
+              path="/empresas/cadastro"
+              element={
+                <PrivateRoute>
+                  <CadastroEmpresa />
+                </PrivateRoute>
+              }
+            />
+            <Route
               path="/documentos"
               element={
                 <PrivateRoute>
@@ -116,6 +126,14 @@ const App = () => (
               element={
                 <PrivateRoute>
                   <Contratos />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/propostas"
+              element={
+                <PrivateRoute>
+                  <Propostas />
                 </PrivateRoute>
               }
             />
