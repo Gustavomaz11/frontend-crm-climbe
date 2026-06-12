@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import ClimbLogo from "@/components/login/ClimbLogo";
-import { useContratos, useEmpresas, Contrato } from "@/services";
+import { useEmpresas } from "@/services";
 
 const navItems = [
   { icon: Home, label: "Home", path: "/dashboard" },
@@ -26,11 +26,37 @@ const statusStyles: Record<string, string> = {
   "ATIVO": "bg-accent/10 text-accent",
   "ANALISE": "bg-primary/10 text-primary",
   "PENDENTE": "bg-destructive/10 text-destructive",
-  "CONCLUIDO": "bg-accent/10 text-accent",
+  "APROVADO": "bg-accent/10 text-accent",
+  "RECUSADO": "bg-destructive/10 text-destructive",
+  "EM REVISÃO": "bg-primary/10 text-primary",
 };
 
-type FilterTab = "Todos" | "Ativos" | "Em análise" | "Pendente" | "Concluído";
-const tabs: FilterTab[] = ["Todos", "Ativos", "Em análise", "Pendente", "Concluído"];
+interface Proposta {
+  id: number;
+  nomeDocumento: string;
+  empresaNome: string;
+  status: string;
+}
+
+const mockPropostas: Proposta[] = [
+  { id: 1, nomeDocumento: "Proposta Comercial 2026", empresaNome: "Nova Capital", status: "PENDENTE" },
+  { id: 2, nomeDocumento: "Proposta de Serviços TI", empresaNome: "Apex Ventures", status: "APROVADO" },
+  { id: 3, nomeDocumento: "Proposta Consultoria Financeira", empresaNome: "Horizon Group", status: "ANALISE" },
+  { id: 4, nomeDocumento: "Proposta Infraestrutura", empresaNome: "Meridian Partners", status: "EM REVISÃO" },
+  { id: 5, nomeDocumento: "Proposta Marketing Digital", empresaNome: "Solare Investimentos", status: "RECUSADO" },
+  { id: 6, nomeDocumento: "Proposta RH e Gestão", empresaNome: "Vértice Consultoria", status: "APROVADO" },
+];
+
+type FilterTab = "Todos" | "Pendente" | "Em análise" | "Aprovado" | "Recusado";
+const tabs: FilterTab[] = ["Todos", "Pendente", "Em análise", "Aprovado", "Recusado"];
+
+const STATUS_MAP: Record<FilterTab, string | null> = {
+  "Todos": null,
+  "Pendente": "PENDENTE",
+  "Em análise": "ANALISE",
+  "Aprovado": "APROVADO",
+  "Recusado": "RECUSADO",
+};
 
 const ACCEPTED = ".pdf,.doc,.docx,.xls,.xlsx";
 
@@ -40,12 +66,12 @@ function formatBytes(bytes: number) {
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-const Contratos = () => {
+const Propostas = () => {
   const { isDark, setIsDark } = useTheme();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeTab, setActiveTab] = useState<FilterTab>("Todos");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedContrato, setSelectedContrato] = useState<Contrato | null>(null);
+  const [selectedProposta, setSelectedProposta] = useState<Proposta | null>(null);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
@@ -55,7 +81,6 @@ const Contratos = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
-  const { data: contratos = [], isLoading, error } = useContratos();
   const { data: empresas = [] } = useEmpresas();
 
   const addFiles = useCallback((incoming: FileList | null) => {
@@ -87,13 +112,15 @@ const Contratos = () => {
   }
 
   const filtered = useMemo(() => {
-    if (!contratos.length) return [];
-    return contratos.filter(c => {
-      const matchSearch = c.titulo?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-        c.descricao?.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchSearch;
+    const statusFilter = STATUS_MAP[activeTab];
+    return mockPropostas.filter((p) => {
+      const matchSearch =
+        p.nomeDocumento.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.empresaNome.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchStatus = statusFilter ? p.status === statusFilter : true;
+      return matchSearch && matchStatus;
     });
-  }, [searchQuery, contratos]);
+  }, [searchQuery, activeTab]);
 
   return (
     <div className="relative min-h-screen bg-background text-foreground transition-colors duration-500 overflow-hidden">
@@ -109,8 +136,8 @@ const Contratos = () => {
           </div>
           <nav className="flex-1 py-4 px-2 space-y-1">
             {navItems.map(item => (
-              <motion.button key={item.label} onClick={() => navigate(item.path)} className={`w-full flex items-center gap-3 rounded-lg transition-all group relative ${sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"} ${item.label === "Contratos" ? "bg-accent/10 text-accent" : "text-muted-foreground hover:text-foreground hover:bg-muted/30"}`} whileHover={{ x: sidebarCollapsed ? 0 : 2 }} whileTap={{ scale: 0.98 }}>
-                {item.label === "Contratos" && <motion.div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-accent" layoutId="activeNav" />}
+              <motion.button key={item.label} onClick={() => navigate(item.path)} className={`w-full flex items-center gap-3 rounded-lg transition-all group relative ${sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"} ${item.label === "Propostas" ? "bg-accent/10 text-accent" : "text-muted-foreground hover:text-foreground hover:bg-muted/30"}`} whileHover={{ x: sidebarCollapsed ? 0 : 2 }} whileTap={{ scale: 0.98 }}>
+                {item.label === "Propostas" && <motion.div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-accent" layoutId="activeNav" />}
                 <item.icon className="w-[18px] h-[18px] shrink-0" />
                 {!sidebarCollapsed && <span className="text-[13px] font-medium">{item.label}</span>}
               </motion.button>
@@ -133,7 +160,7 @@ const Contratos = () => {
           <motion.header className="sticky top-0 z-20 h-16 flex items-center justify-between px-6 border-b border-border/20 bg-background/80 backdrop-blur-xl" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
             <div className="flex items-center gap-2 h-9 px-3 rounded-lg border border-border/25 bg-card/30 backdrop-blur-sm text-muted-foreground/50 w-[280px]">
               <Search className="w-3.5 h-3.5" />
-              <input type="text" placeholder="Buscar contratos..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground/30 text-foreground" />
+              <input type="text" placeholder="Buscar propostas..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground/30 text-foreground" />
             </div>
             <motion.div className="w-9 h-9 rounded-lg bg-accent/15 border border-accent/20 flex items-center justify-center"><span className="text-accent font-semibold text-[11px]">RR</span></motion.div>
           </motion.header>
@@ -141,8 +168,8 @@ const Contratos = () => {
           <div className="px-6 pt-6 pb-4">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h1 className="text-[22px] font-bold text-foreground tracking-tight">Contratos</h1>
-                <p className="text-[12px] text-muted-foreground/50 mt-0.5">{isLoading ? "Carregando..." : `${filtered.length} de ${contratos.length} contratos`}</p>
+                <h1 className="text-[22px] font-bold text-foreground tracking-tight">Propostas</h1>
+                <p className="text-[12px] text-muted-foreground/50 mt-0.5">{`${filtered.length} de ${mockPropostas.length} propostas`}</p>
               </div>
               <motion.button
                 onClick={() => { setUploadOpen(!uploadOpen); setUploadDone(false); }}
@@ -150,7 +177,7 @@ const Contratos = () => {
                 whileHover={{ scale: 1.02, y: -1 }}
                 whileTap={{ scale: 0.98 }}
               >
-                <Plus className="w-3.5 h-3.5" /> Novo Contrato
+                <Plus className="w-3.5 h-3.5" /> Nova Proposta
               </motion.button>
             </div>
 
@@ -165,7 +192,6 @@ const Contratos = () => {
                   transition={{ duration: 0.22 }}
                 >
                   <div className="p-4">
-                    {/* Drop zone */}
                     <input
                       ref={inputRef}
                       type="file"
@@ -295,34 +321,41 @@ const Contratos = () => {
 
           <div className="px-6 pb-6">
             <motion.div className="rounded-xl border border-border/25 bg-card/40 backdrop-blur-sm overflow-hidden" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}>
-              <div className="divide-y divide-border/10 max-h-[calc(100vh-220px)] overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-muted-foreground/20 [&::-webkit-scrollbar-thumb]:rounded-full">
-                {isLoading ? (
-                  <div className="py-12 text-center text-[12px] text-muted-foreground/50">Carregando contratos...</div>
-                ) : error ? (
-                  <div className="py-12 text-center text-[12px] text-destructive">Erro ao carregar contratos</div>
-                ) : filtered.length === 0 ? (
-                  <div className="py-12 text-center text-[12px] text-muted-foreground/30">Nenhum contrato encontrado</div>
+              {/* Table header */}
+              <div className="grid grid-cols-[1fr_1fr_120px] px-5 py-2.5 border-b border-border/15 bg-muted/5">
+                <span className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider">Documento</span>
+                <span className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider">Empresa</span>
+                <span className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider">Status</span>
+              </div>
+              <div className="divide-y divide-border/10 max-h-[calc(100vh-260px)] overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-muted-foreground/20 [&::-webkit-scrollbar-thumb]:rounded-full">
+                {filtered.length === 0 ? (
+                  <div className="py-12 text-center text-[12px] text-muted-foreground/30">Nenhuma proposta encontrada</div>
                 ) : (
-                  filtered.map((c, i) => (
+                  filtered.map((p, i) => (
                     <motion.div
-                      key={c.id}
-                      className="px-5 py-4 hover:bg-muted/10 transition-colors cursor-pointer group border-b border-border/5 last:border-0"
-                      onClick={() => setSelectedContrato(c)}
+                      key={p.id}
+                      className="grid grid-cols-[1fr_1fr_120px] items-center px-5 py-4 hover:bg-muted/10 transition-colors cursor-pointer group"
+                      onClick={() => setSelectedProposta(p)}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: i * 0.03 }}
                       whileHover={{ x: 2 }}
                     >
-                      <div className="flex items-center gap-4">
-                        <div className="flex-1">
-                          <p className="text-[12px] font-semibold text-foreground">CT-{c.id}</p>
-                          <p className="text-[11px] text-foreground/70 group-hover:text-accent transition-colors">{c.titulo}</p>
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-7 h-7 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
+                          <ScrollText className="w-3.5 h-3.5 text-accent" />
                         </div>
-                        <div className="text-right">
-                          <p className="text-[12px] font-medium text-foreground/80">R$ {c.valor}</p>
-                          <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full w-fit inline-block ${statusStyles[c.status] || "bg-muted/10 text-muted-foreground"}`}>{c.status}</span>
-                        </div>
+                        <p className="text-[12px] font-medium text-foreground/80 group-hover:text-accent transition-colors truncate">{p.nomeDocumento}</p>
                       </div>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                          <Building2 className="w-2.5 h-2.5 text-primary" />
+                        </div>
+                        <p className="text-[12px] text-foreground/60 truncate">{p.empresaNome}</p>
+                      </div>
+                      <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full w-fit ${statusStyles[p.status] || "bg-muted/10 text-muted-foreground"}`}>
+                        {p.status}
+                      </span>
                     </motion.div>
                   ))
                 )}
@@ -334,34 +367,30 @@ const Contratos = () => {
 
       {/* Detail Modal */}
       <AnimatePresence>
-        {selectedContrato && (
+        {selectedProposta && (
           <motion.div className="fixed inset-0 z-50 flex items-center justify-center p-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <motion.div className="absolute inset-0 bg-background/80 backdrop-blur-md" onClick={() => setSelectedContrato(null)} />
+            <motion.div className="absolute inset-0 bg-background/80 backdrop-blur-md" onClick={() => setSelectedProposta(null)} />
             <motion.div className="relative z-10 w-full max-w-lg rounded-2xl border border-border/30 bg-card/95 backdrop-blur-xl shadow-2xl overflow-hidden" initial={{ scale: 0.92, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.92, opacity: 0, y: 20 }}>
               <div className="flex items-center justify-between p-5 border-b border-border/20">
                 <div>
-                  <h2 className="text-[16px] font-semibold text-foreground">CT-{selectedContrato.id}</h2>
-                  <p className="text-[11px] text-muted-foreground/50 mt-0.5">{selectedContrato.titulo}</p>
+                  <h2 className="text-[16px] font-semibold text-foreground">{selectedProposta.nomeDocumento}</h2>
+                  <p className="text-[11px] text-muted-foreground/50 mt-0.5">{selectedProposta.empresaNome}</p>
                 </div>
-                <motion.button onClick={() => setSelectedContrato(null)} className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/20" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}><X className="w-4 h-4" /></motion.button>
+                <motion.button onClick={() => setSelectedProposta(null)} className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/20" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}><X className="w-4 h-4" /></motion.button>
               </div>
               <div className="p-5 space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="rounded-lg border border-border/20 bg-background/50 p-4">
-                    <p className="text-[10px] text-muted-foreground/40 mb-1 uppercase tracking-wider">Valor</p>
-                    <p className="text-[14px] font-semibold text-accent">R$ {selectedContrato.valor}</p>
+                    <p className="text-[10px] text-muted-foreground/40 mb-1 uppercase tracking-wider">Empresa</p>
+                    <p className="text-[13px] font-semibold text-foreground/80">{selectedProposta.empresaNome}</p>
                   </div>
                   <div className="rounded-lg border border-border/20 bg-background/50 p-4">
                     <p className="text-[10px] text-muted-foreground/40 mb-1 uppercase tracking-wider">Status</p>
-                    <span className={`text-[11px] font-medium px-2.5 py-0.5 rounded-full inline-block ${statusStyles[selectedContrato.status]}`}>{selectedContrato.status}</span>
+                    <span className={`text-[11px] font-medium px-2.5 py-0.5 rounded-full inline-block ${statusStyles[selectedProposta.status] || "bg-muted/10 text-muted-foreground"}`}>{selectedProposta.status}</span>
                   </div>
                 </div>
-                <div>
-                  <p className="text-[10px] text-muted-foreground/40 mb-2 uppercase tracking-wider">Descrição</p>
-                  <p className="text-[12px] text-foreground/70">{selectedContrato.descricao || "Sem descrição"}</p>
-                </div>
                 <div className="flex gap-2">
-                  <motion.button className="flex-1 h-10 rounded-lg bg-accent text-accent-foreground text-[12px] font-semibold" whileHover={{ scale: 1.02, y: -1 }} whileTap={{ scale: 0.98 }}>Ver Contrato</motion.button>
+                  <motion.button className="flex-1 h-10 rounded-lg bg-accent text-accent-foreground text-[12px] font-semibold" whileHover={{ scale: 1.02, y: -1 }} whileTap={{ scale: 0.98 }}>Ver Proposta</motion.button>
                 </div>
               </div>
             </motion.div>
@@ -372,4 +401,4 @@ const Contratos = () => {
   );
 };
 
-export default Contratos;
+export default Propostas;

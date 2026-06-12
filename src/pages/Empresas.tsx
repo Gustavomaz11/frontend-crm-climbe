@@ -3,7 +3,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Home, FileText, Calendar as CalendarIcon, Shield, Building2, Settings,
-  LogOut, Sun, Moon, ChevronLeft, ChevronRight, Search, Download, Eye, X, FileCheck, UserCheck
+  LogOut, Sun, Moon, ChevronLeft, ChevronRight, Search, Download, Eye, X, FileCheck, UserCheck, Plus, ScrollText
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import ClimbLogo from "@/components/login/ClimbLogo";
@@ -12,6 +12,7 @@ import { useEmpresas, Empresa } from "@/services";
 const navItems = [
   { icon: Home, label: "Home", path: "/dashboard" },
   { icon: FileText, label: "Contratos", path: "/contratos" },
+  { icon: ScrollText, label: "Propostas", path: "/propostas" },
   { icon: CalendarIcon, label: "Agenda", path: "/agenda" },
   { icon: Shield, label: "Permissões", path: "/permissoes" },
   { icon: Building2, label: "Empresas", path: "/empresas" },
@@ -79,9 +80,20 @@ const Empresas = () => {
             <motion.div className="w-9 h-9 rounded-lg bg-accent/15 border border-accent/20 flex items-center justify-center"><span className="text-accent font-semibold text-[11px]">RR</span></motion.div>
           </motion.header>
 
-          <div className="px-6 pt-6 pb-2">
-            <h1 className="text-[22px] font-bold text-foreground tracking-tight">Empresas</h1>
-            <p className="text-[12px] text-muted-foreground/50 mt-0.5">Gerencie todas as empresas — pendentes e clientes.</p>
+          <div className="px-6 pt-6 pb-2 flex items-center justify-between">
+            <div>
+              <h1 className="text-[22px] font-bold text-foreground tracking-tight">Empresas</h1>
+              <p className="text-[12px] text-muted-foreground/50 mt-0.5">Gerencie todas as empresas — pendentes e clientes.</p>
+            </div>
+            <motion.button
+              onClick={() => navigate("/empresas/cadastro")}
+              className="flex items-center gap-2 h-9 px-4 rounded-lg bg-accent text-white text-[13px] font-medium hover:bg-accent/90 transition-all"
+              whileHover={{ y: -1 }}
+              whileTap={{ scale: 0.97 }}
+            >
+              <Plus className="w-4 h-4" />
+              Cadastrar Novo
+            </motion.button>
           </div>
 
           <div className="px-6 pb-6">
