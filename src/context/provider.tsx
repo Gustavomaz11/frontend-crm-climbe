@@ -61,7 +61,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     }
 
     destroyCookie(undefined, "@CLIMB:T");
-    destroyCookie(undefined, "@CLIMB:R");
+    destroyCookie(undefined, "@CLIMB:RT");
     destroyCookie(undefined, "email");
     syncGoogleAccessToken(null);
     clearSession();
@@ -73,7 +73,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   // Função para fazer refresh do token
   const performTokenRefresh = useCallback(async () => {
     try {
-      const { "@CLIMB:R": refreshTokenCookie } = parseCookies();
+      const { "@CLIMB:RT": refreshTokenCookie } = parseCookies();
 
       if (!refreshTokenCookie) {
         throw new Error("Refresh token não encontrado");
@@ -155,7 +155,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         });
 
         // Salvar refresh token em cookie mais seguro
-        setCookie(undefined, "@CLIMB:R", refreshTokenData, {
+        setCookie(undefined, "@CLIMB:RT", refreshTokenData, {
           maxAge: 60 * 60 * 24 * 7, // 7 dias
           path: "/",
           secure: isProduction,

@@ -22,6 +22,7 @@ interface ExchangeCodeResponse {
       email: string;
       cargoNome: string;
       cargoId?: number;
+      fotoPerfil?: string | null;
     };
   };
 }
@@ -48,6 +49,7 @@ interface CompleteRegistrationResponse {
       situacao: string;
       cargoNome: string;
       cargoId: number;
+      fotoPerfil?: string | null;
     };
   };
 }

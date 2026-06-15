@@ -17,6 +17,7 @@ export interface Session {
     id?: number;
     email?: string;
     nomeCompleto?: string;
+    fotoPerfil?: string | null;
   };
 }
 
@@ -24,20 +25,7 @@ export const signInRequest = async (credentials: SignInCredentials) => {
   try {
     const response = await api.post("/auth/login", credentials);
 
-    // A API retorna: {
-    //   success,
-    //   data: { accessToken, refreshToken, usuario },
-    //   expiresIn,
-    //   message,
-    //   timestamp
-    // }
-
-    const { data: sessionData, expiresIn } = response.data;
-
-    return {
-      ...sessionData,
-      expiresIn,
-    };
+    return response.data.data;
   } catch (error: unknown) {
     return Promise.reject(error);
   }

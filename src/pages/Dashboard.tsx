@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 
 import ClimbLogo from "@/components/login/ClimbLogo";
+import { UserAvatar } from "@/components/UserAvatar";
 
 // ajuste estes imports se sua pasta estiver diferente
 import {
@@ -429,6 +430,11 @@ const Dashboard = () => {
     userData?.nomeCompleto ||
     userData?.pessoa?.nomeCompleto ||
     "Usuário";
+  const userPhoto =
+    basicUserData?.fotoPerfil ||
+    userData?.fotoPerfil ||
+    userData?.pessoa?.fotoPerfil ||
+    null;
 
   const today = new Date();
   const currentMonth = today.getMonth();
@@ -1552,19 +1558,7 @@ const Dashboard = () => {
                 </span>
               </motion.button>
 
-              <motion.div
-                className="flex h-9 w-9 items-center justify-center rounded-lg border border-accent/20 bg-accent/15"
-                whileHover={{ scale: 1.03 }}
-              >
-                <span className="text-[11px] font-semibold text-accent">
-                  {userName
-                    .split(" ")
-                    .map((part) => part[0])
-                    .slice(0, 2)
-                    .join("")
-                    .toUpperCase()}
-                </span>
-              </motion.div>
+              <UserAvatar name={userName} photoUrl={userPhoto} />
             </div>
           </motion.header>
 

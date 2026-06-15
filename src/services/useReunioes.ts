@@ -42,6 +42,7 @@ export interface CreateReuniaoDTO {
   local?: string;
   empresaId: number;
   status?: string;
+  participanteIds?: number[];
 }
 
 type ReuniaoApi = Reuniao & {
@@ -155,10 +156,9 @@ function buildCreatePayload(data: CreateReuniaoDTO) {
     hora: data.hora,
     presencial: data.presencial,
     local: data.local,
+    empresaId: data.empresaId,
     status: data.status ?? "AGENDADA",
-    empresa: {
-      idEmpresa: data.empresaId,
-    },
+    participanteIds: data.participanteIds ?? [],
   };
 }
 
