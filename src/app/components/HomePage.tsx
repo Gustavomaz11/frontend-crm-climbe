@@ -51,6 +51,9 @@ interface AgendaEvent {
   color: string;
 }
 
+type ContractFilter = 'All' | 'BPO' | 'M&A';
+const contractFilters: ContractFilter[] = ['All', 'BPO', 'M&A'];
+
 const mockContracts: Contract[] = [
   { id: '1', company: 'Gorillaz', service: 'BPO', analyst: 'Gustavo', status: 'Ativo', date: '31.01.' },
   { id: '2', company: 'Jotanune', service: 'M&A', analyst: 'Gustavo', status: 'Análise', date: '2019' },
@@ -220,7 +223,7 @@ const daysOfWeek = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 
 export default function HomePage() {
   const today = new Date();
-  const [selectedFilter, setSelectedFilter] = useState<'All' | 'BPO' | 'M&A'>('All');
+  const [selectedFilter, setSelectedFilter] = useState<ContractFilter>('All');
   const [selectedDate, setSelectedDate] = useState<number>(today.getDate());
   const [dateRange, setDateRange] = useState('11 Nov - 11 Dec, 2026');
   const [currentMonth, setCurrentMonth] = useState<number>(today.getMonth());
@@ -609,10 +612,10 @@ export default function HomePage() {
 
             {/* Filter Tabs */}
             <div className="flex gap-2 mb-4">
-              {['All', 'BPO', 'M&A'].map((filter) => (
+              {contractFilters.map((filter) => (
                 <button
                   key={filter}
-                  onClick={() => setSelectedFilter(filter as any)}
+                  onClick={() => setSelectedFilter(filter)}
                   className={`px-4 py-2 rounded-lg text-[12px] font-['Poppins:Medium',sans-serif] transition-colors ${
                     selectedFilter === filter
                       ? 'bg-[#0abfa3] text-white'
