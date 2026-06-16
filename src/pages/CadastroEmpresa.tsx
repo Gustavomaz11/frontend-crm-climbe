@@ -119,6 +119,19 @@ const CadastroEmpresa = () => {
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
 
+  const basicUserData = useAuthStore((state) => state.basicUserData);
+  const userData = useAuthStore((state) => state.userData);
+  const userName =
+    basicUserData?.nomeCompleto ||
+    userData?.nomeCompleto ||
+    userData?.pessoa?.nomeCompleto ||
+    "Usuario";
+  const userPhoto =
+    basicUserData?.fotoPerfil ||
+    userData?.fotoPerfil ||
+    userData?.pessoa?.fotoPerfil ||
+    null;
+
   const { mutate: createEmpresa, isPending } = useCreateEmpresa();
 
   function set(field: keyof CreateEmpresaDTO, value: string) {
@@ -247,9 +260,7 @@ const CadastroEmpresa = () => {
               Voltar para Empresas
             </motion.button>
 
-            <motion.div className="w-9 h-9 rounded-lg bg-accent/15 border border-accent/20 flex items-center justify-center">
-              <span className="text-accent font-semibold text-[11px]">RR</span>
-            </motion.div>
+            <UserAvatar name={userName} photoUrl={userPhoto} />
           </motion.header>
 
           <div className="px-6 pt-6 pb-8 max-w-3xl mx-auto">

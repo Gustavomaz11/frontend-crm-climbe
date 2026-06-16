@@ -26,6 +26,19 @@ const Permissoes = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
 
+  const basicUserData = useAuthStore((state) => state.basicUserData);
+  const userData = useAuthStore((state) => state.userData);
+  const userName =
+    basicUserData?.nomeCompleto ||
+    userData?.nomeCompleto ||
+    userData?.pessoa?.nomeCompleto ||
+    "Usuario";
+  const userPhoto =
+    basicUserData?.fotoPerfil ||
+    userData?.fotoPerfil ||
+    userData?.pessoa?.fotoPerfil ||
+    null;
+
   // Fetch permissoes from API
   const { data: permissoes = [], isLoading, error } = usePermissoes();
 
@@ -82,9 +95,7 @@ const Permissoes = () => {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <motion.div className="w-9 h-9 rounded-lg bg-accent/15 border border-accent/20 flex items-center justify-center" whileHover={{ scale: 1.03 }}>
-                <span className="text-accent font-semibold text-[11px]">RR</span>
-              </motion.div>
+              <UserAvatar name={userName} photoUrl={userPhoto} />
               <div className="text-right">
                 <p className="text-[12px] font-medium text-foreground">Analista</p>
                 <p className="text-[10px] text-muted-foreground/40">analista@climb.com</p>
