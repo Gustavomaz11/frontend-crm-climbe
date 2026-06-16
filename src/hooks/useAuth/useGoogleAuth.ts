@@ -22,6 +22,7 @@ interface ExchangeCodeResponse {
       email: string;
       cargoNome: string;
       cargoId?: number;
+      fotoPerfil?: string | null;
     };
   };
 }
@@ -39,6 +40,7 @@ interface CompleteRegistrationResponse {
   data: {
     accessToken: string;
     refreshToken: string;
+    expiresIn: number;
     usuario: {
       id: number;
       nomeCompleto: string;
@@ -48,6 +50,7 @@ interface CompleteRegistrationResponse {
       situacao: string;
       cargoNome: string;
       cargoId: number;
+      fotoPerfil?: string | null;
     };
   };
 }
@@ -76,8 +79,18 @@ export const useCompleteRegistration = () => {
   return useMutation({
     mutationFn: async (data: CompleteRegistrationDTO) => {
       const response = await api.post<CompleteRegistrationResponse>(
-        "/auth/google/complete-registration",
-        data
+        "/usuarios/completar-cadastro",
+        {
+          cpf: data.cpf,
+          contato: data.contato,
+          senha: data.senha,
+          cargoId: data.cargoId,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${data.pendingToken}`,
+          },
+        },
       );
       return response.data;
     },

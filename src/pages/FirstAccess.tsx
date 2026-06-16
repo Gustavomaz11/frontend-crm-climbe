@@ -15,12 +15,14 @@ import { setCookie } from "nookies";
 import ClimbLogo from "@/components/login/ClimbLogo";
 import { useTheme } from "@/hooks/use-theme";
 import { useCompleteRegistration } from "@/hooks/useAuth/useGoogleAuth";
+import { useAuthStore } from "@/store/useAuthStore";
 import { useUserRoleStore } from "@/store/useUserRoleStore";
 
 const FirstAccess = () => {
   const { isDark, setIsDark } = useTheme();
   const navigate = useNavigate();
   const setRole = useUserRoleStore((state) => state.setRole);
+  const setBasicUserData = useAuthStore((state) => state.setBasicUserData);
   const { mutateAsync: completeRegistration, isPending } = useCompleteRegistration();
 
   const [showPassword, setShowPassword] = useState(false);
@@ -145,12 +147,18 @@ const FirstAccess = () => {
         path: "/",
       });
 
-      setCookie(null, "@CLIMB:RT", response.data.refreshToken, {
+      setCookie(null, "@CLIMB:R", response.data.refreshToken, {
         maxAge: 60 * 60 * 24 * 30,
         path: "/",
       });
 
       setRole(response.data.usuario.cargoNome || "USER");
+      setBasicUserData({
+        id: response.data.usuario.id,
+        email: response.data.usuario.email,
+        nomeCompleto: response.data.usuario.nomeCompleto,
+        fotoPerfil: response.data.usuario.fotoPerfil,
+      });
 
       sessionStorage.removeItem("@CLIMB:PENDING_TOKEN");
       sessionStorage.removeItem("@CLIMB:PENDING_CARGO_ID");

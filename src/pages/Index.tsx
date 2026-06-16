@@ -57,7 +57,7 @@ const Index = () => {
           path: "/",
         });
 
-        setCookie(null, "@CLIMB:RT", data.refreshToken, {
+        setCookie(null, "@CLIMB:R", data.refreshToken, {
           maxAge: 60 * 60 * 24 * 30,
           path: "/",
         });
@@ -67,6 +67,7 @@ const Index = () => {
           id: data.usuario.id,
           email: data.usuario.email,
           nomeCompleto: data.usuario.nomeCompleto,
+          fotoPerfil: data.usuario.fotoPerfil,
         });
 
         // Salvar role
@@ -88,13 +89,39 @@ const Index = () => {
     const code = searchParams.get("code");
     const googleOauth = searchParams.get("google_oauth");
     const errorMsg = searchParams.get("message");
+    const email = searchParams.get("email");
 
     if (googleOauth === "success" && code) {
       handleGoogleCallback(code);
+    } else if (googleOauth === "completar_cadastro" && code) {
+      exchangeGoogleCode(code)
+        .then((response) => {
+          const pendingToken = response.data.accessToken;
+          if (!pendingToken) {
+            toast.error("Token de cadastro invalido.");
+            return;
+          }
+
+          sessionStorage.setItem("@CLIMB:PENDING_TOKEN", pendingToken);
+          syncGoogleAccessToken(response.data.googleAccessToken);
+          setBasicUserData({
+            email: email ?? undefined,
+            nomeCompleto: email ?? "Usuario Google",
+          });
+          navigate("/first-access");
+        })
+        .catch(() => toast.error("Erro ao processar cadastro Google"));
+    } else if (googleOauth === "pending_approval") {
+      if (email) {
+        sessionStorage.setItem("@CLIMB:PENDING_EMAIL", email);
+      }
+      navigate("/pending-approval");
+    } else if (googleOauth === "not_linked") {
+      toast.error("Conta Google ainda nao vinculada. Tente novamente ou use login por e-mail e senha.");
     } else if (googleOauth === "error") {
       toast.error(`Erro: ${errorMsg || "Falha na autenticação"}`);
     }
-  }, [searchParams, handleGoogleCallback]);
+  }, [searchParams, handleGoogleCallback, exchangeGoogleCode, setBasicUserData, navigate]);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -121,7 +148,7 @@ const Index = () => {
         path: "/",
       });
 
-      setCookie(null, "@CLIMB:RT", response.refreshToken, {
+      setCookie(null, "@CLIMB:R", response.refreshToken, {
         maxAge: 60 * 60 * 24 * 30,
         path: "/",
       });
@@ -130,9 +157,11 @@ const Index = () => {
         id: response.usuario?.id,
         email: response.usuario?.email,
         nomeCompleto: response.usuario?.nomeCompleto,
+        fotoPerfil: response.usuario?.fotoPerfil,
       });
 
       const possibleRole =
+        response.usuario?.cargoNome ||
         (response.usuario as { cargo?: string; role?: string } | undefined)
           ?.cargo ||
         (response.usuario as { cargo?: string; role?: string } | undefined)

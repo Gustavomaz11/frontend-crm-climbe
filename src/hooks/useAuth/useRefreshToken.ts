@@ -12,22 +12,15 @@ export interface RefreshTokenResponse {
 }
 
 const refreshTokenRequest = async (
-  refreshToken: string
+  refreshToken: string,
 ): Promise<RefreshTokenResponse> => {
   try {
     const response = await api.post("/auth/refresh", {
       refreshToken,
     });
-    console.log("🔄 Refresh response:", response.data);
 
-    // A API retorna: { success, data: <token_string>, expiresIn, message, timestamp }
-    // Precisamos extrair o token e expiresIn
-    const { data: accessToken, expiresIn } = response.data;
-
-    return {
-      accessToken,
-      expiresIn,
-    };
+    // A API retorna: { success, data: { accessToken, expiresIn }, message, timestamp }
+    return response.data.data;
   } catch (error: unknown) {
     return Promise.reject(error);
   }

@@ -8,6 +8,8 @@ import {
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import ClimbLogo from "@/components/login/ClimbLogo";
+import { UserAvatar } from "@/components/UserAvatar";
+import { useAuthStore } from "@/store/useAuthStore";
 import { useEmpresas } from "@/services";
 
 const navItems = [
@@ -80,6 +82,19 @@ const Propostas = () => {
   const [selectedEmpresaId, setSelectedEmpresaId] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+
+  const basicUserData = useAuthStore((state) => state.basicUserData);
+  const userData = useAuthStore((state) => state.userData);
+  const userName =
+    basicUserData?.nomeCompleto ||
+    userData?.nomeCompleto ||
+    userData?.pessoa?.nomeCompleto ||
+    "Usuario";
+  const userPhoto =
+    basicUserData?.fotoPerfil ||
+    userData?.fotoPerfil ||
+    userData?.pessoa?.fotoPerfil ||
+    null;
 
   const { data: empresas = [] } = useEmpresas();
 
@@ -162,7 +177,7 @@ const Propostas = () => {
               <Search className="w-3.5 h-3.5" />
               <input type="text" placeholder="Buscar propostas..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground/30 text-foreground" />
             </div>
-            <motion.div className="w-9 h-9 rounded-lg bg-accent/15 border border-accent/20 flex items-center justify-center"><span className="text-accent font-semibold text-[11px]">RR</span></motion.div>
+            <UserAvatar name={userName} photoUrl={userPhoto} />
           </motion.header>
 
           <div className="px-6 pt-6 pb-4">
