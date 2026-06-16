@@ -61,6 +61,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     }
 
     destroyCookie(undefined, "@CLIMB:T");
+    destroyCookie(undefined, "@CLIMB:R");
     destroyCookie(undefined, "@CLIMB:RT");
     destroyCookie(undefined, "email");
     syncGoogleAccessToken(null);

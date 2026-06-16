@@ -19,6 +19,7 @@ const refreshTokenRequest = async (
       refreshToken,
     });
 
+    // A API retorna: { success, data: { accessToken, expiresIn }, message, timestamp }
     return response.data.data;
   } catch (error: unknown) {
     return Promise.reject(error);
