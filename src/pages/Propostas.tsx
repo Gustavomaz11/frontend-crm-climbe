@@ -1,16 +1,26 @@
-import { useState, useMemo, useRef, useCallback } from "react";
+import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { useTheme } from "@/hooks/use-theme";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Home, FileText, Calendar as CalendarIcon, Shield, Building2, Settings,
   LogOut, Sun, Moon, ChevronLeft, ChevronRight, Search, Plus, FileCheck, X,
-  UserCheck, UploadCloud, File as FileIcon, CheckCircle2, ScrollText,
+  UserCheck, UploadCloud, File as FileIcon, CheckCircle2, ScrollText, AlertCircle,
+  Check, XCircle, History,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import ClimbLogo from "@/components/login/ClimbLogo";
 import { UserAvatar } from "@/components/UserAvatar";
 import { useAuthStore } from "@/store/useAuthStore";
-import { useEmpresas } from "@/services";
+import {
+  getPropostaDownloadUrl,
+  getPropostaHistorico,
+  useCreatePropostaWithFile,
+  useEmpresas,
+  usePropostas,
+  useUpdatePropostaStatus,
+  type HistoricoAprovacaoProposta,
+  type PropostaStatus,
+} from "@/services";
 
 const navItems = [
   { icon: Home, label: "Home", path: "/dashboard" },
@@ -25,39 +35,27 @@ const navItems = [
 ];
 
 const statusStyles: Record<string, string> = {
-  "ATIVO": "bg-accent/10 text-accent",
-  "ANALISE": "bg-primary/10 text-primary",
-  "PENDENTE": "bg-destructive/10 text-destructive",
-  "APROVADO": "bg-accent/10 text-accent",
-  "RECUSADO": "bg-destructive/10 text-destructive",
-  "EM REVISÃO": "bg-primary/10 text-primary",
+  "PENDENTE": "bg-primary/10 text-primary",
+  "APROVADA": "bg-accent/10 text-accent",
+  "REJEITADA": "bg-destructive/10 text-destructive",
 };
 
 interface Proposta {
   id: number;
   nomeDocumento: string;
   empresaNome: string;
-  status: string;
+  status: PropostaStatus;
+  url: string;
 }
 
-const mockPropostas: Proposta[] = [
-  { id: 1, nomeDocumento: "Proposta Comercial 2026", empresaNome: "Nova Capital", status: "PENDENTE" },
-  { id: 2, nomeDocumento: "Proposta de Serviços TI", empresaNome: "Apex Ventures", status: "APROVADO" },
-  { id: 3, nomeDocumento: "Proposta Consultoria Financeira", empresaNome: "Horizon Group", status: "ANALISE" },
-  { id: 4, nomeDocumento: "Proposta Infraestrutura", empresaNome: "Meridian Partners", status: "EM REVISÃO" },
-  { id: 5, nomeDocumento: "Proposta Marketing Digital", empresaNome: "Solare Investimentos", status: "RECUSADO" },
-  { id: 6, nomeDocumento: "Proposta RH e Gestão", empresaNome: "Vértice Consultoria", status: "APROVADO" },
-];
+type FilterTab = "Todos" | "Pendente" | "Aprovada" | "Rejeitada";
+const tabs: FilterTab[] = ["Todos", "Pendente", "Aprovada", "Rejeitada"];
 
-type FilterTab = "Todos" | "Pendente" | "Em análise" | "Aprovado" | "Recusado";
-const tabs: FilterTab[] = ["Todos", "Pendente", "Em análise", "Aprovado", "Recusado"];
-
-const STATUS_MAP: Record<FilterTab, string | null> = {
+const STATUS_MAP: Record<FilterTab, PropostaStatus | null> = {
   "Todos": null,
   "Pendente": "PENDENTE",
-  "Em análise": "ANALISE",
-  "Aprovado": "APROVADO",
-  "Recusado": "RECUSADO",
+  "Aprovada": "APROVADA",
+  "Rejeitada": "REJEITADA",
 };
 
 const ACCEPTED = ".pdf,.doc,.docx,.xls,.xlsx";
@@ -66,6 +64,20 @@ function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function getFileNameFromUrl(url: string) {
+  if (!url) return "Proposta sem arquivo";
+  const fileName = decodeURIComponent(url.split("/").pop() || url);
+  return fileName.replace(/^[0-9a-fA-F-]{36}_/, "");
+}
+
+function formatDateTime(value: string) {
+  if (!value) return "-";
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+  }).format(new Date(value));
 }
 
 const Propostas = () => {
@@ -79,6 +91,14 @@ const Propostas = () => {
   const [files, setFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
   const [uploadDone, setUploadDone] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+  const [modalError, setModalError] = useState("");
+  const [actionMessage, setActionMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [historyProposta, setHistoryProposta] = useState<Proposta | null>(null);
+  const [historyItems, setHistoryItems] = useState<HistoricoAprovacaoProposta[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState("");
   const [selectedEmpresaId, setSelectedEmpresaId] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
@@ -97,6 +117,50 @@ const Propostas = () => {
     null;
 
   const { data: empresas = [] } = useEmpresas();
+  const { data: propostas = [], isLoading: propostasLoading, error: propostasError } = usePropostas();
+  const createPropostaWithFile = useCreatePropostaWithFile();
+  const updatePropostaStatus = useUpdatePropostaStatus();
+
+  const empresasById = useMemo(() => {
+    const map = new Map<number, string>();
+    empresas.forEach((empresa) => {
+      map.set(Number(empresa.id), empresa.nome);
+    });
+    return map;
+  }, [empresas]);
+
+  const propostasView = useMemo<Proposta[]>(
+    () =>
+      propostas.map((proposta) => ({
+        id: proposta.idProposta,
+        nomeDocumento: getFileNameFromUrl(proposta.url),
+        empresaNome: empresasById.get(Number(proposta.empresaId)) ?? `Empresa #${proposta.empresaId}`,
+        status: proposta.status,
+        url: proposta.url,
+      })),
+    [empresasById, propostas],
+  );
+
+  useEffect(() => {
+    if (!uploadError && !uploadDone) return;
+
+    const timer = window.setTimeout(() => {
+      setUploadError("");
+      setUploadDone(false);
+    }, 5000);
+
+    return () => window.clearTimeout(timer);
+  }, [uploadError, uploadDone]);
+
+  useEffect(() => {
+    if (!actionMessage) return;
+
+    const timer = window.setTimeout(() => {
+      setActionMessage(null);
+    }, 5000);
+
+    return () => window.clearTimeout(timer);
+  }, [actionMessage]);
 
   const addFiles = useCallback((incoming: FileList | null) => {
     if (!incoming) return;
@@ -105,6 +169,7 @@ const Propostas = () => {
     );
     setFiles((prev) => [...prev, ...next]);
     setUploadDone(false);
+    setUploadError("");
   }, [files]);
 
   const removeFile = (idx: number) =>
@@ -116,26 +181,96 @@ const Propostas = () => {
     addFiles(e.dataTransfer.files);
   }
 
-  function handleFakeUpload() {
+  async function handleUpload() {
+    const empresaId = Number(selectedEmpresaId);
+
+    if (!selectedEmpresaId || !Number.isFinite(empresaId) || empresaId <= 0) {
+      setUploadError("Selecione uma empresa para a proposta.");
+      return;
+    }
+
     setUploading(true);
-    setTimeout(() => {
+    setUploadError("");
+
+    try {
+      for (const file of files) {
+        await createPropostaWithFile.mutateAsync({
+          file,
+          empresaId,
+        });
+      }
       setUploading(false);
       setUploadDone(true);
       setFiles([]);
       setSelectedEmpresaId("");
-    }, 1400);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Erro ao enviar proposta.";
+      setUploadError(message);
+      setUploading(false);
+    }
+  }
+
+  async function handleOpenProposta(proposta: Proposta) {
+    setModalError("");
+
+    try {
+      const url = await getPropostaDownloadUrl(proposta.id);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Erro ao abrir proposta.";
+      setModalError(message);
+    }
+  }
+
+  async function handleUpdateStatus(proposta: Proposta, status: Exclude<PropostaStatus, "PENDENTE">) {
+    setActionMessage(null);
+
+    if (proposta.status !== "PENDENTE") {
+      setActionMessage({ type: "error", text: "Não é permitido alterar o status de uma proposta já aprovada ou rejeitada." });
+      return;
+    }
+
+    try {
+      await updatePropostaStatus.mutateAsync({ id: proposta.id, status });
+      const label = status === "APROVADA" ? "aprovada" : "rejeitada";
+      setActionMessage({ type: "success", text: `Proposta ${label} com sucesso.` });
+      if (selectedProposta?.id === proposta.id) {
+        setSelectedProposta({ ...selectedProposta, status });
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Erro ao alterar status da proposta.";
+      setActionMessage({ type: "error", text: message });
+    }
+  }
+
+  async function handleOpenHistory(proposta: Proposta) {
+    setHistoryProposta(proposta);
+    setHistoryOpen(true);
+    setHistoryLoading(true);
+    setHistoryError("");
+    setHistoryItems([]);
+
+    try {
+      const historico = await getPropostaHistorico(proposta.id);
+      setHistoryItems(historico);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Erro ao carregar histórico.";
+      setHistoryError(message);
+    } finally {
+      setHistoryLoading(false);
+    }
   }
 
   const filtered = useMemo(() => {
     const statusFilter = STATUS_MAP[activeTab];
-    return mockPropostas.filter((p) => {
+    return propostasView.filter((p) => {
       const matchSearch =
         p.nomeDocumento.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.empresaNome.toLowerCase().includes(searchQuery.toLowerCase());
       const matchStatus = statusFilter ? p.status === statusFilter : true;
       return matchSearch && matchStatus;
     });
-  }, [searchQuery, activeTab]);
+  }, [searchQuery, activeTab, propostasView]);
 
   return (
     <div className="relative min-h-screen bg-background text-foreground transition-colors duration-500 overflow-hidden">
@@ -184,10 +319,10 @@ const Propostas = () => {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h1 className="text-[22px] font-bold text-foreground tracking-tight">Propostas</h1>
-                <p className="text-[12px] text-muted-foreground/50 mt-0.5">{`${filtered.length} de ${mockPropostas.length} propostas`}</p>
+                <p className="text-[12px] text-muted-foreground/50 mt-0.5">{`${filtered.length} de ${propostasView.length} propostas`}</p>
               </div>
               <motion.button
-                onClick={() => { setUploadOpen(!uploadOpen); setUploadDone(false); }}
+                onClick={() => { setUploadOpen(!uploadOpen); setUploadDone(false); setUploadError(""); }}
                 className="h-9 px-4 rounded-lg bg-accent text-accent-foreground text-[12px] font-semibold flex items-center gap-2 shadow-[0_2px_10px_-2px_hsl(var(--accent)/0.3)]"
                 whileHover={{ scale: 1.02, y: -1 }}
                 whileTap={{ scale: 0.98 }}
@@ -215,6 +350,23 @@ const Propostas = () => {
                       className="hidden"
                       onChange={(e) => addFiles(e.target.files)}
                     />
+                    <AnimatePresence>
+                      {(uploadError || uploadDone) && (
+                        <motion.div
+                          className={`mb-3 flex items-center gap-2 rounded-lg border px-3 py-2 text-[12px] ${
+                            uploadError
+                              ? "border-destructive/20 bg-destructive/5 text-destructive"
+                              : "border-accent/20 bg-accent/5 text-accent"
+                          }`}
+                          initial={{ opacity: 0, y: -6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -6 }}
+                        >
+                          {uploadError ? <AlertCircle className="w-3.5 h-3.5 shrink-0" /> : <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />}
+                          <span>{uploadError || "Proposta enviada com sucesso!"}</span>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                     <motion.div
                       onClick={() => inputRef.current?.click()}
                       onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
@@ -243,11 +395,11 @@ const Propostas = () => {
                       <label className="text-[9px] text-muted-foreground/40 font-medium uppercase tracking-wider mb-1 block">Empresa</label>
                       <select
                         value={selectedEmpresaId}
-                        onChange={(e) => setSelectedEmpresaId(e.target.value)}
+                        onChange={(e) => { setSelectedEmpresaId(e.target.value); setUploadError(""); }}
                         className="w-full h-9 px-2.5 rounded-lg border border-border/25 bg-background/50 text-[12px] outline-none focus:border-accent/40 transition-colors text-foreground"
                       >
                         <option value="">Selecione a empresa</option>
-                        {empresas.map((empresa) => (
+                        {empresas.filter((empresa) => Number(empresa.id) > 0).map((empresa) => (
                           <option key={empresa.id} value={empresa.id}>{empresa.nome}</option>
                         ))}
                       </select>
@@ -288,28 +440,15 @@ const Propostas = () => {
 
                     {/* Actions */}
                     <div className="mt-3 flex items-center justify-end gap-2">
-                      <AnimatePresence>
-                        {uploadDone && (
-                          <motion.span
-                            className="flex items-center gap-1.5 text-[12px] text-accent mr-auto"
-                            initial={{ opacity: 0, x: -8 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0 }}
-                          >
-                            <CheckCircle2 className="w-3.5 h-3.5" />
-                            Enviado com sucesso!
-                          </motion.span>
-                        )}
-                      </AnimatePresence>
                       <motion.button
-                        onClick={() => { setUploadOpen(false); setFiles([]); setUploadDone(false); setSelectedEmpresaId(""); }}
+                        onClick={() => { setUploadOpen(false); setFiles([]); setUploadDone(false); setUploadError(""); setSelectedEmpresaId(""); }}
                         className="h-8 px-4 rounded-lg border border-border/30 text-[12px] text-muted-foreground hover:text-foreground transition-all"
                         whileTap={{ scale: 0.97 }}
                       >
                         Cancelar
                       </motion.button>
                       <motion.button
-                        onClick={handleFakeUpload}
+                        onClick={handleUpload}
                         disabled={files.length === 0 || uploading}
                         className="h-8 px-5 rounded-lg bg-accent text-white text-[12px] font-medium hover:bg-accent/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                         whileTap={{ scale: 0.97 }}
@@ -325,6 +464,23 @@ const Propostas = () => {
 
           {/* Tabs */}
           <div className="px-6 pb-4">
+            <AnimatePresence>
+              {actionMessage && (
+                <motion.div
+                  className={`mb-3 flex items-center gap-2 rounded-lg border px-3 py-2 text-[12px] ${
+                    actionMessage.type === "error"
+                      ? "border-destructive/20 bg-destructive/5 text-destructive"
+                      : "border-accent/20 bg-accent/5 text-accent"
+                  }`}
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                >
+                  {actionMessage.type === "error" ? <AlertCircle className="w-3.5 h-3.5 shrink-0" /> : <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />}
+                  <span>{actionMessage.text}</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
             <div className="flex items-center gap-1 h-9 rounded-lg border border-border/25 bg-card/30 overflow-hidden w-fit">
               {tabs.map(t => (
                 <motion.button key={t} onClick={() => setActiveTab(t)} className={`h-full px-4 text-[12px] font-medium transition-all ${activeTab === t ? "bg-accent/15 text-accent" : "text-muted-foreground/50 hover:text-foreground"}`} whileTap={{ scale: 0.97 }}>
@@ -337,20 +493,25 @@ const Propostas = () => {
           <div className="px-6 pb-6">
             <motion.div className="rounded-xl border border-border/25 bg-card/40 backdrop-blur-sm overflow-hidden" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}>
               {/* Table header */}
-              <div className="grid grid-cols-[1fr_1fr_120px] px-5 py-2.5 border-b border-border/15 bg-muted/5">
+              <div className="grid grid-cols-[1fr_1fr_120px_132px] px-5 py-2.5 border-b border-border/15 bg-muted/5">
                 <span className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider">Documento</span>
                 <span className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider">Empresa</span>
                 <span className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider">Status</span>
+                <span className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider">Ações</span>
               </div>
               <div className="divide-y divide-border/10 max-h-[calc(100vh-260px)] overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-muted-foreground/20 [&::-webkit-scrollbar-thumb]:rounded-full">
-                {filtered.length === 0 ? (
+                {propostasLoading ? (
+                  <div className="py-12 text-center text-[12px] text-muted-foreground/50">Carregando propostas...</div>
+                ) : propostasError ? (
+                  <div className="py-12 text-center text-[12px] text-destructive">Erro ao carregar propostas</div>
+                ) : filtered.length === 0 ? (
                   <div className="py-12 text-center text-[12px] text-muted-foreground/30">Nenhuma proposta encontrada</div>
                 ) : (
                   filtered.map((p, i) => (
                     <motion.div
                       key={p.id}
-                      className="grid grid-cols-[1fr_1fr_120px] items-center px-5 py-4 hover:bg-muted/10 transition-colors cursor-pointer group"
-                      onClick={() => setSelectedProposta(p)}
+                      className="grid grid-cols-[1fr_1fr_120px_132px] items-center px-5 py-4 hover:bg-muted/10 transition-colors cursor-pointer group"
+                      onClick={() => { setSelectedProposta(p); setModalError(""); }}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: i * 0.03 }}
@@ -371,6 +532,34 @@ const Propostas = () => {
                       <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full w-fit ${statusStyles[p.status] || "bg-muted/10 text-muted-foreground"}`}>
                         {p.status}
                       </span>
+                      <div className="flex items-center gap-1.5">
+	                        <button
+	                          type="button"
+	                          title="Aprovar proposta"
+	                          onClick={(e) => { e.stopPropagation(); handleUpdateStatus(p, "APROVADA"); }}
+	                          disabled={p.status !== "PENDENTE" || updatePropostaStatus.isPending}
+	                          className="w-7 h-7 rounded-lg border border-border/25 flex items-center justify-center text-muted-foreground hover:text-accent hover:border-accent/40 hover:bg-accent/5 transition-colors disabled:opacity-35 disabled:cursor-not-allowed"
+	                        >
+                          <Check className="w-3.5 h-3.5" />
+                        </button>
+	                        <button
+	                          type="button"
+	                          title="Rejeitar proposta"
+	                          onClick={(e) => { e.stopPropagation(); handleUpdateStatus(p, "REJEITADA"); }}
+	                          disabled={p.status !== "PENDENTE" || updatePropostaStatus.isPending}
+	                          className="w-7 h-7 rounded-lg border border-border/25 flex items-center justify-center text-muted-foreground hover:text-destructive hover:border-destructive/40 hover:bg-destructive/5 transition-colors disabled:opacity-35 disabled:cursor-not-allowed"
+	                        >
+                          <XCircle className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          title="Ver histórico"
+                          onClick={(e) => { e.stopPropagation(); handleOpenHistory(p); }}
+                          className="w-7 h-7 rounded-lg border border-border/25 flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-accent/40 hover:bg-muted/20 transition-colors"
+                        >
+                          <History className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </motion.div>
                   ))
                 )}
@@ -405,8 +594,62 @@ const Propostas = () => {
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <motion.button className="flex-1 h-10 rounded-lg bg-accent text-accent-foreground text-[12px] font-semibold" whileHover={{ scale: 1.02, y: -1 }} whileTap={{ scale: 0.98 }}>Ver Proposta</motion.button>
+                  <motion.button
+                    onClick={() => handleOpenProposta(selectedProposta)}
+                    disabled={!selectedProposta.url}
+                    className="flex-1 h-10 rounded-lg bg-accent text-accent-foreground text-[12px] font-semibold disabled:opacity-40 disabled:cursor-not-allowed"
+                    whileHover={{ scale: 1.02, y: -1 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    Ver Proposta
+                  </motion.button>
                 </div>
+                {modalError && (
+                  <p className="text-[12px] text-destructive">{modalError}</p>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* History Modal */}
+      <AnimatePresence>
+        {historyOpen && historyProposta && (
+          <motion.div className="fixed inset-0 z-50 flex items-center justify-center p-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.div className="absolute inset-0 bg-background/80 backdrop-blur-md" onClick={() => setHistoryOpen(false)} />
+            <motion.div className="relative z-10 w-full max-w-2xl rounded-2xl border border-border/30 bg-card/95 backdrop-blur-xl shadow-2xl overflow-hidden" initial={{ scale: 0.92, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.92, opacity: 0, y: 20 }}>
+              <div className="flex items-center justify-between p-5 border-b border-border/20">
+                <div>
+                  <h2 className="text-[16px] font-semibold text-foreground">Histórico da proposta</h2>
+                  <p className="text-[11px] text-muted-foreground/50 mt-0.5">{historyProposta.nomeDocumento}</p>
+                </div>
+                <motion.button onClick={() => setHistoryOpen(false)} className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/20" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}><X className="w-4 h-4" /></motion.button>
+              </div>
+              <div className="p-5">
+                {historyLoading ? (
+                  <div className="py-10 text-center text-[12px] text-muted-foreground/50">Carregando histórico...</div>
+                ) : historyError ? (
+                  <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-[12px] text-destructive">{historyError}</div>
+                ) : historyItems.length === 0 ? (
+                  <div className="py-10 text-center text-[12px] text-muted-foreground/40">Nenhuma alteração de status registrada</div>
+                ) : (
+                  <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-muted-foreground/20 [&::-webkit-scrollbar-thumb]:rounded-full">
+                    {historyItems.map((item) => (
+                      <div key={item.idHistorico} className="rounded-lg border border-border/20 bg-background/50 px-4 py-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full ${statusStyles[item.statusAnterior] || "bg-muted/10 text-muted-foreground"}`}>{item.statusAnterior}</span>
+                            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40 shrink-0" />
+                            <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full ${statusStyles[item.statusNovo] || "bg-muted/10 text-muted-foreground"}`}>{item.statusNovo}</span>
+                          </div>
+                          <span className="text-[11px] text-muted-foreground/50 shrink-0">{formatDateTime(item.dataAlteracao)}</span>
+                        </div>
+                        <p className="mt-2 text-[11px] text-muted-foreground/45">{item.usuarioNome || `Usuário #${item.usuarioId}`}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </motion.div>
           </motion.div>

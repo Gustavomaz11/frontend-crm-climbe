@@ -16,6 +16,7 @@ import Agenda from "./pages/Agenda.tsx";
 import Permissoes from "./pages/Permissoes.tsx";
 import Empresas from "./pages/Empresas.tsx";
 import Documentos from "./pages/Documentos.tsx";
+import EnviarDocumento from "./pages/EnviarDocumento.tsx";
 import Contratos from "./pages/Contratos.tsx";
 import Propostas from "./pages/Propostas.tsx";
 import NotFound from "./pages/NotFound.tsx";
@@ -60,6 +61,14 @@ const App = () => (
               element={
                 <PublicRoute>
                   <PendingApproval />
+                </PublicRoute>
+              }
+            />
+            <Route
+              path="/documentos/enviar/:token"
+              element={
+                <PublicRoute>
+                  <EnviarDocumento />
                 </PublicRoute>
               }
             />
