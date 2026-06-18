@@ -16,6 +16,11 @@ interface UsuarioApi {
   dataAtualizacao?: string;
 }
 
+export interface Cargo {
+  id: number;
+  nome: string;
+}
+
 type OrigemSolicitacaoAcesso = "USUARIO" | "GOOGLE";
 
 interface SolicitacaoAcessoApi {
@@ -62,8 +67,19 @@ export interface Usuario {
 interface CreateUsuarioDTO {
   email: string;
   nomeCompleto: string;
-  cargo: string;
-  aceitouTermos: boolean;
+  cpf: string;
+  contato: string;
+  senha: string;
+  cargoId: number;
+}
+
+export interface SolicitarAcessoUsuarioDTO {
+  nomeCompleto: string;
+  cpf: string;
+  email: string;
+  contato: string;
+  senha: string;
+  cargoId: number;
 }
 
 function normalizeUsuario(usuario: UsuarioApi): Usuario {
@@ -113,6 +129,16 @@ export function useUsuarios() {
   });
 }
 
+export function useCargos() {
+  return useQuery<Cargo[]>({
+    queryKey: ["cargos"],
+    queryFn: async () => {
+      const response = await api.get<Cargo[]>("/cargos");
+      return response.data;
+    },
+  });
+}
+
 export function useSolicitacoesAcesso() {
   return useQuery<SolicitacaoAcesso[]>({
     queryKey: ["usuarios", "pendentes"],
@@ -139,11 +165,26 @@ export function useCreateUsuario() {
 
   return useMutation({
     mutationFn: async (data: CreateUsuarioDTO) => {
-      const response = await api.post<UsuarioApi>("/usuarios", data);
-      return normalizeUsuario(response.data);
+      const response = await api.post<string>("/usuarios", data);
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["usuarios"] });
+      queryClient.invalidateQueries({ queryKey: ["usuarios", "pendentes"] });
+    },
+  });
+}
+
+export function useSolicitarAcessoUsuario() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: SolicitarAcessoUsuarioDTO) => {
+      const response = await api.post<string>("/usuarios", data);
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["usuarios", "pendentes"] });
     },
   });
 }

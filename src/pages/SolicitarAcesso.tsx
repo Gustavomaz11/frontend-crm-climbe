@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, type FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Moon, Sun, Loader2 } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
@@ -11,6 +11,7 @@ import {
   useExchangeGoogleCode,
 } from "@/hooks/useAuth/useGoogleAuth";
 import { syncGoogleAccessToken } from "@/lib/googleAccessToken";
+import { useCargos, useSolicitarAcessoUsuario } from "@/services/useUsuarios";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useUserRoleStore } from "@/store/useUserRoleStore";
 
@@ -20,11 +21,15 @@ const SolicitarAcesso = () => {
   const [searchParams] = useSearchParams();
   const [submitted, setSubmitted] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [form, setForm] = useState({
     nome: "",
     email: "",
-    empresa: "",
-    cargo: "",
+    cpf: "",
+    contato: "",
+    senha: "",
+    confirmPassword: "",
+    cargoId: "",
   });
 
   const setBasicUserData = useAuthStore((state) => state.setBasicUserData);
@@ -33,6 +38,10 @@ const SolicitarAcesso = () => {
     useGoogleAuthUrl();
   const { mutateAsync: exchangeGoogleCode, isPending: isExchangingCode } =
     useExchangeGoogleCode();
+  const { data: cargos = [], isLoading: isLoadingCargos } = useCargos();
+  const solicitarAcesso = useSolicitarAcessoUsuario();
+
+  const isSubmitting = solicitarAcesso.isPending;
 
   const handleGoogleCallback = useCallback(
     async (code: string) => {
@@ -135,8 +144,99 @@ const SolicitarAcesso = () => {
     }
   };
 
+  const formatCPF = (value: string) => {
+    const cleanValue = value.replace(/\D/g, "").slice(0, 11);
+    if (cleanValue.length <= 3) return cleanValue;
+    if (cleanValue.length <= 6) return `${cleanValue.slice(0, 3)}.${cleanValue.slice(3)}`;
+    if (cleanValue.length <= 9) {
+      return `${cleanValue.slice(0, 3)}.${cleanValue.slice(3, 6)}.${cleanValue.slice(6)}`;
+    }
+    return `${cleanValue.slice(0, 3)}.${cleanValue.slice(3, 6)}.${cleanValue.slice(6, 9)}-${cleanValue.slice(9, 11)}`;
+  };
+
+  const formatPhone = (value: string) => {
+    const cleanValue = value.replace(/\D/g, "").slice(0, 11);
+    if (cleanValue.length <= 2) return cleanValue;
+    if (cleanValue.length <= 6) return `(${cleanValue.slice(0, 2)}) ${cleanValue.slice(2)}`;
+    if (cleanValue.length <= 10) {
+      return `(${cleanValue.slice(0, 2)}) ${cleanValue.slice(2, 6)}-${cleanValue.slice(6)}`;
+    }
+    return `(${cleanValue.slice(0, 2)}) ${cleanValue.slice(2, 7)}-${cleanValue.slice(7)}`;
+  };
+
+  const handleFormChange = (field: keyof typeof form, value: string) => {
+    const nextValue =
+      field === "cpf" ? formatCPF(value) : field === "contato" ? formatPhone(value) : value;
+
+    setForm((current) => ({
+      ...current,
+      [field]: nextValue,
+    }));
+
+    if (errors[field]) {
+      setErrors((current) => ({
+        ...current,
+        [field]: "",
+      }));
+    }
+  };
+
+  const validateForm = () => {
+    const nextErrors: Record<string, string> = {};
+    const cleanCpf = form.cpf.replace(/\D/g, "");
+    const cleanPhone = form.contato.replace(/\D/g, "");
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!form.nome.trim()) nextErrors.nome = "Informe seu nome completo.";
+    if (!emailRegex.test(form.email)) nextErrors.email = "Informe um e-mail válido.";
+    if (cleanCpf.length !== 11) nextErrors.cpf = "CPF deve ter 11 dígitos.";
+    if (cleanPhone.length < 10 || cleanPhone.length > 11) {
+      nextErrors.contato = "Informe um telefone válido com DDD.";
+    }
+    if (!form.cargoId) nextErrors.cargoId = "Selecione um cargo.";
+    if (form.senha.length < 8) nextErrors.senha = "Senha deve ter no mínimo 8 caracteres.";
+    if (form.senha !== form.confirmPassword) {
+      nextErrors.confirmPassword = "As senhas não correspondem.";
+    }
+
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
+  const getRequestErrorMessage = (error: unknown) => {
+    const maybeError = error as {
+      response?: { data?: { message?: string; error?: string } | string };
+      message?: string;
+    };
+    const data = maybeError.response?.data;
+
+    if (typeof data === "string") return data;
+    return data?.message || data?.error || maybeError.message || "Erro ao enviar solicitação.";
+  };
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!validateForm()) return;
+
+    try {
+      await solicitarAcesso.mutateAsync({
+        nomeCompleto: form.nome.trim(),
+        cpf: form.cpf.replace(/\D/g, ""),
+        email: form.email.trim(),
+        contato: form.contato.replace(/\D/g, ""),
+        senha: form.senha,
+        cargoId: Number(form.cargoId),
+      });
+
+      setSubmitted(true);
+    } catch (error) {
+      toast.error(getRequestErrorMessage(error));
+    }
+  };
+
   return (
-    <div className="relative min-h-screen bg-background text-foreground transition-colors duration-500 overflow-hidden">
+    <div className="relative min-h-screen bg-background text-foreground transition-colors duration-500 overflow-x-hidden">
       <div
         className="fixed inset-0 pointer-events-none opacity-[0.015] dark:opacity-[0.03]"
         style={{
@@ -201,7 +301,7 @@ const SolicitarAcesso = () => {
           </motion.button>
         </header>
 
-        <main className="flex items-center justify-center px-6 md:px-10 lg:px-14">
+        <main className="flex items-center justify-center px-6 md:px-10 lg:px-14 py-8">
           <div className="w-full max-w-sm">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -235,33 +335,43 @@ const SolicitarAcesso = () => {
                       ambiente interno.
                     </p>
 
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        setSubmitted(true);
-                      }}
-                      className="space-y-4"
-                    >
+                    <form onSubmit={handleSubmit} className="space-y-4">
                       {[
                         {
                           id: "nome",
                           label: "Nome completo",
                           placeholder: "Seu nome",
+                          type: "text",
                         },
                         {
                           id: "email",
                           label: "E-mail corporativo",
                           placeholder: "nome@empresa.com.br",
+                          type: "email",
                         },
                         {
-                          id: "empresa",
-                          label: "Empresa",
-                          placeholder: "Nome da empresa",
+                          id: "cpf",
+                          label: "CPF",
+                          placeholder: "000.000.000-00",
+                          type: "text",
                         },
                         {
-                          id: "cargo",
-                          label: "Cargo",
-                          placeholder: "Seu cargo",
+                          id: "contato",
+                          label: "Telefone",
+                          placeholder: "(00) 00000-0000",
+                          type: "tel",
+                        },
+                        {
+                          id: "senha",
+                          label: "Senha",
+                          placeholder: "Crie uma senha",
+                          type: "password",
+                        },
+                        {
+                          id: "confirmPassword",
+                          label: "Confirmar senha",
+                          placeholder: "Repita sua senha",
+                          type: "password",
                         },
                       ].map((field) => (
                         <div key={field.id}>
@@ -270,18 +380,20 @@ const SolicitarAcesso = () => {
                           </label>
                           <div className="relative">
                             <input
-                              type={field.id === "email" ? "email" : "text"}
+                              type={field.type}
                               value={form[field.id as keyof typeof form]}
                               onChange={(e) =>
-                                setForm((current) => ({
-                                  ...current,
-                                  [field.id]: e.target.value,
-                                }))
+                                handleFormChange(
+                                  field.id as keyof typeof form,
+                                  e.target.value,
+                                )
                               }
                               onFocus={() => setFocusedField(field.id)}
                               onBlur={() => setFocusedField(null)}
                               placeholder={field.placeholder}
-                              className="w-full h-11 rounded-md border border-input bg-background px-3.5 text-sm text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-accent/60 focus:ring-1 focus:ring-accent/15 transition-all duration-200"
+                              className={`w-full h-11 rounded-md border bg-background px-3.5 text-sm text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-accent/60 focus:ring-1 focus:ring-accent/15 transition-all duration-200 ${
+                                errors[field.id] ? "border-red-500/70" : "border-input"
+                              }`}
                             />
                             <motion.div
                               className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-accent origin-left"
@@ -292,18 +404,69 @@ const SolicitarAcesso = () => {
                               transition={{ duration: 0.3, ease: "easeOut" }}
                             />
                           </div>
+                          {errors[field.id] && (
+                            <p className="text-[10px] text-red-500 mt-1">
+                              {errors[field.id]}
+                            </p>
+                          )}
                         </div>
                       ))}
 
+                      <div>
+                        <label className="text-[11px] font-medium text-muted-foreground/70 mb-1.5 block tracking-wide">
+                          Cargo
+                        </label>
+                        <div className="relative">
+                          <select
+                            value={form.cargoId}
+                            onChange={(e) => handleFormChange("cargoId", e.target.value)}
+                            onFocus={() => setFocusedField("cargoId")}
+                            onBlur={() => setFocusedField(null)}
+                            disabled={isLoadingCargos || isSubmitting}
+                            className={`w-full h-11 rounded-md border bg-background px-3.5 text-sm text-foreground focus:outline-none focus:border-accent/60 focus:ring-1 focus:ring-accent/15 transition-all duration-200 disabled:opacity-60 ${
+                              errors.cargoId ? "border-red-500/70" : "border-input"
+                            }`}
+                          >
+                            <option value="">
+                              {isLoadingCargos ? "Carregando cargos..." : "Selecione um cargo"}
+                            </option>
+                            {cargos.map((cargo) => (
+                              <option key={cargo.id} value={cargo.id}>
+                                {cargo.nome}
+                              </option>
+                            ))}
+                          </select>
+                          <motion.div
+                            className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-accent origin-left"
+                            initial={{ scaleX: 0 }}
+                            animate={{ scaleX: focusedField === "cargoId" ? 1 : 0 }}
+                            transition={{ duration: 0.3, ease: "easeOut" }}
+                          />
+                        </div>
+                        {errors.cargoId && (
+                          <p className="text-[10px] text-red-500 mt-1">{errors.cargoId}</p>
+                        )}
+                      </div>
+
                       <motion.button
                         type="submit"
-                        className="w-full h-11 rounded-md bg-accent text-accent-foreground text-sm font-semibold flex items-center justify-center gap-2 group relative overflow-hidden"
-                        whileHover={{ scale: 1.005 }}
-                        whileTap={{ scale: 0.995 }}
+                        disabled={isSubmitting || isLoadingCargos}
+                        className="w-full h-11 rounded-md bg-accent text-accent-foreground text-sm font-semibold flex items-center justify-center gap-2 group relative overflow-hidden disabled:opacity-60 disabled:cursor-not-allowed"
+                        whileHover={isSubmitting || isLoadingCargos ? {} : { scale: 1.005 }}
+                        whileTap={isSubmitting || isLoadingCargos ? {} : { scale: 0.995 }}
                       >
                         <span className="relative z-10 flex items-center gap-2">
-                          Enviar solicitação
-                          <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
+                          {isSubmitting ? (
+                            <>
+                              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              Enviando...
+                            </>
+                          ) : (
+                            <>
+                              Enviar solicitação
+                              <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
+                            </>
+                          )}
                         </span>
                       </motion.button>
 
@@ -321,7 +484,7 @@ const SolicitarAcesso = () => {
                       <motion.button
                         type="button"
                         onClick={handleGoogleLogin}
-                        disabled={isLoadingGoogleUrl || isExchangingCode}
+                        disabled={isLoadingGoogleUrl || isExchangingCode || isSubmitting}
                         className="flex h-11 w-full items-center justify-center gap-2.5 rounded-md border border-border/50 bg-background text-sm font-medium text-foreground transition-colors duration-200 hover:border-border hover:bg-muted/30 disabled:cursor-not-allowed disabled:opacity-50"
                         whileHover={
                           isLoadingGoogleUrl || isExchangingCode
