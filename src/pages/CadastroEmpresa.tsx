@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Home, FileText, Calendar as CalendarIcon, Shield, Building2, Settings,
   LogOut, Sun, Moon, ChevronLeft, ChevronRight, UserCheck, ArrowLeft,
-  CheckCircle2, ScrollText,
+  CheckCircle2, ScrollText, AlertCircle,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import ClimbLogo from "@/components/login/ClimbLogo";
@@ -108,6 +108,7 @@ const CadastroEmpresa = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [form, setForm] = useState<CreateEmpresaDTO>(emptyForm);
   const [success, setSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate();
   const navItems = useVisibleMainNavItems();
 
@@ -128,12 +129,18 @@ const CadastroEmpresa = () => {
 
   function set(field: keyof CreateEmpresaDTO, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
+    setErrorMessage("");
   }
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setErrorMessage("");
     createEmpresa(form, {
       onSuccess: () => setSuccess(true),
+      onError: (error) => {
+        const message = error instanceof Error ? error.message : "Erro ao cadastrar empresa.";
+        setErrorMessage(message);
+      },
     });
   }
 
@@ -262,6 +269,20 @@ const CadastroEmpresa = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
+              <AnimatePresence>
+                {errorMessage && (
+                  <motion.div
+                    className="flex items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-[12px] text-destructive"
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -6 }}
+                  >
+                    <AlertCircle className="h-4 w-4 shrink-0" />
+                    <span>{errorMessage}</span>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               {/* Dados da empresa */}
               <motion.div
                 className="rounded-xl border border-border/25 bg-card/40 backdrop-blur-sm p-5 space-y-4"
