@@ -6,6 +6,7 @@ import {
   Home, FileText, Calendar as CalendarIcon, Shield, Building2, Settings,
   LogOut, Sun, Moon, ChevronLeft, ChevronRight, Search, FileCheck, X,
   Download, UserCheck, ScrollText, Plus, Send, Mail, AlertCircle, CheckCircle2,
+  RotateCcw, Trash2,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import ClimbLogo from "@/components/login/ClimbLogo";
@@ -13,8 +14,10 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { useAuthStore } from "@/store/useAuthStore";
 import {
   getDocumentoDownloadUrl,
+  useDeleteDocumento,
   useDocumentos,
   useEmpresas,
+  useReenviarSolicitacaoDocumento,
   useSolicitarDocumento,
   type Documento,
 } from "@/services";
@@ -69,6 +72,8 @@ const Documentos = () => {
   const { data: documentos = [], isLoading, error } = useDocumentos();
   const { data: empresas = [] } = useEmpresas();
   const solicitarDocumento = useSolicitarDocumento();
+  const reenviarSolicitacaoDocumento = useReenviarSolicitacaoDocumento();
+  const deleteDocumento = useDeleteDocumento();
 
   const selectedEmpresa = useMemo(
     () => empresas.find((empresa) => String(empresa.id) === selectedEmpresaId),
@@ -143,6 +148,35 @@ const Documentos = () => {
       window.open(url, "_blank", "noopener,noreferrer");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Erro ao baixar documento.";
+      setModalError(message);
+    }
+  }
+
+  async function handleReenviarSolicitacao(documento: Documento) {
+    setModalError("");
+
+    try {
+      const atualizado = await reenviarSolicitacaoDocumento.mutateAsync(documento.id);
+      setSelectedDoc(atualizado);
+      setRequestMessage({ type: "success", text: "Solicitação reenviada com novo link de anexo." });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Erro ao reenviar solicitação.";
+      setModalError(message);
+    }
+  }
+
+  async function handleExcluirSolicitacao(documento: Documento) {
+    setModalError("");
+
+    const confirmed = window.confirm(`Excluir a solicitação "${documento.nome}"?`);
+    if (!confirmed) return;
+
+    try {
+      await deleteDocumento.mutateAsync(documento.id);
+      setSelectedDoc(null);
+      setRequestMessage({ type: "success", text: "Solicitação excluída com sucesso." });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Erro ao excluir solicitação.";
       setModalError(message);
     }
   }
@@ -320,9 +354,17 @@ const Documentos = () => {
                   </div>
                   <div><p className="text-[10px] text-muted-foreground/40">E-mail destinatário</p><p className="text-[13px] text-foreground/80">{selectedDoc.emailDestinatario || "-"}</p></div>
                 </div>
-                <button onClick={() => handleDownloadDocumento(selectedDoc)} disabled={!selectedDoc.caminho} className="w-full h-10 rounded-lg border border-accent/20 bg-accent/10 text-accent text-[12px] font-medium flex items-center justify-center gap-2 hover:bg-accent/20 transition-colors disabled:opacity-45 disabled:cursor-not-allowed">
-                  <Download className="w-4 h-4" /> Baixar documento
-                </button>
+                <div className="grid grid-cols-3 gap-2">
+                  <button onClick={() => handleDownloadDocumento(selectedDoc)} disabled={!selectedDoc.caminho} className="h-10 rounded-lg border border-accent/20 bg-accent/10 text-accent text-[12px] font-medium flex items-center justify-center gap-2 hover:bg-accent/20 transition-colors disabled:opacity-45 disabled:cursor-not-allowed">
+                    <Download className="w-4 h-4" /> Baixar
+                  </button>
+                  <button onClick={() => handleReenviarSolicitacao(selectedDoc)} disabled={!!selectedDoc.caminho || reenviarSolicitacaoDocumento.isPending} className="h-10 rounded-lg border border-primary/20 bg-primary/10 text-primary text-[12px] font-medium flex items-center justify-center gap-2 hover:bg-primary/20 transition-colors disabled:opacity-45 disabled:cursor-not-allowed">
+                    <RotateCcw className="w-4 h-4" /> {reenviarSolicitacaoDocumento.isPending ? "Reenviando..." : "Reenviar"}
+                  </button>
+                  <button onClick={() => handleExcluirSolicitacao(selectedDoc)} disabled={deleteDocumento.isPending} className="h-10 rounded-lg border border-destructive/20 bg-destructive/10 text-destructive text-[12px] font-medium flex items-center justify-center gap-2 hover:bg-destructive/20 transition-colors disabled:opacity-45 disabled:cursor-not-allowed">
+                    <Trash2 className="w-4 h-4" /> {deleteDocumento.isPending ? "Excluindo..." : "Excluir"}
+                  </button>
+                </div>
                 {modalError && <p className="text-[12px] text-destructive">{modalError}</p>}
               </div>
             </motion.div>

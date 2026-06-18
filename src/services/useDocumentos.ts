@@ -160,6 +160,24 @@ export function useSolicitarDocumento() {
   });
 }
 
+export function useReenviarSolicitacaoDocumento() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      try {
+        const response = await api.patch<DocumentoApi>(`/documentos/${id}/reenviar`);
+        return normalizeDocumento(response.data);
+      } catch (error) {
+        throw new Error(getApiErrorMessage(error));
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["documentos"] });
+    },
+  });
+}
+
 export function useUpdateDocumento() {
   const queryClient = useQueryClient();
 
