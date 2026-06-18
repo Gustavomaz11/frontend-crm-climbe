@@ -50,6 +50,7 @@ const Permissoes = () => {
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [optimisticPermissionIds, setOptimisticPermissionIds] = useState<Set<number>>(new Set());
   const [pendingPermissionIds, setPendingPermissionIds] = useState<Set<number>>(new Set());
+  const [syncLocked, setSyncLocked] = useState(false);
   const permissionQueueRef = useRef<PermissionQueueItem[]>([]);
   const processingQueueRef = useRef(false);
   const selectedUserIdRef = useRef<number | null>(null);
@@ -135,14 +136,15 @@ const Permissoes = () => {
   }, [selectedUserId]);
 
   useEffect(() => {
-    if (pendingPermissionIds.size > 0 || processingQueueRef.current) return;
+    if (pendingPermissionIds.size > 0 || syncLocked) return;
     setOptimisticPermissionIds(new Set(usuarioPermissoes.map((associacao) => associacao.permissao.id)));
-  }, [pendingPermissionIds.size, selectedUserId, usuarioPermissoes]);
+  }, [pendingPermissionIds.size, selectedUserId, syncLocked, usuarioPermissoes]);
 
   async function processPermissionQueue() {
     if (processingQueueRef.current) return;
 
     processingQueueRef.current = true;
+    setSyncLocked(true);
     const failedCodes: string[] = [];
 
     try {
@@ -189,9 +191,10 @@ const Permissoes = () => {
         }
       }
     } finally {
-      processingQueueRef.current = false;
       await queryClient.invalidateQueries({ queryKey: ["usuario-permissoes"] });
       await queryClient.invalidateQueries({ queryKey: ["usuarios"] });
+      processingQueueRef.current = false;
+      setSyncLocked(false);
 
       if (failedCodes.length > 0) {
         setFeedback({
