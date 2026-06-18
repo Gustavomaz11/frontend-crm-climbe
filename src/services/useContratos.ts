@@ -7,6 +7,8 @@ interface ApiEnvelope<T> {
   success: boolean;
   data: T;
   message?: string;
+  detail?: string;
+  error?: string;
 }
 
 export type ContratoStatus = "PENDENTE" | "APROVADO" | "REJEITADO" | string;
@@ -92,7 +94,7 @@ function unwrap<T>(response: T | ApiEnvelope<T>): T {
 
 function getApiErrorMessage(error: unknown) {
   if (isAxiosError<ApiEnvelope<unknown>>(error)) {
-    return error.response?.data?.message || error.message;
+    return error.response?.data?.message || error.response?.data?.detail || error.response?.data?.error || error.message;
   }
   if (error instanceof Error) {
     return error.message;

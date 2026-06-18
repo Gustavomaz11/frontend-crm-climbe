@@ -108,8 +108,18 @@ const Contratos = () => {
   const propostasAprovadasDaEmpresa = useMemo(() => {
     const empresaId = Number(selectedEmpresaId);
     if (!empresaId) return [];
-    return propostas.filter((proposta) => proposta.status === "APROVADA" && Number(proposta.empresaId) === empresaId);
-  }, [propostas, selectedEmpresaId]);
+    const propostasVinculadas = new Set(
+      contratos
+        .map((contrato) => contrato.propostaId)
+        .filter((propostaId): propostaId is number => Boolean(propostaId)),
+    );
+    return propostas.filter(
+      (proposta) =>
+        proposta.status === "APROVADA" &&
+        Number(proposta.empresaId) === empresaId &&
+        !propostasVinculadas.has(proposta.idProposta),
+    );
+  }, [contratos, propostas, selectedEmpresaId]);
 
   useEffect(() => {
     if (!uploadError && !uploadDone) return;
@@ -157,6 +167,11 @@ const Contratos = () => {
 
     if (!selectedEmpresaId || !Number.isFinite(empresaId) || empresaId <= 0) {
       setUploadError("Selecione uma empresa para o contrato.");
+      return;
+    }
+
+    if (propostaId && contratos.some((contrato) => contrato.propostaId === propostaId)) {
+      setUploadError("Esta proposta já está vinculada a outro contrato.");
       return;
     }
 
