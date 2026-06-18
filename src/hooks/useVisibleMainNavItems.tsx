@@ -5,7 +5,6 @@ import {
   Calendar as CalendarIcon,
   Shield,
   Building2,
-  Settings,
   FileCheck,
   UserCheck,
   ScrollText,
@@ -35,7 +34,6 @@ const mainNavItems: MainNavItem[] = [
     permissions: ["DOCUMENTO_JURIDICO_CRUD", "ARQUIVO_UPLOAD", "ARQUIVO_DOWNLOAD"],
   },
   { icon: UserCheck, label: "Solicitações", path: "/aprovar-acesso", permissions: ["PERMITIR_ACESSO"] },
-  { icon: Settings, label: "Configurações", path: "/dashboard" },
 ];
 
 export function useVisibleMainNavItems() {

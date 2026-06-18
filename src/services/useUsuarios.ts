@@ -16,6 +16,34 @@ interface UsuarioApi {
   dataAtualizacao?: string;
 }
 
+type OrigemSolicitacaoAcesso = "USUARIO" | "GOOGLE";
+
+interface SolicitacaoAcessoApi {
+  origem: OrigemSolicitacaoAcesso;
+  id: number;
+  nomeCompleto?: string | null;
+  email: string;
+  avatarUrl?: string | null;
+  cpf?: string | null;
+  contato?: string | null;
+  cargoNome?: string | null;
+  criadoEm?: string | null;
+  expiraEm?: string | null;
+}
+
+export interface SolicitacaoAcesso {
+  origem: OrigemSolicitacaoAcesso;
+  id: number;
+  nomeCompleto: string;
+  email: string;
+  avatarUrl?: string | null;
+  cpf?: string | null;
+  contato?: string | null;
+  cargoNome?: string | null;
+  criadoEm?: string | null;
+  expiraEm?: string | null;
+}
+
 export interface Usuario {
   id: number;
   email: string;
@@ -60,12 +88,37 @@ function normalizeUsuario(usuario: UsuarioApi): Usuario {
   };
 }
 
+function normalizeSolicitacaoAcesso(solicitacao: SolicitacaoAcessoApi): SolicitacaoAcesso {
+  return {
+    origem: solicitacao.origem,
+    id: solicitacao.id,
+    nomeCompleto: solicitacao.nomeCompleto || solicitacao.email,
+    email: solicitacao.email,
+    avatarUrl: solicitacao.avatarUrl,
+    cpf: solicitacao.cpf,
+    contato: solicitacao.contato,
+    cargoNome: solicitacao.cargoNome,
+    criadoEm: solicitacao.criadoEm,
+    expiraEm: solicitacao.expiraEm,
+  };
+}
+
 export function useUsuarios() {
   return useQuery<Usuario[]>({
     queryKey: ["usuarios"],
     queryFn: async () => {
       const response = await api.get<UsuarioApi[]>("/usuarios");
       return response.data.map(normalizeUsuario);
+    },
+  });
+}
+
+export function useSolicitacoesAcesso() {
+  return useQuery<SolicitacaoAcesso[]>({
+    queryKey: ["usuarios", "pendentes"],
+    queryFn: async () => {
+      const response = await api.get<SolicitacaoAcessoApi[]>("/usuarios/pendentes");
+      return response.data.map(normalizeSolicitacaoAcesso);
     },
   });
 }
@@ -117,6 +170,44 @@ export function useDeleteUsuario() {
       await api.delete(`/usuarios/${id}`);
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["usuarios"] });
+    },
+  });
+}
+
+export function useAprovarSolicitacaoAcesso() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, origem }: { id: number; origem: OrigemSolicitacaoAcesso }) => {
+      if (origem === "GOOGLE") {
+        await api.post(`/usuarios/pendentes-google/${id}/aprovar`);
+        return;
+      }
+
+      await api.post(`/usuarios/${id}/aprovar`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["usuarios", "pendentes"] });
+      queryClient.invalidateQueries({ queryKey: ["usuarios"] });
+    },
+  });
+}
+
+export function useRecusarSolicitacaoAcesso() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, origem }: { id: number; origem: OrigemSolicitacaoAcesso }) => {
+      if (origem === "GOOGLE") {
+        await api.post(`/usuarios/pendentes-google/${id}/recusar`);
+        return;
+      }
+
+      await api.post(`/usuarios/${id}/recusar`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["usuarios", "pendentes"] });
       queryClient.invalidateQueries({ queryKey: ["usuarios"] });
     },
   });
