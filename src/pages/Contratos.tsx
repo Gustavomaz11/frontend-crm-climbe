@@ -9,7 +9,7 @@ import {
   UserCheck, UploadCloud, File as FileIcon, CheckCircle2, ScrollText, AlertCircle,
   Check, XCircle, History,
 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import ClimbLogo from "@/components/login/ClimbLogo";
 import { UserAvatar } from "@/components/UserAvatar";
 import {
@@ -86,6 +86,7 @@ const Contratos = () => {
   const [selectedPropostaId, setSelectedPropostaId] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const navItems = useVisibleMainNavItems();
 
   const { data: contratos = [], isLoading, error } = useContratos();
@@ -123,6 +124,18 @@ const Contratos = () => {
         !propostasVinculadas.has(proposta.idProposta),
     );
   }, [contratos, propostas, selectedEmpresaId]);
+
+  useEffect(() => {
+    if (searchParams.get("novo") !== "1") return;
+
+    setUploadOpen(true);
+    setUploadDone(false);
+    setUploadError("");
+
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete("novo");
+    setSearchParams(nextParams, { replace: true });
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     if (!uploadError && !uploadDone) return;

@@ -1696,6 +1696,7 @@ const Dashboard = () => {
             >
               <div className="flex items-center gap-3">
                 <motion.button
+                  onClick={() => navigate("/contratos?novo=1")}
                   className="flex h-9 items-center gap-2 rounded-lg bg-accent px-4 text-[12px] font-semibold text-accent-foreground shadow-[0_2px_10px_-2px_hsl(var(--accent)/0.3)]"
                   whileHover={{ scale: 1.02, y: -1 }}
                   whileTap={{ scale: 0.98 }}
