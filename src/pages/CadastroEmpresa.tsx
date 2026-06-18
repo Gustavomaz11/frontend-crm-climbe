@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTheme } from "@/hooks/use-theme";
+import { useVisibleMainNavItems } from "@/hooks/useVisibleMainNavItems";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Home, FileText, Calendar as CalendarIcon, Shield, Building2, Settings,
@@ -12,18 +13,6 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useCreateEmpresa, CreateEmpresaDTO } from "@/services";
 import { FileCheck } from "lucide-react";
-
-const navItems = [
-  { icon: Home, label: "Home", path: "/dashboard" },
-  { icon: FileText, label: "Contratos", path: "/contratos" },
-  { icon: ScrollText, label: "Propostas", path: "/propostas" },
-  { icon: CalendarIcon, label: "Agenda", path: "/agenda" },
-  { icon: Shield, label: "Permissões", path: "/permissoes" },
-  { icon: Building2, label: "Empresas", path: "/empresas" },
-  { icon: FileCheck, label: "Documentos", path: "/documentos" },
-  { icon: UserCheck, label: "Solicitações", path: "/aprovar-acesso" },
-  { icon: Settings, label: "Configurações", path: "/dashboard" },
-];
 
 const UF_OPTIONS = [
   "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG",
@@ -120,6 +109,7 @@ const CadastroEmpresa = () => {
   const [form, setForm] = useState<CreateEmpresaDTO>(emptyForm);
   const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
+  const navItems = useVisibleMainNavItems();
 
   const basicUserData = useAuthStore((state) => state.basicUserData);
   const userData = useAuthStore((state) => state.userData);

@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useTheme } from "@/hooks/use-theme";
+import { useVisibleMainNavItems } from "@/hooks/useVisibleMainNavItems";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Home, FileText, Calendar as CalendarIcon, Shield, Building2, Settings,
@@ -20,18 +21,6 @@ import {
   useUsuarios,
 } from "@/services";
 import { useAuthStore } from "@/store/useAuthStore";
-
-const navItems = [
-  { icon: Home, label: "Home", path: "/dashboard" },
-  { icon: FileText, label: "Contratos", path: "/contratos" },
-  { icon: ScrollText, label: "Propostas", path: "/propostas" },
-  { icon: CalendarIcon, label: "Agenda", path: "/agenda" },
-  { icon: Shield, label: "Permissões", path: "/permissoes" },
-  { icon: Building2, label: "Empresas", path: "/empresas" },
-  { icon: FileCheck, label: "Documentos", path: "/documentos" },
-  { icon: UserCheck, label: "Solicitações", path: "/aprovar-acesso" },
-  { icon: Settings, label: "Configurações", path: "/dashboard" },
-];
 
 interface AgendaEvent {
   id: string;
@@ -235,6 +224,7 @@ const Agenda = () => {
   const [eventError, setEventError] = useState("");
   const [editingEventId, setEditingEventId] = useState<number | null>(null);
   const navigate = useNavigate();
+  const navItems = useVisibleMainNavItems();
   const { data: reunioes = [] } = useReunioes();
   const { data: empresas = [] } = useEmpresas();
   const { data: usuarios = [] } = useUsuarios();
@@ -1026,6 +1016,5 @@ const Agenda = () => {
 };
 
 export default Agenda;
-
 
 

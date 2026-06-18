@@ -1,5 +1,6 @@
 import { useMemo, useContext, useState } from "react";
 import { useTheme } from "@/hooks/use-theme";
+import { useVisibleMainNavItems } from "@/hooks/useVisibleMainNavItems";
 import { useNavigate, Link } from "react-router-dom";
 import { AuthContext } from "@/context/provider";
 import { motion, AnimatePresence } from "framer-motion";
@@ -114,18 +115,6 @@ interface StageItem {
 /* ══════════════════════════════════════════════════
    CONSTS
    ══════════════════════════════════════════════════ */
-
-const navItems = [
-  { icon: Home, label: "Home", path: "/dashboard" },
-  { icon: FileText, label: "Contratos", path: "/contratos" },
-  { icon: ScrollText, label: "Propostas", path: "/propostas" },
-  { icon: CalendarIcon, label: "Agenda", path: "/agenda" },
-  { icon: Shield, label: "Permissões", path: "/permissoes" },
-  { icon: Building2, label: "Empresas", path: "/empresas" },
-  { icon: FileCheck, label: "Documentos", path: "/documentos" },
-  { icon: UserCheck, label: "Solicitações", path: "/aprovar-acesso" },
-  { icon: Settings, label: "Configurações", path: "/dashboard" },
-];
 
 const badgeStyles: Record<PipelineRow["badge"], string> = {
   active: "bg-accent/15 text-accent border-accent/20",
@@ -357,6 +346,7 @@ const Dashboard = () => {
   const { isDark, setIsDark } = useTheme();
   const navigate = useNavigate();
   const authContext = useContext(AuthContext);
+  const navItems = useVisibleMainNavItems();
 
   const basicUserData = useAuthStore((state) => state.basicUserData);
   const userData = useAuthStore((state) => state.userData);

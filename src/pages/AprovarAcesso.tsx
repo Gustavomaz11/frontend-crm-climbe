@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTheme } from "@/hooks/use-theme";
+import { useVisibleMainNavItems } from "@/hooks/useVisibleMainNavItems";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Home,
@@ -28,18 +29,6 @@ import ClimbLogo from "@/components/login/ClimbLogo";
 import { UserAvatar } from "@/components/UserAvatar";
 import { useAuthStore } from "@/store/useAuthStore";
 import { Button } from "@/components/ui/button";
-
-const navItems = [
-  { icon: Home, label: "Home", path: "/dashboard" },
-  { icon: FileText, label: "Contratos", path: "/contratos" },
-  { icon: ScrollText, label: "Propostas", path: "/propostas" },
-  { icon: CalendarIcon, label: "Agenda", path: "/agenda" },
-  { icon: Shield, label: "Permissões", path: "/permissoes" },
-  { icon: Building2, label: "Empresas", path: "/empresas" },
-  { icon: FileCheck, label: "Documentos", path: "/documentos" },
-  { icon: UserCheck, label: "Solicitações", path: "/aprovar-acesso" },
-  { icon: Settings, label: "Configurações", path: "/dashboard" },
-];
 
 type Status = "pendente" | "aprovado" | "recusado";
 
@@ -170,6 +159,7 @@ const AprovarAcesso = () => {
     acao: "aprovar" | "recusar";
   } | null>(null);
   const navigate = useNavigate();
+  const navItems = useVisibleMainNavItems();
 
   const basicUserData = useAuthStore((state) => state.basicUserData);
   const userData = useAuthStore((state) => state.userData);

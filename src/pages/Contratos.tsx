@@ -1,5 +1,6 @@
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { useTheme } from "@/hooks/use-theme";
+import { useVisibleMainNavItems } from "@/hooks/useVisibleMainNavItems";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Home, FileText, Calendar as CalendarIcon, Shield, Building2, Settings,
@@ -24,18 +25,6 @@ import {
   type HistoricoAprovacaoContrato,
 } from "@/services";
 import { useAuthStore } from "@/store/useAuthStore";
-
-const navItems = [
-  { icon: Home, label: "Home", path: "/dashboard" },
-  { icon: FileText, label: "Contratos", path: "/contratos" },
-  { icon: ScrollText, label: "Propostas", path: "/propostas" },
-  { icon: CalendarIcon, label: "Agenda", path: "/agenda" },
-  { icon: Shield, label: "Permissões", path: "/permissoes" },
-  { icon: Building2, label: "Empresas", path: "/empresas" },
-  { icon: FileCheck, label: "Documentos", path: "/documentos" },
-  { icon: UserCheck, label: "Solicitações", path: "/aprovar-acesso" },
-  { icon: Settings, label: "Configurações", path: "/dashboard" },
-];
 
 const statusStyles: Record<string, string> = {
   "PENDENTE": "bg-primary/10 text-primary",
@@ -95,6 +84,7 @@ const Contratos = () => {
   const [selectedPropostaId, setSelectedPropostaId] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const navItems = useVisibleMainNavItems();
 
   const { data: contratos = [], isLoading, error } = useContratos();
   const { data: empresas = [] } = useEmpresas();

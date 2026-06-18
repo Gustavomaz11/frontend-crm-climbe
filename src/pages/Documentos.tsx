@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTheme } from "@/hooks/use-theme";
+import { useVisibleMainNavItems } from "@/hooks/useVisibleMainNavItems";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Home, FileText, Calendar as CalendarIcon, Shield, Building2, Settings,
@@ -17,18 +18,6 @@ import {
   useSolicitarDocumento,
   type Documento,
 } from "@/services";
-
-const navItems = [
-  { icon: Home, label: "Home", path: "/dashboard" },
-  { icon: FileText, label: "Contratos", path: "/contratos" },
-  { icon: ScrollText, label: "Propostas", path: "/propostas" },
-  { icon: CalendarIcon, label: "Agenda", path: "/agenda" },
-  { icon: Shield, label: "Permissões", path: "/permissoes" },
-  { icon: Building2, label: "Empresas", path: "/empresas" },
-  { icon: FileCheck, label: "Documentos", path: "/documentos" },
-  { icon: UserCheck, label: "Solicitações", path: "/aprovar-acesso" },
-  { icon: Settings, label: "Configurações", path: "/dashboard" },
-];
 
 const statusStyles: Record<string, string> = {
   PENDENTE: "bg-primary/10 text-primary",
@@ -62,6 +51,7 @@ const Documentos = () => {
   const [requestMessage, setRequestMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [modalError, setModalError] = useState("");
   const navigate = useNavigate();
+  const navItems = useVisibleMainNavItems();
 
   const basicUserData = useAuthStore((state) => state.basicUserData);
   const userData = useAuthStore((state) => state.userData);
