@@ -20,6 +20,7 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { useTheme } from "@/hooks/use-theme";
+import { useSidebarState } from "@/hooks/useSidebarState";
 import { useVisibleMainNavItems } from "@/hooks/useVisibleMainNavItems";
 import {
   useAprovarSolicitacaoAcesso,
@@ -132,7 +133,7 @@ function getErrorMessage(error: unknown) {
 
 const AprovarAcesso = () => {
   const { isDark, setIsDark } = useTheme();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useSidebarState();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<Status | "todos">("todos");
   const [solicitacoesConcluidas, setSolicitacoesConcluidas] = useState<SolicitacaoAcessoView[]>([]);
@@ -237,7 +238,7 @@ const AprovarAcesso = () => {
           className={`fixed left-0 top-0 bottom-0 z-30 flex flex-col border-r border-border/30 bg-card/60 backdrop-blur-xl transition-all duration-300 ${
             sidebarCollapsed ? "w-[72px]" : "w-[220px]"
           }`}
-          initial={{ x: -20, opacity: 0 }}
+          initial={false}
           animate={{ x: 0, opacity: 1 }}
         >
           <div

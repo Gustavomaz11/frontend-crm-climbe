@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useTheme } from "@/hooks/use-theme";
+import { useSidebarState } from "@/hooks/useSidebarState";
 import { useVisibleMainNavItems } from "@/hooks/useVisibleMainNavItems";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -121,7 +122,7 @@ function formatPhone(v: string) {
 
 const CadastroEmpresa = () => {
   const { isDark, setIsDark } = useTheme();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useSidebarState();
   const [form, setForm] = useState<CreateEmpresaDTO>(emptyForm);
   const [success, setSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -197,7 +198,7 @@ const CadastroEmpresa = () => {
         {/* Sidebar */}
         <motion.aside
           className={`fixed left-0 top-0 bottom-0 z-30 flex flex-col border-r border-border/30 bg-card/60 backdrop-blur-xl transition-all duration-300 ${sidebarCollapsed ? "w-[72px]" : "w-[220px]"}`}
-          initial={{ x: -20, opacity: 0 }}
+          initial={false}
           animate={{ x: 0, opacity: 1 }}
         >
           <div className={`flex items-center h-16 border-b border-border/20 ${sidebarCollapsed ? "justify-center px-2" : "px-5"}`}>
@@ -224,7 +225,7 @@ const CadastroEmpresa = () => {
                 whileTap={{ scale: 0.98 }}
               >
                 {item.label === "Empresas" && (
-                  <motion.div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-accent" layoutId="activeNav" />
+                  <motion.div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-accent" />
                 )}
                 <item.icon className="w-[18px] h-[18px] shrink-0" />
                 {!sidebarCollapsed && <span className="text-[13px] font-medium">{item.label}</span>}

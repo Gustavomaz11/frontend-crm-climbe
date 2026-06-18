@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import { api } from "@/api";
 
@@ -176,6 +176,8 @@ export function useUsuarioPermissoes(usuarioId?: number) {
       return unwrap(response.data).map(normalizeAssociacao);
     },
     enabled: !!usuarioId,
+    placeholderData: keepPreviousData,
+    staleTime: 5 * 60 * 1000,
   });
 }
 

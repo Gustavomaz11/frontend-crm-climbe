@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTheme } from "@/hooks/use-theme";
+import { useSidebarState } from "@/hooks/useSidebarState";
 import { useVisibleMainNavItems } from "@/hooks/useVisibleMainNavItems";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -43,7 +44,7 @@ interface PermissionQueueItem {
 const Permissoes = () => {
   const { isDark, setIsDark } = useTheme();
   const queryClient = useQueryClient();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useSidebarState();
   const [userSearch, setUserSearch] = useState("");
   const [permissionSearch, setPermissionSearch] = useState("");
   const [selectedUserId, setSelectedUserId] = useState<number | null>(null);
@@ -245,7 +246,7 @@ const Permissoes = () => {
       </div>
 
       <div className="relative z-10 flex min-h-screen">
-        <motion.aside className={`fixed left-0 top-0 bottom-0 z-30 flex flex-col border-r border-border/30 bg-card/60 backdrop-blur-xl transition-all duration-300 ${sidebarCollapsed ? "w-[72px]" : "w-[220px]"}`} initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }}>
+        <motion.aside className={`fixed left-0 top-0 bottom-0 z-30 flex flex-col border-r border-border/30 bg-card/60 backdrop-blur-xl transition-all duration-300 ${sidebarCollapsed ? "w-[72px]" : "w-[220px]"}`} initial={false} animate={{ x: 0, opacity: 1 }}>
           <div className={`flex items-center h-16 border-b border-border/20 ${sidebarCollapsed ? "justify-center px-2" : "px-5"}`}>
             {sidebarCollapsed ? (
               <motion.div className="w-7 h-7 rounded-lg bg-accent/10 flex items-center justify-center"><span className="text-accent font-bold text-xs">C</span></motion.div>
@@ -256,7 +257,7 @@ const Permissoes = () => {
           <nav className="flex-1 py-4 px-2 space-y-1">
             {navItems.map((item) => (
               <motion.button key={item.label} onClick={() => navigate(item.path)} className={`w-full flex items-center gap-3 rounded-lg transition-all group relative ${sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"} ${item.label === "Permissões" ? "bg-accent/10 text-accent" : "text-muted-foreground hover:text-foreground hover:bg-muted/30"}`} whileHover={{ x: sidebarCollapsed ? 0 : 2 }} whileTap={{ scale: 0.98 }}>
-                {item.label === "Permissões" && <motion.div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-accent" layoutId="activeNav" />}
+                {item.label === "Permissões" && <motion.div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-accent" />}
                 <item.icon className="w-[18px] h-[18px] shrink-0" />
                 {!sidebarCollapsed && <span className="text-[13px] font-medium">{item.label}</span>}
               </motion.button>
