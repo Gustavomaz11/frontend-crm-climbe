@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTheme } from "@/hooks/use-theme";
 import { useSidebarState } from "@/hooks/useSidebarState";
 import { useVisibleMainNavItems } from "@/hooks/useVisibleMainNavItems";
@@ -126,6 +126,8 @@ const CadastroEmpresa = () => {
   const [form, setForm] = useState<CreateEmpresaDTO>(emptyForm);
   const [success, setSuccess] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [cepLoading, setCepLoading] = useState(false);
+  const [cepMessage, setCepMessage] = useState("");
   const navigate = useNavigate();
   const navItems = useVisibleMainNavItems();
 
@@ -147,7 +149,69 @@ const CadastroEmpresa = () => {
   function set(field: keyof CreateEmpresaDTO, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
     setErrorMessage("");
+    if (field === "cep") {
+      setCepMessage("");
+    }
   }
+
+  useEffect(() => {
+    const cep = form.cep.replace(/\D/g, "");
+
+    if (cep.length !== 8) {
+      setCepLoading(false);
+      return;
+    }
+
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setCepLoading(true);
+      setCepMessage("");
+
+      try {
+        const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`, {
+          signal: controller.signal,
+        });
+
+        if (!response.ok) {
+          throw new Error("Erro ao consultar CEP.");
+        }
+
+        const data = (await response.json()) as {
+          erro?: boolean;
+          logradouro?: string;
+          bairro?: string;
+          localidade?: string;
+          uf?: string;
+        };
+
+        if (data.erro) {
+          setCepMessage("CEP não encontrado.");
+          return;
+        }
+
+        setForm((prev) => ({
+          ...prev,
+          logradouro: data.logradouro || prev.logradouro,
+          bairro: data.bairro || prev.bairro,
+          cidade: data.localidade || prev.cidade,
+          uf: data.uf || prev.uf,
+        }));
+        setCepMessage("Endereço preenchido pelo CEP.");
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
+          return;
+        }
+        setCepMessage("Não foi possível consultar o CEP.");
+      } finally {
+        setCepLoading(false);
+      }
+    }, 350);
+
+    return () => {
+      controller.abort();
+      window.clearTimeout(timer);
+    };
+  }, [form.cep]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -357,6 +421,17 @@ const CadastroEmpresa = () => {
                       value={form.cep}
                       onChange={(e) => set("cep", formatCep(e.target.value))}
                     />
+                    {(cepLoading || cepMessage) && (
+                      <p
+                        className={`mt-1 text-[10px] ${
+                          cepMessage.includes("preenchido")
+                            ? "text-accent"
+                            : "text-muted-foreground/55"
+                        }`}
+                      >
+                        {cepLoading ? "Consultando CEP..." : cepMessage}
+                      </p>
+                    )}
                   </div>
                   <div className="col-span-2">
                     <InputField
