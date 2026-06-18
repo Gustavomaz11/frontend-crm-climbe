@@ -237,6 +237,25 @@ export function useUpdateContratoStatus() {
   });
 }
 
+export function useDesvincularPropostaContrato() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      try {
+        const response = await api.patch<ContratoApi>(`/contratos/${id}/desvincular-proposta`);
+        return normalizeContrato(response.data);
+      } catch (error) {
+        throw new Error(getApiErrorMessage(error));
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["contratos"] });
+      queryClient.invalidateQueries({ queryKey: ["propostas"] });
+    },
+  });
+}
+
 export function useDeleteContrato() {
   const queryClient = useQueryClient();
 

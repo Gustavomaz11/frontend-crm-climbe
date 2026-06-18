@@ -19,6 +19,7 @@ import {
   getPropostaDownloadUrl,
   useContratos,
   useCreateContratoWithFile,
+  useDesvincularPropostaContrato,
   useEmpresas,
   usePropostas,
   useUpdateContratoStatus,
@@ -92,6 +93,7 @@ const Contratos = () => {
   const { data: propostas = [] } = usePropostas();
   const createContratoWithFile = useCreateContratoWithFile();
   const updateContratoStatus = useUpdateContratoStatus();
+  const desvincularPropostaContrato = useDesvincularPropostaContrato();
 
   const basicUserData = useAuthStore((state) => state.basicUserData);
   const userData = useAuthStore((state) => state.userData);
@@ -245,6 +247,25 @@ const Contratos = () => {
     } catch (error) {
       const message = error instanceof Error ? error.message : "Erro ao alterar status do contrato.";
       setActionMessage({ type: "error", text: message });
+    }
+  }
+
+  async function handleDesvincularProposta(contrato: Contrato) {
+    setModalError("");
+    setActionMessage(null);
+
+    if (!contrato.propostaId) {
+      setModalError("Este contrato não possui proposta vinculada.");
+      return;
+    }
+
+    try {
+      const atualizado = await desvincularPropostaContrato.mutateAsync(contrato.id);
+      setSelectedContrato(atualizado);
+      setActionMessage({ type: "success", text: "Proposta desvinculada do contrato com sucesso." });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Erro ao desvincular proposta.";
+      setModalError(message);
     }
   }
 
@@ -530,7 +551,21 @@ const Contratos = () => {
                 </div>
                 <div>
                   <p className="text-[10px] text-muted-foreground/40 mb-2 uppercase tracking-wider">Vínculo</p>
-                  <p className="text-[12px] text-foreground/70">{selectedContrato.propostaTitulo || "Sem proposta vinculada"}</p>
+                  <div className="flex items-center justify-between gap-3 rounded-lg border border-border/20 bg-background/50 px-3 py-2">
+                    <p className="min-w-0 truncate text-[12px] text-foreground/70">
+                      {selectedContrato.propostaTitulo || "Sem proposta vinculada"}
+                    </p>
+                    {selectedContrato.propostaId && (
+                      <button
+                        type="button"
+                        onClick={() => handleDesvincularProposta(selectedContrato)}
+                        disabled={desvincularPropostaContrato.isPending}
+                        className="shrink-0 rounded-md border border-destructive/20 bg-destructive/10 px-2.5 py-1 text-[10px] font-semibold text-destructive transition-colors hover:bg-destructive/15 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {desvincularPropostaContrato.isPending ? "Desvinculando..." : "Desvincular"}
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   <motion.button onClick={() => handleOpenContrato(selectedContrato)} disabled={!selectedContrato.urlPdf} className="flex-1 h-10 rounded-lg bg-accent text-accent-foreground text-[12px] font-semibold disabled:opacity-40 disabled:cursor-not-allowed" whileHover={{ scale: 1.02, y: -1 }} whileTap={{ scale: 0.98 }}>
