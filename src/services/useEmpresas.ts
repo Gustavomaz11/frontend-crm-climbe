@@ -68,9 +68,23 @@ interface ApiErrorResponse {
   error?: string;
 }
 
+interface ApiValidationError {
+  message?: string;
+  field?: string;
+  code?: string;
+}
+
 function getApiErrorMessage(error: unknown) {
-  if (isAxiosError<ApiErrorResponse>(error)) {
-    return error.response?.data?.message || error.response?.data?.detail || error.response?.data?.error || error.message;
+  if (isAxiosError<ApiErrorResponse | ApiValidationError[]>(error)) {
+    const data = error.response?.data;
+    if (Array.isArray(data)) {
+      return data
+        .map((item) => item.field ? `${item.field}: ${item.message}` : item.message)
+        .filter(Boolean)
+        .join("; ") || error.message;
+    }
+
+    return data?.message || data?.detail || data?.error || error.message;
   }
   if (error instanceof Error) {
     return error.message;
