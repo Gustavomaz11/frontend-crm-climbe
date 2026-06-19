@@ -1,30 +1,38 @@
 import { useState, useMemo } from "react";
 import { useTheme } from "@/hooks/use-theme";
+import { useSidebarState } from "@/hooks/useSidebarState";
+import { useVisibleMainNavItems } from "@/hooks/useVisibleMainNavItems";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Home, FileText, Calendar as CalendarIcon, Shield, Building2, Settings,
-  LogOut, Sun, Moon, ChevronLeft, ChevronRight, Search, Download, Eye, X, FileCheck
+  LogOut, Sun, Moon, ChevronLeft, ChevronRight, Search, Download, Eye, X, FileCheck, UserCheck, Plus, ScrollText
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import ClimbLogo from "@/components/login/ClimbLogo";
+import { UserAvatar } from "@/components/UserAvatar";
+import { useAuthStore } from "@/store/useAuthStore";
 import { useEmpresas, Empresa } from "@/services";
-
-const navItems = [
-  { icon: Home, label: "Home", path: "/dashboard" },
-  { icon: FileText, label: "Contratos", path: "/contratos" },
-  { icon: CalendarIcon, label: "Agenda", path: "/agenda" },
-  { icon: Shield, label: "Permissões", path: "/permissoes" },
-  { icon: Building2, label: "Empresas", path: "/empresas" },
-  { icon: FileCheck, label: "Documentos", path: "/documentos" },
-  { icon: Settings, label: "Configurações", path: "/dashboard" },
-];
 
 const Empresas = () => {
   const { isDark, setIsDark } = useTheme();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useSidebarState();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedEmpresa, setSelectedEmpresa] = useState<Empresa | null>(null);
   const navigate = useNavigate();
+  const navItems = useVisibleMainNavItems();
+
+  const basicUserData = useAuthStore((state) => state.basicUserData);
+  const userData = useAuthStore((state) => state.userData);
+  const userName =
+    basicUserData?.nomeCompleto ||
+    userData?.nomeCompleto ||
+    userData?.pessoa?.nomeCompleto ||
+    "Usuario";
+  const userPhoto =
+    basicUserData?.fotoPerfil ||
+    userData?.fotoPerfil ||
+    userData?.pessoa?.fotoPerfil ||
+    null;
 
   const { data: empresas = [], isLoading, error } = useEmpresas();
 
@@ -43,14 +51,14 @@ const Empresas = () => {
 
       <div className="relative z-10 flex min-h-screen">
         {/* Sidebar */}
-        <motion.aside className={`fixed left-0 top-0 bottom-0 z-30 flex flex-col border-r border-border/30 bg-card/60 backdrop-blur-xl transition-all duration-300 ${sidebarCollapsed ? "w-[72px]" : "w-[220px]"}`} initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }}>
+        <motion.aside className={`fixed left-0 top-0 bottom-0 z-30 flex flex-col border-r border-border/30 bg-card/60 backdrop-blur-xl transition-all duration-300 ${sidebarCollapsed ? "w-[72px]" : "w-[220px]"}`} initial={false} animate={{ x: 0, opacity: 1 }}>
           <div className={`flex items-center h-16 border-b border-border/20 ${sidebarCollapsed ? "justify-center px-2" : "px-5"}`}>
             {sidebarCollapsed ? <motion.div className="w-7 h-7 rounded-lg bg-accent/10 flex items-center justify-center"><span className="text-accent font-bold text-xs">C</span></motion.div> : <ClimbLogo className="h-[16px] text-foreground" />}
           </div>
           <nav className="flex-1 py-4 px-2 space-y-1">
             {navItems.map(item => (
               <motion.button key={item.label} onClick={() => navigate(item.path)} className={`w-full flex items-center gap-3 rounded-lg transition-all group relative ${sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"} ${item.label === "Empresas" ? "bg-accent/10 text-accent" : "text-muted-foreground hover:text-foreground hover:bg-muted/30"}`} whileHover={{ x: sidebarCollapsed ? 0 : 2 }} whileTap={{ scale: 0.98 }}>
-                {item.label === "Empresas" && <motion.div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-accent" layoutId="activeNav" />}
+                {item.label === "Empresas" && <motion.div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 rounded-r-full bg-accent" />}
                 <item.icon className="w-[18px] h-[18px] shrink-0" />
                 {!sidebarCollapsed && <span className="text-[13px] font-medium">{item.label}</span>}
               </motion.button>
@@ -75,12 +83,23 @@ const Empresas = () => {
               <Search className="w-3.5 h-3.5" />
               <input type="text" placeholder="Buscar empresa..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground/30 text-foreground" />
             </div>
-            <motion.div className="w-9 h-9 rounded-lg bg-accent/15 border border-accent/20 flex items-center justify-center"><span className="text-accent font-semibold text-[11px]">RR</span></motion.div>
+            <UserAvatar name={userName} photoUrl={userPhoto} />
           </motion.header>
 
-          <div className="px-6 pt-6 pb-2">
-            <h1 className="text-[22px] font-bold text-foreground tracking-tight">Empresas</h1>
-            <p className="text-[12px] text-muted-foreground/50 mt-0.5">Gerencie todas as empresas — pendentes e clientes.</p>
+          <div className="px-6 pt-6 pb-2 flex items-center justify-between">
+            <div>
+              <h1 className="text-[22px] font-bold text-foreground tracking-tight">Empresas</h1>
+              <p className="text-[12px] text-muted-foreground/50 mt-0.5">Gerencie todas as empresas — pendentes e clientes.</p>
+            </div>
+            <motion.button
+              onClick={() => navigate("/empresas/cadastro")}
+              className="flex items-center gap-2 h-9 px-4 rounded-lg bg-accent text-white text-[13px] font-medium hover:bg-accent/90 transition-all"
+              whileHover={{ y: -1 }}
+              whileTap={{ scale: 0.97 }}
+            >
+              <Plus className="w-4 h-4" />
+              Cadastrar Novo
+            </motion.button>
           </div>
 
           <div className="px-6 pb-6">

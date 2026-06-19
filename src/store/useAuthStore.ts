@@ -11,6 +11,7 @@ interface Pessoa {
   dataNascimento: string | null;
   telefone: string | null;
   email: string;
+  fotoPerfil?: string | null;
   rgInscricaoSocial: string | null;
 }
 
@@ -22,6 +23,7 @@ export interface UserData {
   dataCriacao: string;
   dataAtualizacao: string;
   nomeCompleto: string;
+  fotoPerfil?: string | null;
   pessoa: Pessoa;
 }
 
@@ -29,6 +31,7 @@ export interface BasicUserData {
   id?: number;
   email?: string;
   nomeCompleto?: string;
+  fotoPerfil?: string | null;
 }
 
 interface AuthState {

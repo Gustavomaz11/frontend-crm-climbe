@@ -91,6 +91,50 @@
   .font-mono-data {
     font-family: 'JetBrains Mono', monospace;
   }
+
+  .overflow-auto,
+  .overflow-x-auto,
+  .overflow-y-auto {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.28) transparent;
+    scrollbar-gutter: stable;
+  }
+
+  .overflow-auto::-webkit-scrollbar,
+  .overflow-x-auto::-webkit-scrollbar,
+  .overflow-y-auto::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .overflow-auto::-webkit-scrollbar-track,
+  .overflow-x-auto::-webkit-scrollbar-track,
+  .overflow-y-auto::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .overflow-auto::-webkit-scrollbar-thumb,
+  .overflow-x-auto::-webkit-scrollbar-thumb,
+  .overflow-y-auto::-webkit-scrollbar-thumb {
+    min-height: 36px;
+    min-width: 36px;
+    border: 2px solid transparent;
+    border-radius: 999px;
+    background-color: hsl(var(--muted-foreground) / 0.22);
+    background-clip: padding-box;
+  }
+
+  .overflow-auto:hover::-webkit-scrollbar-thumb,
+  .overflow-x-auto:hover::-webkit-scrollbar-thumb,
+  .overflow-y-auto:hover::-webkit-scrollbar-thumb {
+    background-color: hsl(var(--muted-foreground) / 0.34);
+  }
+
+  .overflow-auto::-webkit-scrollbar-corner,
+  .overflow-x-auto::-webkit-scrollbar-corner,
+  .overflow-y-auto::-webkit-scrollbar-corner {
+    background: transparent;
+  }
 }
 
 /* Global green focus ring for inputs */

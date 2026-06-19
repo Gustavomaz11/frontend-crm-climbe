@@ -1,6 +1,8 @@
 import { useMemo, useContext, useState } from "react";
 import { useTheme } from "@/hooks/use-theme";
-import { useNavigate, Link } from "react-router-dom";
+import { useSidebarState } from "@/hooks/useSidebarState";
+import { useVisibleMainNavItems } from "@/hooks/useVisibleMainNavItems";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { AuthContext } from "@/context/provider";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -23,7 +25,6 @@ import {
   Clock,
   CheckCircle2,
   AlertCircle,
-  Eye,
   TrendingUp,
   Users,
   Maximize2,
@@ -32,16 +33,24 @@ import {
   Briefcase,
   MapPin,
   FileCheck,
+  UserCheck,
+  ScrollText,
 } from "lucide-react";
 
 import ClimbLogo from "@/components/login/ClimbLogo";
+import { UserAvatar } from "@/components/UserAvatar";
 
 // ajuste estes imports se sua pasta estiver diferente
 import {
+  getContratoDownloadUrl,
+  getDocumentoDownloadUrl,
+  getPropostaDownloadUrl,
+  getPropostaFileNameFromUrl,
   useContratos,
   useEmpresas,
   useReunioes,
   useDocumentos,
+  usePropostas,
   useUsuarios,
   usePermissoes,
 } from "@/services";
@@ -54,6 +63,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 
 interface PipelineRow {
   id: number;
+  empresaId: number;
   empresa: string;
   tipo: string;
   responsavel: string;
@@ -72,6 +82,9 @@ interface PipelineRow {
     name: string;
     status: "validated" | "processing" | "pending";
   }[];
+  documentosVinculados?: ReturnType<typeof useDocumentos>["data"];
+  contratosVinculados?: ReturnType<typeof useContratos>["data"];
+  propostasVinculadas?: ReturnType<typeof usePropostas>["data"];
   fluxo?: {
     name: string;
     done: boolean;
@@ -90,6 +103,8 @@ interface NotificationItem {
   time: string;
   icon: typeof Clock;
   type: "warning" | "alert" | "success" | "info";
+  status?: string;
+  statusClass?: string;
 }
 
 interface StageItem {
@@ -101,16 +116,6 @@ interface StageItem {
 /* ══════════════════════════════════════════════════
    CONSTS
    ══════════════════════════════════════════════════ */
-
-const navItems = [
-  { icon: Home, label: "Home", path: "/dashboard" },
-  { icon: FileText, label: "Contratos", path: "/contratos" },
-  { icon: CalendarIcon, label: "Agenda", path: "/agenda" },
-  { icon: Shield, label: "Permissões", path: "/permissoes" },
-  { icon: Building2, label: "Empresas", path: "/empresas" },
-  { icon: FileCheck, label: "Documentos", path: "/documentos" },
-  { icon: Settings, label: "Configurações", path: "/dashboard" },
-];
 
 const badgeStyles: Record<PipelineRow["badge"], string> = {
   active: "bg-accent/15 text-accent border-accent/20",
@@ -341,13 +346,14 @@ const SectionHeader = ({
 const Dashboard = () => {
   const { isDark, setIsDark } = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
   const authContext = useContext(AuthContext);
+  const navItems = useVisibleMainNavItems();
 
   const basicUserData = useAuthStore((state) => state.basicUserData);
   const userData = useAuthStore((state) => state.userData);
 
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [activeNav, setActiveNav] = useState(0);
+  const [sidebarCollapsed, setSidebarCollapsed] = useSidebarState();
 
   const [maxPipeline, setMaxPipeline] = useState(false);
   const [maxNotifications, setMaxNotifications] = useState(false);
@@ -393,6 +399,12 @@ const Dashboard = () => {
   } = useDocumentos();
 
   const {
+    data: propostas = [],
+    isLoading: loadingPropostas,
+    isError: errorPropostas,
+  } = usePropostas();
+
+  const {
     data: usuarios = [],
     isLoading: loadingUsuarios,
     isError: errorUsuarios,
@@ -409,6 +421,7 @@ const Dashboard = () => {
     loadingEmpresas ||
     loadingReunioes ||
     loadingDocumentos ||
+    loadingPropostas ||
     loadingUsuarios ||
     loadingPermissoes;
 
@@ -417,6 +430,7 @@ const Dashboard = () => {
     errorEmpresas ||
     errorReunioes ||
     errorDocumentos ||
+    errorPropostas ||
     errorUsuarios ||
     errorPermissoes;
 
@@ -425,6 +439,12 @@ const Dashboard = () => {
     userData?.nomeCompleto ||
     userData?.pessoa?.nomeCompleto ||
     "Usuário";
+  const userPhoto =
+    basicUserData?.fotoPerfil ||
+    userData?.fotoPerfil ||
+    userData?.pessoa?.fotoPerfil ||
+    null;
+
 
   const today = new Date();
   const currentMonth = today.getMonth();
@@ -445,30 +465,31 @@ const Dashboard = () => {
 
   const contratosAtivos = useMemo(
     () =>
-      contratos.filter((contrato) =>
-        contrato.status?.toLowerCase().includes("ativo"),
-      ).length,
+      contratos.filter((contrato) => {
+        const status = contrato.status?.toUpperCase() ?? "";
+        return status.includes("ATIVO") || status.includes("APROVADO");
+      }).length,
     [contratos],
   );
 
   const propostasPendentes = useMemo(
     () =>
-      contratos.filter((contrato) => {
-        const status = contrato.status?.toLowerCase() ?? "";
-        return status.includes("proposta") || status.includes("pendente");
-      }).length,
-    [contratos],
+      propostas.filter((proposta) => proposta.status === "PENDENTE").length,
+    [propostas],
   );
 
   const documentosPendentes = useMemo(
-    () => documentos.filter((documento) => !documento.caminho).length,
+    () =>
+      documentos.filter(
+        (documento) => documento.validado === "PENDENTE" || !documento.caminho,
+      ).length,
     [documentos],
   );
 
   const stats = useMemo(
     () => [
       {
-        label: "Contratos Ativos",
+        label: "Contratos Ativos/Aprovados",
         value: String(contratosAtivos),
         change: `${contratos.length} contratos no total`,
         trend: "up" as const,
@@ -478,7 +499,7 @@ const Dashboard = () => {
       {
         label: "Propostas Pendentes",
         value: String(propostasPendentes),
-        change: "Aguardando andamento",
+        change: `${propostas.length} propostas cadastradas`,
         trend: "neutral" as const,
         icon: TrendingUp,
         color: "primary",
@@ -504,6 +525,7 @@ const Dashboard = () => {
       contratosAtivos,
       contratos.length,
       propostasPendentes,
+      propostas.length,
       documentosPendentes,
       documentos.length,
       reunioes.length,
@@ -532,11 +554,37 @@ const Dashboard = () => {
     return map;
   }, [documentos]);
 
+  const contratosByEmpresaId = useMemo(() => {
+    const map = new Map<number, typeof contratos>();
+
+    contratos.forEach((contrato) => {
+      const current = map.get(contrato.empresaId) ?? [];
+      map.set(contrato.empresaId, [...current, contrato]);
+    });
+
+    return map;
+  }, [contratos]);
+
+  const propostasByEmpresaId = useMemo(() => {
+    const map = new Map<number, typeof propostas>();
+
+    propostas.forEach((proposta) => {
+      const current = map.get(Number(proposta.empresaId)) ?? [];
+      map.set(Number(proposta.empresaId), [...current, proposta]);
+    });
+
+    return map;
+  }, [propostas]);
+
   const pipelineData = useMemo<PipelineRow[]>(() => {
     return contratos.map((contrato) => {
       const empresa = empresaById.get(contrato.empresaId);
       const empresaDocs = documentsByEmpresaId.get(contrato.empresaId) ?? [];
-      const isCliente = contrato.status.toLowerCase().includes("ativo");
+      const empresaContratos = contratosByEmpresaId.get(contrato.empresaId) ?? [];
+      const empresaPropostas = propostasByEmpresaId.get(contrato.empresaId) ?? [];
+      const contratoStatus = contrato.status?.toUpperCase() ?? "";
+      const isCliente =
+        contratoStatus.includes("ATIVO") || contratoStatus.includes("APROVADO");
 
       const documentosFormatados = empresaDocs.map((doc) => ({
         name: doc.nome,
@@ -571,6 +619,7 @@ const Dashboard = () => {
 
       return {
         id: contrato.id,
+        empresaId: contrato.empresaId,
         empresa: empresa?.nome ?? `Empresa #${contrato.empresaId}`,
         tipo: "Contrato",
         responsavel: userName,
@@ -586,14 +635,70 @@ const Dashboard = () => {
           ultimoContato: formatDate(contrato.dataAtualizacao),
         },
         documentos: documentosFormatados,
+        documentosVinculados: empresaDocs,
+        contratosVinculados: empresaContratos,
+        propostasVinculadas: empresaPropostas,
         fluxo: fluxoBase,
       };
     });
-  }, [contratos, documentsByEmpresaId, empresaById, userName]);
+  }, [contratos, contratosByEmpresaId, documentsByEmpresaId, empresaById, propostasByEmpresaId, userName]);
 
-  const pendingCompaniesData = useMemo<PipelineRow[]>(() => {
-    return pipelineData.filter((row) => !row.isCliente);
-  }, [pipelineData]);
+  const empresasData = useMemo<PipelineRow[]>(() => {
+    return empresas.map((empresa) => {
+      const empresaDocs = documentsByEmpresaId.get(empresa.id) ?? [];
+      const empresaContratos = contratosByEmpresaId.get(empresa.id) ?? [];
+      const empresaPropostas = propostasByEmpresaId.get(empresa.id) ?? [];
+      const hasContratoAtivo = empresaContratos.some((contrato) => {
+        const status = contrato.status?.toUpperCase() ?? "";
+        return status.includes("ATIVO") || status.includes("APROVADO");
+      });
+      const hasPendencias =
+        empresaDocs.some((doc) => doc.validado === "PENDENTE" || !doc.caminho) ||
+        empresaPropostas.some((proposta) => proposta.status === "PENDENTE") ||
+        empresaContratos.some((contrato) => contrato.status === "PENDENTE");
+
+      const status = hasContratoAtivo
+        ? "Ativa"
+        : hasPendencias
+          ? "Pendente"
+          : "Sem vínculo";
+
+      return {
+        id: empresa.id,
+        empresaId: empresa.id,
+        empresa: empresa.nome,
+        tipo: [
+          `${empresaDocs.length} docs`,
+          `${empresaContratos.length} contratos`,
+          `${empresaPropostas.length} propostas`,
+        ].join(" · "),
+        responsavel: userName,
+        status,
+        badge: hasContratoAtivo ? "active" : hasPendencias ? "proposal" : "direct",
+        data: formatDateShort(empresa.dataCriacao),
+        isCliente: hasContratoAtivo,
+        ultimoContato: formatDate(empresa.dataAtualizacao || empresa.dataCriacao),
+        documentos: empresaDocs.map((doc) => ({
+          name: doc.nome,
+          status: (doc.caminho
+            ? doc.validado === "APROVADO"
+              ? "validated"
+              : "processing"
+            : "pending") as "validated" | "processing" | "pending",
+        })),
+        documentosVinculados: empresaDocs,
+        contratosVinculados: empresaContratos,
+        propostasVinculadas: empresaPropostas,
+        fluxo: [
+          { name: "Empresa cadastrada", done: true },
+          { name: "Proposta cadastrada", done: empresaPropostas.length > 0 },
+          { name: "Contrato criado", done: empresaContratos.length > 0 },
+          { name: "Documentação solicitada", done: empresaDocs.length > 0 },
+          { name: "Arquivos enviados", done: empresaDocs.some((doc) => Boolean(doc.caminho)) },
+        ],
+      };
+    });
+  }, [contratosByEmpresaId, documentsByEmpresaId, empresas, propostasByEmpresaId, userName]);
 
   const meetingsData = useMemo<Record<number, Meeting[]>>(() => {
     const grouped: Record<number, Meeting[]> = {};
@@ -655,22 +760,69 @@ const Dashboard = () => {
       .map((contrato) => ({
         text: `Contrato "${contrato.titulo}" está com status ${contrato.status}`,
         time: getRelativeLabel(contrato.dataAtualizacao),
-        icon: contrato.status.toLowerCase().includes("ativo")
+        icon: ["ATIVO", "APROVADO"].some((status) =>
+          contrato.status.toUpperCase().includes(status),
+        )
           ? CheckCircle2
           : AlertCircle,
-        type: contrato.status.toLowerCase().includes("ativo")
+        type: ["ATIVO", "APROVADO"].some((status) =>
+          contrato.status.toUpperCase().includes(status),
+        )
           ? "success"
           : "warning",
+        status: contrato.status,
+        statusClass: ["ATIVO", "APROVADO"].some((status) =>
+          contrato.status.toUpperCase().includes(status),
+        )
+          ? "bg-accent/10 text-accent border-accent/20"
+          : "bg-primary/10 text-primary border-primary/20",
       }));
 
     const docNotifications: NotificationItem[] = documentos
       .slice(0, 3)
-      .map((doc) => ({
-        text: `Documento "${doc.nome}" enviado para empresa ${doc.empresaId}`,
-        time: getRelativeLabel(doc.dataUpload),
-        icon: FileText,
-        type: doc.caminho ? "success" : "info",
-      }));
+      .map((doc) => {
+        const empresa = empresaById.get(doc.empresaId);
+        const statusLabel =
+          doc.validado === "EM_ANALISE"
+            ? "Em análise"
+            : doc.validado === "APROVADO"
+              ? "Aprovado"
+              : doc.validado === "REPROVADO"
+                ? "Reprovado"
+                : "Pendente";
+
+        return {
+          text: `Documento "${doc.nome}" ${doc.caminho ? "recebido" : "pendente"} para ${empresa?.nome ?? `Empresa #${doc.empresaId}`}`,
+          time: getRelativeLabel(doc.dataUpload),
+          icon: FileText,
+          type: doc.caminho ? "success" : "warning",
+          status: statusLabel,
+          statusClass: doc.caminho
+            ? "bg-accent/10 text-accent border-accent/20"
+            : "bg-primary/10 text-primary border-primary/20",
+        };
+      });
+
+    const propostaNotifications: NotificationItem[] = propostas
+      .slice(0, 3)
+      .map((proposta) => {
+        const empresa = empresaById.get(Number(proposta.empresaId));
+        const fileName = getPropostaFileNameFromUrl(proposta.url);
+
+        return {
+          text: `Proposta "${fileName}" vinculada a ${empresa?.nome ?? `Empresa #${proposta.empresaId}`}`,
+          time: getRelativeLabel(proposta.dataCriacao),
+          icon: ScrollText,
+          type: proposta.status === "APROVADA" ? "success" : proposta.status === "REJEITADA" ? "alert" : "warning",
+          status: proposta.status,
+          statusClass:
+            proposta.status === "APROVADA"
+              ? "bg-accent/10 text-accent border-accent/20"
+              : proposta.status === "REJEITADA"
+                ? "bg-destructive/10 text-destructive border-destructive/20"
+                : "bg-primary/10 text-primary border-primary/20",
+        };
+      });
 
     const meetingNotifications: NotificationItem[] = reunioes
       .slice(0, 3)
@@ -686,9 +838,10 @@ const Dashboard = () => {
     return [
       ...contractNotifications,
       ...docNotifications,
+      ...propostaNotifications,
       ...meetingNotifications,
     ].slice(0, 10);
-  }, [contratos, documentos, reunioes]);
+  }, [contratos, documentos, empresaById, propostas, reunioes]);
 
   const stages = useMemo<StageItem[]>(() => {
     const propostaDocs = contratos
@@ -757,10 +910,10 @@ const Dashboard = () => {
   }, [pipelineData, pipelineSearch, pipelineFilter]);
 
   const filteredEmpresas = useMemo(() => {
-    return pendingCompaniesData.filter((row) =>
+    return empresasData.filter((row) =>
       row.empresa.toLowerCase().includes(empresaSearch.toLowerCase()),
     );
-  }, [pendingCompaniesData, empresaSearch]);
+  }, [empresasData, empresaSearch]);
 
   const handleCompanyClick = (row: PipelineRow) => {
     setSelectedCompany(row);
@@ -832,18 +985,18 @@ const Dashboard = () => {
       </div>
 
       <div className="divide-y divide-border/10">
-        <div className="grid grid-cols-[1fr_80px_80px_90px_70px] px-5 py-2.5 text-[10px] font-medium uppercase tracking-[0.06em] text-muted-foreground/35">
+        <div className="grid grid-cols-[1fr_80px_110px_120px_70px] px-5 py-2.5 text-[10px] font-medium uppercase tracking-[0.06em] text-muted-foreground/35">
           <span>Empresa</span>
           <span>Tipo</span>
           <span>Resp.</span>
-          <span>Status</span>
+          <span className="pl-3">Status</span>
           <span className="text-right">Data</span>
         </div>
 
         {data.map((row, index) => (
           <motion.div
             key={row.id}
-            className="group grid cursor-pointer grid-cols-[1fr_80px_80px_90px_70px] items-center px-5 py-3 transition-colors duration-200 hover:bg-muted/10"
+            className="group grid cursor-pointer grid-cols-[1fr_80px_110px_120px_70px] items-center px-5 py-3 transition-colors duration-200 hover:bg-muted/10"
             onClick={() => handleCompanyClick(row)}
             initial={{ opacity: 0, x: -10 }}
             animate={{ opacity: 1, x: 0 }}
@@ -858,7 +1011,7 @@ const Dashboard = () => {
             <span className="text-[12px] text-muted-foreground/50">
               {row.responsavel}
             </span>
-            <span>
+            <span className="pl-3">
               <span
                 className={`inline-flex h-6 items-center rounded-md border px-2.5 text-[10px] font-medium ${badgeStyles[row.badge]}`}
               >
@@ -885,7 +1038,15 @@ const Dashboard = () => {
       {items.map((notif, index) => (
         <motion.div
           key={`${notif.text}-${index}`}
-          className="group flex cursor-pointer gap-3 px-5 py-4 transition-colors duration-200 hover:bg-muted/10"
+          className={`group flex cursor-pointer gap-3 px-5 py-4 transition-colors duration-200 hover:bg-muted/10 ${
+            notif.type === "success"
+              ? "bg-accent/[0.025]"
+              : notif.type === "alert"
+                ? "bg-destructive/[0.025]"
+                : notif.type === "warning"
+                  ? "bg-primary/[0.025]"
+                  : ""
+          }`}
           initial={{ opacity: 0, x: 10 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.3, delay: index * 0.05 }}
@@ -905,10 +1066,19 @@ const Dashboard = () => {
           </div>
 
           <div className="min-w-0 flex-1">
-            <p className="leading-relaxed text-[12px] text-foreground/80 transition-colors group-hover:text-foreground">
-              {notif.text}
-            </p>
-            <p className="mt-1 text-[10px] text-muted-foreground/30">
+            <div className="flex items-start gap-2">
+              <p className="min-w-0 flex-1 leading-relaxed text-[12px] text-foreground/80 transition-colors group-hover:text-foreground">
+                {notif.text}
+              </p>
+              {notif.status && (
+                <span
+                  className={`shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.04em] ${notif.statusClass ?? "border-border/25 bg-muted/20 text-muted-foreground"}`}
+                >
+                  {notif.status}
+                </span>
+              )}
+            </div>
+            <p className="mt-1 text-[10px] text-muted-foreground/35">
               {notif.time}
             </p>
           </div>
@@ -917,109 +1087,43 @@ const Dashboard = () => {
     </div>
   );
 
-  const renderEmpresaDetail = (company: PipelineRow) => {
-    if (company.isCliente && company.contratoInfo) {
-      return (
-        <div className="space-y-5">
-          <div className="mb-4 flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10">
-              <Building2 className="h-5 w-5 text-accent" />
-            </div>
+  const handleDownloadVinculo = async (
+    tipo: "documento" | "contrato" | "proposta",
+    id: number,
+  ) => {
+    try {
+      const url =
+        tipo === "documento"
+          ? await getDocumentoDownloadUrl(id)
+          : tipo === "contrato"
+            ? await getContratoDownloadUrl(id)
+            : await getPropostaDownloadUrl(id);
 
-            <div>
-              <h4 className="text-[15px] font-semibold text-foreground">
-                {company.empresa}
-              </h4>
-              <p className="text-[11px] font-medium text-accent">
-                Cliente ativo · {company.tipo}
-              </p>
-            </div>
-
-            <span
-              className={`ml-auto inline-flex h-6 items-center rounded-md border px-2.5 text-[10px] font-medium ${badgeStyles[company.badge]}`}
-            >
-              {company.status}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-3 rounded-xl border border-border/20 bg-background/50 p-4">
-              <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground/40">
-                Detalhes do contrato
-              </p>
-
-              <div className="space-y-2">
-                <div>
-                  <p className="text-[10px] text-muted-foreground/40">
-                    Negociado
-                  </p>
-                  <p className="text-[12px] text-foreground/80">
-                    {company.contratoInfo.negociado}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-[10px] text-muted-foreground/40">Valor</p>
-                  <p className="text-[13px] font-semibold text-accent">
-                    {company.contratoInfo.valor}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-[10px] text-muted-foreground/40">
-                    Validade
-                  </p>
-                  <p className="text-[12px] text-foreground/80">
-                    {company.contratoInfo.validade}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-[10px] text-muted-foreground/40">
-                    Último contato
-                  </p>
-                  <p className="text-[12px] text-foreground/80">
-                    {company.contratoInfo.ultimoContato}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-3 rounded-xl border border-border/20 bg-background/50 p-4">
-              <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground/40">
-                Ações
-              </p>
-
-              <div className="space-y-2">
-                <motion.button
-                  className="flex h-9 w-full items-center justify-center gap-2 rounded-lg border border-border/25 bg-card/40 text-[12px] text-foreground/70 transition-all hover:border-accent/30 hover:text-accent"
-                  whileHover={{ y: -1 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Download className="h-3.5 w-3.5" /> Baixar contrato
-                </motion.button>
-
-                <motion.button
-                  className="flex h-9 w-full items-center justify-center gap-2 rounded-lg border border-border/25 bg-card/40 text-[12px] text-foreground/70 transition-all hover:border-accent/30 hover:text-accent"
-                  whileHover={{ y: -1 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Eye className="h-3.5 w-3.5" /> Ver histórico
-                </motion.button>
-              </div>
-            </div>
-          </div>
-        </div>
-      );
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Não foi possível abrir o arquivo.";
+      window.alert(message);
     }
+  };
 
-    const docs = company.documentos ?? [];
+  const renderEmpresaDetail = (company: PipelineRow) => {
+    const docsResumo = company.documentos ?? [];
+    const documentosEmpresa = company.documentosVinculados ?? [];
+    const contratosEmpresa = company.contratosVinculados ?? [];
+    const propostasEmpresa = company.propostasVinculadas ?? [];
     const fluxo = company.fluxo ?? [];
-    const validatedCount = docs.filter(
+    const validatedCount = docsResumo.filter(
       (doc) => doc.status === "validated",
     ).length;
     const compliance =
-      docs.length > 0 ? Math.round((validatedCount / docs.length) * 100) : 0;
+      docsResumo.length > 0 ? Math.round((validatedCount / docsResumo.length) * 100) : 0;
+
+    const emptyState = (label: string) => (
+      <div className="rounded-lg border border-dashed border-border/25 px-3 py-4 text-center text-[12px] text-muted-foreground/35">
+        Nenhum {label} vinculado.
+      </div>
+    );
 
     return (
       <div className="space-y-5">
@@ -1033,14 +1137,12 @@ const Dashboard = () => {
               {company.empresa}
             </h4>
             <p className="text-[11px] font-medium text-primary">
-              Pendente · {company.tipo}
+              {company.tipo}
             </p>
           </div>
 
-          <span
-            className={`ml-auto inline-flex h-6 items-center rounded-md border px-2.5 text-[10px] font-medium ${badgeStyles[company.badge]}`}
-          >
-            {company.status}
+          <span className="ml-auto text-[11px] text-muted-foreground/40">
+            {company.ultimoContato || "—"}
           </span>
         </div>
 
@@ -1048,73 +1150,18 @@ const Dashboard = () => {
           Último contato: {company.ultimoContato || "—"}
         </p>
 
-        <div className="grid grid-cols-2 gap-x-8">
-          <div>
-            <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground/35">
-              Documentos
-            </p>
-
-            {docs.map((doc, index) => (
-              <div
-                key={`${doc.name}-${index}`}
-                className="flex items-center justify-between py-2"
-              >
-                <span className="text-[12px] text-foreground/70">
-                  {doc.name}
-                </span>
-
-                <span
-                  className={`rounded-full px-2 py-0.5 text-[9px] font-medium ${
-                    doc.status === "validated"
-                      ? "bg-accent/10 text-accent"
-                      : doc.status === "processing"
-                        ? "bg-primary/10 text-primary"
-                        : "bg-muted/30 text-muted-foreground/40"
-                  }`}
-                >
-                  {doc.status === "validated"
-                    ? "Validado"
-                    : doc.status === "processing"
-                      ? "Em análise"
-                      : "Pendente"}
-                </span>
-              </div>
-            ))}
+        <div className="grid grid-cols-3 gap-3">
+          <div className="rounded-xl border border-border/20 bg-background/50 p-4">
+            <p className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground/35">Documentos</p>
+            <p className="mt-1 text-[22px] font-bold text-foreground">{documentosEmpresa.length}</p>
           </div>
-
-          <div>
-            <p className="mb-3 text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground/35">
-              Fluxo
-            </p>
-
-            {fluxo.map((item, index) => (
-              <div
-                key={`${item.name}-${index}`}
-                className="flex items-center gap-2.5 py-2"
-              >
-                <div
-                  className={`flex h-4 w-4 items-center justify-center rounded-full border-2 ${
-                    item.done
-                      ? "border-accent bg-accent/10"
-                      : "border-border/30"
-                  }`}
-                >
-                  {item.done && (
-                    <CheckCircle2 className="h-3 w-3 text-accent" />
-                  )}
-                </div>
-
-                <span
-                  className={`text-[12px] ${
-                    item.done
-                      ? "text-foreground/70"
-                      : "text-muted-foreground/40"
-                  }`}
-                >
-                  {item.name}
-                </span>
-              </div>
-            ))}
+          <div className="rounded-xl border border-border/20 bg-background/50 p-4">
+            <p className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground/35">Contratos</p>
+            <p className="mt-1 text-[22px] font-bold text-foreground">{contratosEmpresa.length}</p>
+          </div>
+          <div className="rounded-xl border border-border/20 bg-background/50 p-4">
+            <p className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground/35">Propostas</p>
+            <p className="mt-1 text-[22px] font-bold text-foreground">{propostasEmpresa.length}</p>
           </div>
         </div>
 
@@ -1136,6 +1183,97 @@ const Dashboard = () => {
               transition={{ duration: 1, ease: "easeOut" }}
             />
           </div>
+        </div>
+
+        <div className="space-y-3 rounded-xl border border-border/20 bg-background/50 p-4">
+          <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground/40">
+            Documentos
+          </p>
+          {documentosEmpresa.length === 0
+            ? emptyState("documento")
+            : documentosEmpresa.map((doc) => (
+                <div key={doc.id} className="flex items-center gap-3 rounded-lg border border-border/15 bg-card/35 px-3 py-2">
+                  <FileCheck className="h-4 w-4 text-accent" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[12px] font-medium text-foreground/80">{doc.nome}</p>
+                    <p className="text-[10px] text-muted-foreground/40">{doc.validado} · {formatDate(doc.dataUpload)}</p>
+                  </div>
+                  <button
+                    onClick={() => handleDownloadVinculo("documento", doc.id)}
+                    disabled={!doc.caminho}
+                    className="flex h-8 items-center gap-1.5 rounded-md border border-border/25 px-2.5 text-[11px] text-foreground/65 transition-colors hover:border-accent/30 hover:text-accent disabled:cursor-not-allowed disabled:opacity-35"
+                  >
+                    <Download className="h-3.5 w-3.5" /> Download
+                  </button>
+                </div>
+              ))}
+        </div>
+
+        <div className="space-y-3 rounded-xl border border-border/20 bg-background/50 p-4">
+          <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground/40">
+            Contratos
+          </p>
+          {contratosEmpresa.length === 0
+            ? emptyState("contrato")
+            : contratosEmpresa.map((contrato) => (
+                <div key={contrato.id} className="flex items-center gap-3 rounded-lg border border-border/15 bg-card/35 px-3 py-2">
+                  <FileText className="h-4 w-4 text-primary" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[12px] font-medium text-foreground/80">{contrato.titulo}</p>
+                    <p className="text-[10px] text-muted-foreground/40">{contrato.status} · início {formatDate(contrato.dataInicio)}</p>
+                  </div>
+                  <button
+                    onClick={() => handleDownloadVinculo("contrato", contrato.id)}
+                    disabled={!contrato.urlPdf}
+                    className="flex h-8 items-center gap-1.5 rounded-md border border-border/25 px-2.5 text-[11px] text-foreground/65 transition-colors hover:border-accent/30 hover:text-accent disabled:cursor-not-allowed disabled:opacity-35"
+                  >
+                    <Download className="h-3.5 w-3.5" /> Download
+                  </button>
+                </div>
+              ))}
+        </div>
+
+        <div className="space-y-3 rounded-xl border border-border/20 bg-background/50 p-4">
+          <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground/40">
+            Propostas
+          </p>
+          {propostasEmpresa.length === 0
+            ? emptyState("proposta")
+            : propostasEmpresa.map((proposta) => (
+                <div key={proposta.idProposta} className="flex items-center gap-3 rounded-lg border border-border/15 bg-card/35 px-3 py-2">
+                  <ScrollText className="h-4 w-4 text-accent" />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[12px] font-medium text-foreground/80">{getPropostaFileNameFromUrl(proposta.url)}</p>
+                    <p className="text-[10px] text-muted-foreground/40">
+                      {proposta.status} · {formatDate(proposta.dataCriacao)}
+                      {proposta.valuation != null ? ` · ${formatCurrency(Number(proposta.valuation))}` : ""}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleDownloadVinculo("proposta", proposta.idProposta)}
+                    disabled={!proposta.url}
+                    className="flex h-8 items-center gap-1.5 rounded-md border border-border/25 px-2.5 text-[11px] text-foreground/65 transition-colors hover:border-accent/30 hover:text-accent disabled:cursor-not-allowed disabled:opacity-35"
+                  >
+                    <Download className="h-3.5 w-3.5" /> Download
+                  </button>
+                </div>
+              ))}
+        </div>
+
+        <div className="space-y-3 rounded-xl border border-border/20 bg-background/50 p-4">
+          <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground/40">
+            Fluxo
+          </p>
+          {fluxo.map((item, index) => (
+            <div key={`${item.name}-${index}`} className="flex items-center gap-2.5 py-1">
+              <div className={`flex h-4 w-4 items-center justify-center rounded-full border-2 ${item.done ? "border-accent bg-accent/10" : "border-border/30"}`}>
+                {item.done && <CheckCircle2 className="h-3 w-3 text-accent" />}
+              </div>
+              <span className={`text-[12px] ${item.done ? "text-foreground/70" : "text-muted-foreground/40"}`}>
+                {item.name}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
     );
@@ -1390,7 +1528,7 @@ const Dashboard = () => {
           className={`fixed bottom-0 left-0 top-0 z-30 flex flex-col border-r border-border/30 bg-card/60 backdrop-blur-xl transition-all duration-300 ${
             sidebarCollapsed ? "w-[72px]" : "w-[220px]"
           }`}
-          initial={{ x: -20, opacity: 0 }}
+          initial={false}
           animate={{ x: 0, opacity: 1 }}
           transition={{ duration: 0.5 }}
         >
@@ -1412,39 +1550,36 @@ const Dashboard = () => {
           </div>
 
           <nav className="flex-1 space-y-1 px-2 py-4">
-            {navItems.map((item, index) => (
-              <motion.button
-                key={item.label}
-                onClick={() => {
-                  setActiveNav(index);
-                  navigate(item.path);
-                }}
-                className={`group relative flex w-full items-center gap-3 rounded-lg transition-all duration-200 ${
-                  sidebarCollapsed
-                    ? "justify-center px-2 py-2.5"
-                    : "px-3 py-2.5"
-                } ${
-                  activeNav === index
-                    ? "bg-accent/10 text-accent"
-                    : "text-muted-foreground hover:bg-muted/30 hover:text-foreground"
-                }`}
-                whileHover={{ x: sidebarCollapsed ? 0 : 2 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                {activeNav === index && (
-                  <motion.div
-                    className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-accent"
-                    layoutId="activeNav"
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                  />
-                )}
+            {navItems.map((item) => {
+              const isActive = location.pathname === item.path;
 
-                <item.icon className="h-[18px] w-[18px] shrink-0" />
-                {!sidebarCollapsed && (
-                  <span className="text-[13px] font-medium">{item.label}</span>
-                )}
-              </motion.button>
-            ))}
+              return (
+                <motion.button
+                  key={item.label}
+                  onClick={() => navigate(item.path)}
+                  className={`group relative flex w-full items-center gap-3 rounded-lg transition-all duration-200 ${
+                    sidebarCollapsed
+                      ? "justify-center px-2 py-2.5"
+                      : "px-3 py-2.5"
+                  } ${
+                    isActive
+                      ? "bg-accent/10 text-accent"
+                      : "text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+                  }`}
+                  whileHover={{ x: sidebarCollapsed ? 0 : 2 }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  {isActive && (
+                    <motion.div className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-accent" />
+                  )}
+
+                  <item.icon className="h-[18px] w-[18px] shrink-0" />
+                  {!sidebarCollapsed && (
+                    <span className="text-[13px] font-medium">{item.label}</span>
+                  )}
+                </motion.button>
+              );
+            })}
           </nav>
 
           <div className="space-y-1 border-t border-border/20 px-2 py-3">
@@ -1548,19 +1683,7 @@ const Dashboard = () => {
                 </span>
               </motion.button>
 
-              <motion.div
-                className="flex h-9 w-9 items-center justify-center rounded-lg border border-accent/20 bg-accent/15"
-                whileHover={{ scale: 1.03 }}
-              >
-                <span className="text-[11px] font-semibold text-accent">
-                  {userName
-                    .split(" ")
-                    .map((part) => part[0])
-                    .slice(0, 2)
-                    .join("")
-                    .toUpperCase()}
-                </span>
-              </motion.div>
+              <UserAvatar name={userName} photoUrl={userPhoto} />
             </div>
           </motion.header>
 
@@ -1576,6 +1699,7 @@ const Dashboard = () => {
             >
               <div className="flex items-center gap-3">
                 <motion.button
+                  onClick={() => navigate("/contratos?novo=1")}
                   className="flex h-9 items-center gap-2 rounded-lg bg-accent px-4 text-[12px] font-semibold text-accent-foreground shadow-[0_2px_10px_-2px_hsl(var(--accent)/0.3)]"
                   whileHover={{ scale: 1.02, y: -1 }}
                   whileTap={{ scale: 0.98 }}
@@ -1734,7 +1858,7 @@ const Dashboard = () => {
               >
                 <SectionHeader
                   title="Empresas"
-                  subtitle="Pendentes — documentação em análise"
+                  subtitle="Documentos, contratos e propostas por empresa"
                   onMaximize={() => {
                     setSelectedCompany(null);
                     setMaxEmpresas(true);
@@ -1758,7 +1882,7 @@ const Dashboard = () => {
                   {filteredEmpresas.map((row, index) => (
                     <motion.div
                       key={row.id}
-                      className="group flex cursor-pointer items-center justify-between px-5 py-3 transition-colors duration-200 hover:bg-muted/10"
+                      className="group flex cursor-pointer items-center px-5 py-3 transition-colors duration-200 hover:bg-muted/10"
                       onClick={() => handleCompanyClick(row)}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
@@ -1780,13 +1904,6 @@ const Dashboard = () => {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2">
-                        <span
-                          className={`inline-flex h-6 items-center rounded-md border px-2.5 text-[10px] font-medium ${badgeStyles[row.badge]}`}
-                        >
-                          {row.status}
-                        </span>
-                      </div>
                     </motion.div>
                   ))}
 
@@ -1916,7 +2033,7 @@ const Dashboard = () => {
                   <Search className="h-3.5 w-3.5 text-muted-foreground/30" />
                   <input
                     type="text"
-                    placeholder="Buscar empresa pendente..."
+                    placeholder="Buscar empresa..."
                     value={empresaSearch}
                     onChange={(e) => setEmpresaSearch(e.target.value)}
                     className="flex-1 bg-transparent text-[12px] text-foreground outline-none placeholder:text-muted-foreground/25"
@@ -1929,7 +2046,7 @@ const Dashboard = () => {
               {filteredEmpresas.map((row, index) => (
                 <motion.div
                   key={row.id}
-                  className="-mx-3 group flex cursor-pointer items-center justify-between rounded-lg px-3 py-3 transition-colors duration-200 hover:bg-muted/10"
+                  className="-mx-3 group flex cursor-pointer items-center rounded-lg px-3 py-3 transition-colors duration-200 hover:bg-muted/10"
                   onClick={() => setSelectedCompany(row)}
                   initial={{ opacity: 0, y: 5 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -1951,17 +2068,6 @@ const Dashboard = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[9px] font-medium text-primary">
-                      Pendente
-                    </span>
-
-                    <span
-                      className={`inline-flex h-6 items-center rounded-md border px-2.5 text-[10px] font-medium ${badgeStyles[row.badge]}`}
-                    >
-                      {row.status}
-                    </span>
-                  </div>
                 </motion.div>
               ))}
 

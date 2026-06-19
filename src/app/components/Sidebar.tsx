@@ -1,20 +1,28 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import svgPathsTheme from '../../imports/svg-24pw80vll6';
 import { useTheme } from '../context/ThemeContext';
 import logo from '../../imports/Logo-vetorizada-escuro.svg';
 import logoBranca from '../../imports/Logo-vetorizada-claro.svg';
 import barrasClimbe from '../../imports/Barras-climbe.svg';
 
+type SidebarPage = 'home' | 'contratos' | 'climbe' | 'permissoes' | 'empresas' | 'configuracoes';
+
+interface SidebarItem {
+  id: SidebarPage;
+  label: string;
+  icon: ReactNode;
+}
+
 interface SidebarProps {
   currentPage: string;
-  onNavigate: (page: 'home' | 'contratos' | 'climbe' | 'permissoes' | 'empresas' | 'configuracoes') => void;
+  onNavigate: (page: SidebarPage) => void;
 }
 
 export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
   const { theme, setTheme } = useTheme();
   const [isCollapsed, setIsCollapsed] = useState(false);
 
-  const menuItems = [
+  const menuItems: SidebarItem[] = [
     {
       id: 'home',
       label: 'Home',
@@ -38,7 +46,7 @@ export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
     },
   ];
 
-  const operationalItems = [
+  const operationalItems: SidebarItem[] = [
     {
       id: 'climbe',
       label: 'Agenda',
@@ -145,7 +153,7 @@ export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
                 {menuItems.map((item) => (
                   <button
                     key={item.id}
-                    onClick={() => onNavigate(item.id as any)}
+                    onClick={() => onNavigate(item.id)}
                     className={`w-full flex items-center ${isCollapsed ? 'justify-center gap-0 px-0' : 'gap-3 px-3'} py-2.5 rounded-lg mb-1 transition-all ${
                       currentPage === item.id
                         ? 'bg-[#d4f1ed] text-[#0abfa3]'
@@ -176,7 +184,7 @@ export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
                 {operationalItems.map((item) => (
                   <button
                     key={item.id}
-                    onClick={() => onNavigate(item.id as any)}
+                    onClick={() => onNavigate(item.id)}
                     className={`w-full flex items-center ${isCollapsed ? 'justify-center gap-0 px-0' : 'gap-3 px-3'} py-2.5 rounded-lg mb-1 transition-all ${
                       currentPage === item.id
                         ? 'bg-[#d4f1ed] text-[#0abfa3]'

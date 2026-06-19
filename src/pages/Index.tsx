@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, EyeOff, ArrowRight, Moon, Sun, Loader2 } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
@@ -39,18 +39,89 @@ const Index = () => {
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
 
+  const handleGoogleCallback = useCallback(
+    async (code: string) => {
+      try {
+        const response = await exchangeGoogleCode(code);
+
+        if (!response.success) {
+          toast.error(response.message);
+          return;
+        }
+
+        const { data } = response;
+
+        // Salvar tokens
+        setCookie(null, "@CLIMB:T", data.accessToken, {
+          maxAge: data.expiresIn,
+          path: "/",
+        });
+
+        setCookie(null, "@CLIMB:R", data.refreshToken, {
+          maxAge: 60 * 60 * 24 * 30,
+          path: "/",
+        });
+
+        // Salvar dados do usuário
+        setBasicUserData({
+          id: data.usuario.id,
+          email: data.usuario.email,
+          nomeCompleto: data.usuario.nomeCompleto,
+          fotoPerfil: data.usuario.fotoPerfil,
+        });
+
+        // Salvar role
+        setRole(data.usuario.cargoNome || "USER");
+
+        syncGoogleAccessToken(data.googleAccessToken);
+
+        toast.success(`Bem-vindo, ${data.usuario.nomeCompleto}!`);
+        navigate("/dashboard");
+      } catch {
+        toast.error("Erro ao processar login com Google");
+      }
+    },
+    [exchangeGoogleCode, setBasicUserData, setRole, navigate],
+  );
+
   // Handler para callback do Google OAuth
   useEffect(() => {
     const code = searchParams.get("code");
     const googleOauth = searchParams.get("google_oauth");
     const errorMsg = searchParams.get("message");
+    const email = searchParams.get("email");
 
     if (googleOauth === "success" && code) {
       handleGoogleCallback(code);
+    } else if (googleOauth === "completar_cadastro" && code) {
+      exchangeGoogleCode(code)
+        .then((response) => {
+          const pendingToken = response.data.accessToken;
+          if (!pendingToken) {
+            toast.error("Token de cadastro invalido.");
+            return;
+          }
+
+          sessionStorage.setItem("@CLIMB:PENDING_TOKEN", pendingToken);
+          syncGoogleAccessToken(response.data.googleAccessToken);
+          setBasicUserData({
+            email: email ?? undefined,
+            nomeCompleto: email ?? "Usuario Google",
+          });
+          navigate("/first-access");
+        })
+        .catch(() => toast.error("Erro ao processar cadastro Google"));
+    } else if (googleOauth === "pending_approval") {
+      if (email) {
+        sessionStorage.setItem("@CLIMB:PENDING_EMAIL", email);
+      }
+      navigate("/pending-approval");
+    } else if (googleOauth === "not_linked") {
+      toast.error("Conta Google ainda nao vinculada. Tente novamente ou use login por e-mail e senha.");
     } else if (googleOauth === "error") {
       toast.error(`Erro: ${errorMsg || "Falha na autenticação"}`);
     }
-  }, [searchParams]);
+  }, [searchParams, handleGoogleCallback, exchangeGoogleCode, setBasicUserData, navigate]);
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -77,7 +148,7 @@ const Index = () => {
         path: "/",
       });
 
-      setCookie(null, "@CLIMB:RT", response.refreshToken, {
+      setCookie(null, "@CLIMB:R", response.refreshToken, {
         maxAge: 60 * 60 * 24 * 30,
         path: "/",
       });
@@ -86,9 +157,11 @@ const Index = () => {
         id: response.usuario?.id,
         email: response.usuario?.email,
         nomeCompleto: response.usuario?.nomeCompleto,
+        fotoPerfil: response.usuario?.fotoPerfil,
       });
 
       const possibleRole =
+        response.usuario?.cargoNome ||
         (response.usuario as { cargo?: string; role?: string } | undefined)
           ?.cargo ||
         (response.usuario as { cargo?: string; role?: string } | undefined)
@@ -122,47 +195,6 @@ const Index = () => {
       window.location.href = data.authorizationUrl;
     } catch {
       toast.error("Erro ao iniciar login com Google");
-    }
-  };
-
-  const handleGoogleCallback = async (code: string) => {
-    try {
-      const response = await exchangeGoogleCode(code);
-
-      if (!response.success) {
-        toast.error(response.message);
-        return;
-      }
-
-      const { data } = response;
-
-      // Salvar tokens
-      setCookie(null, "@CLIMB:T", data.accessToken, {
-        maxAge: data.expiresIn,
-        path: "/",
-      });
-
-      setCookie(null, "@CLIMB:RT", data.refreshToken, {
-        maxAge: 60 * 60 * 24 * 30,
-        path: "/",
-      });
-
-      // Salvar dados do usuário
-      setBasicUserData({
-        id: data.usuario.id,
-        email: data.usuario.email,
-        nomeCompleto: data.usuario.nomeCompleto,
-      });
-
-      // Salvar role
-      setRole(data.usuario.cargoNome || "USER");
-
-      syncGoogleAccessToken(data.googleAccessToken);
-
-      toast.success(`Bem-vindo, ${data.usuario.nomeCompleto}!`);
-      navigate("/dashboard");
-    } catch {
-      toast.error("Erro ao processar login com Google");
     }
   };
 
