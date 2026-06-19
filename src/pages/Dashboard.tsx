@@ -1244,7 +1244,10 @@ const Dashboard = () => {
                   <ScrollText className="h-4 w-4 text-accent" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[12px] font-medium text-foreground/80">{getPropostaFileNameFromUrl(proposta.url)}</p>
-                    <p className="text-[10px] text-muted-foreground/40">{proposta.status} · {formatDate(proposta.dataCriacao)}</p>
+                    <p className="text-[10px] text-muted-foreground/40">
+                      {proposta.status} · {formatDate(proposta.dataCriacao)}
+                      {proposta.valuation != null ? ` · ${formatCurrency(Number(proposta.valuation))}` : ""}
+                    </p>
                   </div>
                   <button
                     onClick={() => handleDownloadVinculo("proposta", proposta.idProposta)}

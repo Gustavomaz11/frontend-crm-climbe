@@ -7,7 +7,7 @@ import {
   Home, FileText, Calendar as CalendarIcon, Shield, Building2, Settings,
   LogOut, Sun, Moon, ChevronLeft, ChevronRight, Search, Plus, FileCheck, X,
   UserCheck, UploadCloud, File as FileIcon, CheckCircle2, ScrollText, AlertCircle,
-  Check, XCircle, History,
+  Check, XCircle, History, DollarSign,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import ClimbLogo from "@/components/login/ClimbLogo";
@@ -34,6 +34,7 @@ interface Proposta {
   id: number;
   nomeDocumento: string;
   empresaNome: string;
+  valuation: number | null;
   status: PropostaStatus;
   url: string;
 }
@@ -70,6 +71,27 @@ function formatDateTime(value: string) {
   }).format(new Date(value));
 }
 
+function formatCurrency(value?: number | null) {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "-";
+
+  return value.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
+}
+
+function parseCurrencyInput(value: string) {
+  const digits = value.replace(/\D/g, "");
+  if (!digits) return 0;
+  return Number(digits) / 100;
+}
+
+function formatCurrencyInput(value: string) {
+  const digits = value.replace(/\D/g, "");
+  if (!digits) return "";
+  return formatCurrency(Number(digits) / 100);
+}
+
 const Propostas = () => {
   const { isDark, setIsDark } = useTheme();
   const [sidebarCollapsed, setSidebarCollapsed] = useSidebarState();
@@ -90,6 +112,7 @@ const Propostas = () => {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState("");
   const [selectedEmpresaId, setSelectedEmpresaId] = useState("");
+  const [valuationInput, setValuationInput] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const navItems = useVisibleMainNavItems();
@@ -126,6 +149,7 @@ const Propostas = () => {
         id: proposta.idProposta,
         nomeDocumento: getFileNameFromUrl(proposta.url),
         empresaNome: empresasById.get(Number(proposta.empresaId)) ?? `Empresa #${proposta.empresaId}`,
+        valuation: proposta.valuation == null ? null : Number(proposta.valuation),
         status: proposta.status,
         url: proposta.url,
       })),
@@ -180,6 +204,13 @@ const Propostas = () => {
       return;
     }
 
+    const valuation = parseCurrencyInput(valuationInput);
+
+    if (!Number.isFinite(valuation) || valuation <= 0) {
+      setUploadError("Informe o valuation da proposta.");
+      return;
+    }
+
     setUploading(true);
     setUploadError("");
 
@@ -188,12 +219,14 @@ const Propostas = () => {
         await createPropostaWithFile.mutateAsync({
           file,
           empresaId,
+          valuation,
         });
       }
       setUploading(false);
       setUploadDone(true);
       setFiles([]);
       setSelectedEmpresaId("");
+      setValuationInput("");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Erro ao enviar proposta.";
       setUploadError(message);
@@ -382,8 +415,9 @@ const Propostas = () => {
                     </motion.div>
 
                     {/* Empresa select */}
-                    <div className="mt-3">
-                      <label className="text-[9px] text-muted-foreground/40 font-medium uppercase tracking-wider mb-1 block">Empresa</label>
+                    <div className="mt-3 grid gap-3 md:grid-cols-2">
+                      <div>
+                        <label className="text-[9px] text-muted-foreground/40 font-medium uppercase tracking-wider mb-1 block">Empresa</label>
                       <select
                         value={selectedEmpresaId}
                         onChange={(e) => { setSelectedEmpresaId(e.target.value); setUploadError(""); }}
@@ -394,6 +428,21 @@ const Propostas = () => {
                           <option key={empresa.id} value={empresa.id}>{empresa.nome}</option>
                         ))}
                       </select>
+                      </div>
+                      <div>
+                        <label className="text-[9px] text-muted-foreground/40 font-medium uppercase tracking-wider mb-1 block">Valuation</label>
+                        <div className="flex h-9 items-center gap-2 rounded-lg border border-border/25 bg-background/50 px-2.5 transition-colors focus-within:border-accent/40">
+                          <DollarSign className="h-3.5 w-3.5 text-muted-foreground/35" />
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            value={valuationInput}
+                            onChange={(e) => { setValuationInput(formatCurrencyInput(e.target.value)); setUploadError(""); }}
+                            placeholder="R$ 0,00"
+                            className="min-w-0 flex-1 bg-transparent text-[12px] text-foreground outline-none placeholder:text-muted-foreground/30"
+                          />
+                        </div>
+                      </div>
                     </div>
 
                     {/* File list */}
@@ -432,7 +481,7 @@ const Propostas = () => {
                     {/* Actions */}
                     <div className="mt-3 flex items-center justify-end gap-2">
                       <motion.button
-                        onClick={() => { setUploadOpen(false); setFiles([]); setUploadDone(false); setUploadError(""); setSelectedEmpresaId(""); }}
+                        onClick={() => { setUploadOpen(false); setFiles([]); setUploadDone(false); setUploadError(""); setSelectedEmpresaId(""); setValuationInput(""); }}
                         className="h-8 px-4 rounded-lg border border-border/30 text-[12px] text-muted-foreground hover:text-foreground transition-all"
                         whileTap={{ scale: 0.97 }}
                       >
@@ -484,9 +533,10 @@ const Propostas = () => {
           <div className="px-6 pb-6">
             <motion.div className="rounded-xl border border-border/25 bg-card/40 backdrop-blur-sm overflow-hidden" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}>
               {/* Table header */}
-              <div className="grid grid-cols-[1fr_1fr_120px_132px] px-5 py-2.5 border-b border-border/15 bg-muted/5">
+              <div className="grid grid-cols-[1fr_1fr_130px_120px_132px] px-5 py-2.5 border-b border-border/15 bg-muted/5">
                 <span className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider">Documento</span>
                 <span className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider">Empresa</span>
+                <span className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider">Valuation</span>
                 <span className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider">Status</span>
                 <span className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider">Ações</span>
               </div>
@@ -501,7 +551,7 @@ const Propostas = () => {
                   filtered.map((p, i) => (
                     <motion.div
                       key={p.id}
-                      className="grid grid-cols-[1fr_1fr_120px_132px] items-center px-5 py-4 hover:bg-muted/10 transition-colors cursor-pointer group"
+                      className="grid grid-cols-[1fr_1fr_130px_120px_132px] items-center px-5 py-4 hover:bg-muted/10 transition-colors cursor-pointer group"
                       onClick={() => { setSelectedProposta(p); setModalError(""); }}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
@@ -520,6 +570,7 @@ const Propostas = () => {
                         </div>
                         <p className="text-[12px] text-foreground/60 truncate">{p.empresaNome}</p>
                       </div>
+                      <p className="text-[12px] font-semibold text-foreground/75">{formatCurrency(p.valuation)}</p>
                       <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full w-fit ${statusStyles[p.status] || "bg-muted/10 text-muted-foreground"}`}>
                         {p.status}
                       </span>
@@ -583,6 +634,10 @@ const Propostas = () => {
                     <p className="text-[10px] text-muted-foreground/40 mb-1 uppercase tracking-wider">Status</p>
                     <span className={`text-[11px] font-medium px-2.5 py-0.5 rounded-full inline-block ${statusStyles[selectedProposta.status] || "bg-muted/10 text-muted-foreground"}`}>{selectedProposta.status}</span>
                   </div>
+                </div>
+                <div className="rounded-lg border border-border/20 bg-background/50 p-4">
+                  <p className="text-[10px] text-muted-foreground/40 mb-1 uppercase tracking-wider">Valuation</p>
+                  <p className="text-[16px] font-semibold text-foreground/85">{formatCurrency(selectedProposta.valuation)}</p>
                 </div>
                 <div className="flex gap-2">
                   <motion.button

@@ -15,6 +15,7 @@ export interface PropostaApi {
   empresaId: number;
   usuarioId: number;
   url: string;
+  valuation: number | null;
   status: PropostaStatus;
   dataCriacao: string;
 }
@@ -39,6 +40,7 @@ export function getPropostaFileNameFromUrl(url?: string | null) {
 interface CreatePropostaWithFileDTO {
   file: File;
   empresaId: number;
+  valuation: number;
 }
 
 interface UpdatePropostaStatusDTO {
@@ -105,11 +107,12 @@ export function useCreatePropostaWithFile() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ file, empresaId }: CreatePropostaWithFileDTO) => {
+    mutationFn: async ({ file, empresaId, valuation }: CreatePropostaWithFileDTO) => {
       try {
         const formData = new FormData();
         formData.append("arquivo", file);
         formData.append("empresaId", String(empresaId));
+        formData.append("valuation", valuation.toFixed(2));
 
         const response = await api.post<ApiEnvelope<PropostaApi>>("/propostas/upload", formData, {
           headers: {

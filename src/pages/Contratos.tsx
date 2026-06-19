@@ -63,6 +63,15 @@ function formatDateTime(value: string) {
   }).format(new Date(value));
 }
 
+function formatCurrency(value?: number | null) {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "-";
+
+  return value.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
+}
+
 const Contratos = () => {
   const { isDark, setIsDark } = useTheme();
   const [sidebarCollapsed, setSidebarCollapsed] = useSidebarState();
@@ -430,6 +439,7 @@ const Contratos = () => {
                           {propostasAprovadasDaEmpresa.map((proposta) => (
                             <option key={proposta.idProposta} value={proposta.idProposta}>
                               {getPropostaFileNameFromUrl(proposta.url)}
+                              {proposta.valuation != null ? ` · ${formatCurrency(Number(proposta.valuation))}` : ""}
                             </option>
                           ))}
                         </select>
