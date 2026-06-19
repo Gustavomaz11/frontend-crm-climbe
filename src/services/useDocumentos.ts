@@ -68,6 +68,11 @@ export interface SolicitarDocumentoDTO {
   emailDestinatario: string;
 }
 
+interface ValidarDocumentoDTO {
+  id: number;
+  status: Extract<DocumentoStatus, "APROVADO" | "REPROVADO">;
+}
+
 function normalizeDocumento(documento: DocumentoApi): Documento {
   const titulo = documento.titulo || documento.tipoDocumento || `Documento #${documento.id}`;
   const status = documento.validado || "PENDENTE";
@@ -167,6 +172,26 @@ export function useReenviarSolicitacaoDocumento() {
     mutationFn: async (id: number) => {
       try {
         const response = await api.patch<DocumentoApi>(`/documentos/${id}/reenviar`);
+        return normalizeDocumento(response.data);
+      } catch (error) {
+        throw new Error(getApiErrorMessage(error));
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["documentos"] });
+    },
+  });
+}
+
+export function useValidarDocumento() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, status }: ValidarDocumentoDTO) => {
+      try {
+        const response = await api.patch<DocumentoApi>(`/documentos/${id}/validar`, {
+          validado: status,
+        });
         return normalizeDocumento(response.data);
       } catch (error) {
         throw new Error(getApiErrorMessage(error));

@@ -7,7 +7,7 @@ import {
   Home, FileText, Calendar as CalendarIcon, Shield, Building2, Settings,
   LogOut, Sun, Moon, ChevronLeft, ChevronRight, Search, FileCheck, X,
   Download, UserCheck, ScrollText, Plus, Send, Mail, AlertCircle, CheckCircle2,
-  RotateCcw, Trash2,
+  RotateCcw, Trash2, Check, XCircle,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import ClimbLogo from "@/components/login/ClimbLogo";
@@ -20,7 +20,9 @@ import {
   useEmpresas,
   useReenviarSolicitacaoDocumento,
   useSolicitarDocumento,
+  useValidarDocumento,
   type Documento,
+  type DocumentoStatus,
 } from "@/services";
 
 const statusStyles: Record<string, string> = {
@@ -34,12 +36,16 @@ const statusLabels: Record<string, string> = {
   PENDENTE: "Pendente",
   EM_ANALISE: "Em análise",
   APROVADO: "Aprovado",
-  REPROVADO: "Reprovado",
+  REPROVADO: "Rejeitado",
 };
 
 function formatDate(value?: string | null) {
   if (!value) return "-";
   return new Intl.DateTimeFormat("pt-BR").format(new Date(value));
+}
+
+function podeReenviarSolicitacao(documento: Documento) {
+  return !documento.caminho || documento.validado === "PENDENTE" || documento.validado === "REPROVADO";
 }
 
 const Documentos = () => {
@@ -75,6 +81,7 @@ const Documentos = () => {
   const solicitarDocumento = useSolicitarDocumento();
   const reenviarSolicitacaoDocumento = useReenviarSolicitacaoDocumento();
   const deleteDocumento = useDeleteDocumento();
+  const validarDocumento = useValidarDocumento();
 
   const selectedEmpresa = useMemo(
     () => empresas.find((empresa) => String(empresa.id) === selectedEmpresaId),
@@ -182,6 +189,36 @@ const Documentos = () => {
     }
   }
 
+  async function handleValidarDocumento(
+    documento: Documento,
+    status: Extract<DocumentoStatus, "APROVADO" | "REPROVADO">,
+  ) {
+    setModalError("");
+    setRequestMessage(null);
+
+    if (documento.validado !== "EM_ANALISE") {
+      setRequestMessage({ type: "error", text: "Somente documentos em análise podem ser aprovados ou reprovados." });
+      return;
+    }
+
+    try {
+      const atualizado = await validarDocumento.mutateAsync({ id: documento.id, status });
+      const message =
+        status === "APROVADO"
+          ? "Documento aprovado com sucesso."
+          : "Documento rejeitado. A solicitação voltou para pendência e um novo link foi enviado.";
+      setSelectedDoc((current) => current?.id === documento.id ? atualizado : current);
+      setRequestMessage({ type: "success", text: message });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Erro ao atualizar status do documento.";
+      if (selectedDoc?.id === documento.id) {
+        setModalError(message);
+      } else {
+        setRequestMessage({ type: "error", text: message });
+      }
+    }
+  }
+
   return (
     <div className="relative min-h-screen bg-background text-foreground transition-colors duration-500 overflow-hidden">
       <div className="fixed inset-0 pointer-events-none">
@@ -244,11 +281,12 @@ const Documentos = () => {
             </AnimatePresence>
 
             <motion.div className="rounded-xl border border-border/25 bg-card/40 backdrop-blur-sm overflow-hidden" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}>
-              <div className="grid grid-cols-[1.4fr_1fr_120px_120px] px-5 py-3 border-b border-border/15 text-[10px] uppercase tracking-wider text-muted-foreground/40">
+              <div className="grid grid-cols-[1.4fr_1fr_120px_120px_96px] px-5 py-3 border-b border-border/15 text-[10px] uppercase tracking-wider text-muted-foreground/40">
                 <span>Documento</span>
                 <span>Empresa</span>
                 <span>Status</span>
                 <span>Data</span>
+                <span>Ações</span>
               </div>
               <div className="divide-y divide-border/10 max-h-[calc(100vh-250px)] overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-muted-foreground/20 [&::-webkit-scrollbar-thumb]:rounded-full">
                 {isLoading ? (
@@ -259,7 +297,7 @@ const Documentos = () => {
                   <div className="py-12 text-center text-[12px] text-muted-foreground/30">Nenhum documento encontrado</div>
                 ) : (
                   filtered.map((doc, i) => (
-                    <motion.div key={doc.id} className="grid grid-cols-[1.4fr_1fr_120px_120px] items-center px-5 py-4 hover:bg-muted/10 transition-colors cursor-pointer group" onClick={() => { setSelectedDoc(doc); setModalError(""); }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }} whileHover={{ x: 2 }}>
+                    <motion.div key={doc.id} className="grid grid-cols-[1.4fr_1fr_120px_120px_96px] items-center px-5 py-4 hover:bg-muted/10 transition-colors cursor-pointer group" onClick={() => { setSelectedDoc(doc); setModalError(""); }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }} whileHover={{ x: 2 }}>
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
                           <FileCheck className="w-4 h-4 text-accent" />
@@ -272,6 +310,26 @@ const Documentos = () => {
                       <p className="text-[12px] text-foreground/65 truncate">{doc.nomeEmpresa || `Empresa #${doc.empresaId}`}</p>
                       <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full w-fit ${statusStyles[doc.validado] || "bg-muted/10 text-muted-foreground"}`}>{statusLabels[doc.validado] || doc.validado}</span>
                       <p className="text-[11px] text-muted-foreground/45">{formatDate(doc.dataUpload)}</p>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          title="Aprovar documento"
+                          onClick={(event) => { event.stopPropagation(); handleValidarDocumento(doc, "APROVADO"); }}
+                          disabled={doc.validado !== "EM_ANALISE" || validarDocumento.isPending}
+                          className="w-7 h-7 rounded-lg border border-border/25 flex items-center justify-center text-muted-foreground hover:text-accent hover:border-accent/40 hover:bg-accent/5 transition-colors disabled:opacity-35 disabled:cursor-not-allowed"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          title="Rejeitar documento"
+                          onClick={(event) => { event.stopPropagation(); handleValidarDocumento(doc, "REPROVADO"); }}
+                          disabled={doc.validado !== "EM_ANALISE" || validarDocumento.isPending}
+                          className="w-7 h-7 rounded-lg border border-border/25 flex items-center justify-center text-muted-foreground hover:text-destructive hover:border-destructive/40 hover:bg-destructive/5 transition-colors disabled:opacity-35 disabled:cursor-not-allowed"
+                        >
+                          <XCircle className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
                     </motion.div>
                   ))
                 )}
@@ -359,11 +417,19 @@ const Documentos = () => {
                   <button onClick={() => handleDownloadDocumento(selectedDoc)} disabled={!selectedDoc.caminho} className="h-10 rounded-lg border border-accent/20 bg-accent/10 text-accent text-[12px] font-medium flex items-center justify-center gap-2 hover:bg-accent/20 transition-colors disabled:opacity-45 disabled:cursor-not-allowed">
                     <Download className="w-4 h-4" /> Baixar
                   </button>
-                  <button onClick={() => handleReenviarSolicitacao(selectedDoc)} disabled={!!selectedDoc.caminho || reenviarSolicitacaoDocumento.isPending} className="h-10 rounded-lg border border-primary/20 bg-primary/10 text-primary text-[12px] font-medium flex items-center justify-center gap-2 hover:bg-primary/20 transition-colors disabled:opacity-45 disabled:cursor-not-allowed">
+                  <button onClick={() => handleReenviarSolicitacao(selectedDoc)} disabled={!podeReenviarSolicitacao(selectedDoc) || reenviarSolicitacaoDocumento.isPending} className="h-10 rounded-lg border border-primary/20 bg-primary/10 text-primary text-[12px] font-medium flex items-center justify-center gap-2 hover:bg-primary/20 transition-colors disabled:opacity-45 disabled:cursor-not-allowed">
                     <RotateCcw className="w-4 h-4" /> {reenviarSolicitacaoDocumento.isPending ? "Reenviando..." : "Reenviar"}
                   </button>
                   <button onClick={() => handleExcluirSolicitacao(selectedDoc)} disabled={deleteDocumento.isPending} className="h-10 rounded-lg border border-destructive/20 bg-destructive/10 text-destructive text-[12px] font-medium flex items-center justify-center gap-2 hover:bg-destructive/20 transition-colors disabled:opacity-45 disabled:cursor-not-allowed">
                     <Trash2 className="w-4 h-4" /> {deleteDocumento.isPending ? "Excluindo..." : "Excluir"}
+                  </button>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button onClick={() => handleValidarDocumento(selectedDoc, "APROVADO")} disabled={selectedDoc.validado !== "EM_ANALISE" || validarDocumento.isPending} className="h-10 rounded-lg border border-accent/20 bg-accent/10 text-accent text-[12px] font-medium flex items-center justify-center gap-2 hover:bg-accent/20 transition-colors disabled:opacity-45 disabled:cursor-not-allowed">
+                    <Check className="w-4 h-4" /> {validarDocumento.isPending ? "Aprovando..." : "Aprovar"}
+                  </button>
+                  <button onClick={() => handleValidarDocumento(selectedDoc, "REPROVADO")} disabled={selectedDoc.validado !== "EM_ANALISE" || validarDocumento.isPending} className="h-10 rounded-lg border border-destructive/20 bg-destructive/10 text-destructive text-[12px] font-medium flex items-center justify-center gap-2 hover:bg-destructive/20 transition-colors disabled:opacity-45 disabled:cursor-not-allowed">
+                    <XCircle className="w-4 h-4" /> {validarDocumento.isPending ? "Rejeitando..." : "Rejeitar"}
                   </button>
                 </div>
                 {modalError && <p className="text-[12px] text-destructive">{modalError}</p>}
