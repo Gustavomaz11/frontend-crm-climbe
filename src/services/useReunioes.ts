@@ -148,16 +148,6 @@ function normalizeReuniao(reuniao: ReuniaoApi): Reuniao {
   };
 }
 
-function upsertReuniaoInCache(current: Reuniao[] | undefined, reuniao: Reuniao) {
-  const list = current ?? [];
-  const exists = list.some((item) => item.id === reuniao.id);
-  const next = exists
-    ? list.map((item) => (item.id === reuniao.id ? reuniao : item))
-    : [...list, reuniao];
-
-  return next.sort((a, b) => a.dataHora.localeCompare(b.dataHora));
-}
-
 function buildCreatePayload(data: CreateReuniaoDTO) {
   return {
     titulo: data.titulo,
@@ -268,9 +258,9 @@ export function useCreateReuniao() {
       );
       return normalizeReuniao(response.data);
     },
-    onSuccess: (reuniao) => {
-      queryClient.setQueryData<Reuniao[]>(["reunioes"], (current) => upsertReuniaoInCache(current, reuniao));
-      queryClient.refetchQueries({ queryKey: ["reunioes"], type: "active" });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reunioes"] });
+      queryClient.invalidateQueries({ queryKey: ["participantes-reuniao"] });
     },
   });
 }
@@ -289,37 +279,9 @@ export function useUpdateReuniao() {
       );
       return normalizeReuniao(response.data);
     },
-    onMutate: async ({ id, data }) => {
-      await queryClient.cancelQueries({ queryKey: ["reunioes"] });
-      const previous = queryClient.getQueryData<Reuniao[]>(["reunioes"]);
-      queryClient.setQueryData<Reuniao[]>(["reunioes"], (current) =>
-        (current ?? []).map((item) => {
-          if (item.id !== id) return item;
-          return {
-            ...item,
-            titulo: data.titulo,
-            pauta: data.pauta ?? "",
-            descricao: data.pauta ?? "",
-            data: data.data,
-            hora: data.hora,
-            dataHora: `${data.data}T${data.hora}`,
-            presencial: data.presencial,
-            local: data.local ?? "",
-            empresaId: data.empresaId,
-            status: data.status ?? item.status ?? "AGENDADA",
-          };
-        }),
-      );
-      return { previous };
-    },
-    onError: (_error, _variables, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(["reunioes"], context.previous);
-      }
-    },
-    onSuccess: (reuniao) => {
-      queryClient.setQueryData<Reuniao[]>(["reunioes"], (current) => upsertReuniaoInCache(current, reuniao));
-      queryClient.refetchQueries({ queryKey: ["reunioes"], type: "active" });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["reunioes"] });
+      queryClient.invalidateQueries({ queryKey: ["participantes-reuniao"] });
     },
   });
 }
@@ -339,13 +301,20 @@ export function useDeleteReuniao() {
       queryClient.setQueryData<Reuniao[]>(["reunioes"], (current) => (current ?? []).filter((item) => item.id !== id));
       return { previous };
     },
-    onError: (_error, _variables, context) => {
+    onError: (error, _variables, context) => {
+      if (isAxiosError(error) && error.response?.status === 403) {
+        queryClient.invalidateQueries({ queryKey: ["reunioes"] });
+        queryClient.invalidateQueries({ queryKey: ["participantes-reuniao"] });
+        return;
+      }
+
       if (context?.previous) {
         queryClient.setQueryData(["reunioes"], context.previous);
       }
     },
     onSuccess: () => {
       queryClient.refetchQueries({ queryKey: ["reunioes"], type: "active" });
+      queryClient.invalidateQueries({ queryKey: ["participantes-reuniao"] });
     },
   });
 }

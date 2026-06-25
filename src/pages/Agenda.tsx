@@ -13,7 +13,6 @@ import ClimbLogo from "@/components/login/ClimbLogo";
 import { UserAvatar } from "@/components/UserAvatar";
 import {
   useCreateReuniao,
-  useDeleteParticipanteReuniao,
   useDeleteReuniao,
   useEmpresas,
   useParticipantesReuniao,
@@ -221,6 +220,7 @@ const Agenda = () => {
   const [draggedCard, setDraggedCard] = useState<{ card: KanbanCard; fromCol: string } | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [participantSearchQuery, setParticipantSearchQuery] = useState("");
   const [eventForm, setEventForm] = useState(initialEventForm);
   const [eventError, setEventError] = useState("");
   const [editingEventId, setEditingEventId] = useState<number | null>(null);
@@ -229,13 +229,13 @@ const Agenda = () => {
   const { data: reunioes = [] } = useReunioes();
   const { data: empresas = [] } = useEmpresas();
   const { data: usuarios = [] } = useUsuarios();
-  const { data: participantesReuniao = [] } = useParticipantesReuniao();
+  const { data: participantesReuniao = [], isFetched: participantesReuniaoFetched } = useParticipantesReuniao();
   const { mutateAsync: createReuniao, isPending: creatingReuniao } = useCreateReuniao();
   const { mutateAsync: updateReuniao, isPending: updatingReuniao } = useUpdateReuniao();
   const { mutateAsync: deleteReuniao, isPending: deletingReuniao } = useDeleteReuniao();
-  const { mutateAsync: deleteParticipanteReuniao, isPending: deletingParticipanteReuniao } = useDeleteParticipanteReuniao();
   const basicUserData = useAuthStore((state) => state.basicUserData);
   const userData = useAuthStore((state) => state.userData);
+  const currentUserId = basicUserData?.id ?? userData?.id;
 
   const today = new Date();
   const currentMonth = visibleDate.getMonth();
@@ -287,8 +287,33 @@ const Agenda = () => {
   }, [weekDays]);
 
   const calendarGrid = useMemo(() => buildCalendarGrid(currentYear, currentMonth), [currentMonth, currentYear]);
+  const participanteIdsByReuniao = useMemo(() => {
+    const grouped = new Map<number, Set<number>>();
+
+    participantesReuniao.forEach((participante) => {
+      const reuniaoId = participante.reuniao?.idReuniao ?? participante.reuniao?.id;
+      const usuarioId = participante.usuario?.id;
+
+      if (typeof reuniaoId !== "number" || typeof usuarioId !== "number") return;
+
+      const ids = grouped.get(reuniaoId) ?? new Set<number>();
+      ids.add(usuarioId);
+      grouped.set(reuniaoId, ids);
+    });
+
+    return grouped;
+  }, [participantesReuniao]);
+
   const agendaEvents = useMemo<AgendaEvent[]>(() => {
     return reunioes
+      .filter((reuniao) => {
+        if (!participantesReuniaoFetched || !currentUserId) return true;
+
+        const reuniaoId = reuniao.id ?? reuniao.idReuniao;
+        if (typeof reuniaoId !== "number") return false;
+
+        return participanteIdsByReuniao.get(reuniaoId)?.has(currentUserId) ?? false;
+      })
       .map((reuniao) => {
         const date = new Date(reuniao.dataHora);
         if (Number.isNaN(date.getTime())) return null;
@@ -324,12 +349,26 @@ const Agenda = () => {
       })
       .filter((event): event is AgendaEvent => event !== null)
       .sort((a, b) => `${a.dateKey} ${a.hora ?? a.time}`.localeCompare(`${b.dateKey} ${b.hora ?? b.time}`));
-  }, [reunioes, empresas]);
+  }, [reunioes, empresas, participantesReuniaoFetched, currentUserId, participanteIdsByReuniao]);
 
   const filteredAgendaEvents = useMemo(
     () => agendaEvents.filter((event) => matchesSearch(event, searchQuery)),
     [agendaEvents, searchQuery],
   );
+
+  const filteredUsuarios = useMemo(() => {
+    const normalize = (value: string) =>
+      value
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
+    const query = normalize(participantSearchQuery.trim());
+    if (!query) return usuarios;
+
+    return usuarios.filter((usuario) =>
+      normalize(`${usuario.nomeCompleto ?? ""} ${usuario.email ?? ""}`).includes(query),
+    );
+  }, [participantSearchQuery, usuarios]);
 
   const dynamicMonthEvents = useMemo<Record<number, AgendaEvent[]>>(() => {
     const grouped: Record<number, AgendaEvent[]> = {};
@@ -399,6 +438,7 @@ const Agenda = () => {
   const openCreateEventModal = () => {
     setEditingEventId(null);
     setEventError("");
+    setParticipantSearchQuery("");
     setEventForm(initialEventForm());
     setShowAddEvent(true);
   };
@@ -406,6 +446,7 @@ const Agenda = () => {
   const closeEventModal = () => {
     setEditingEventId(null);
     setEventError("");
+    setParticipantSearchQuery("");
     setShowAddEvent(false);
   };
 
@@ -493,6 +534,11 @@ const Agenda = () => {
   };
 
   const handleEditEvent = (event: AgendaEvent) => {
+    if (isGoogleExternalEvent(event)) {
+      setEventError("Eventos externos do Google Calendar não podem ser editados pela agenda local.");
+      return;
+    }
+
     const reuniaoId = Number(event.id);
     const participanteIds = participantesReuniao
       .filter((participante) => {
@@ -515,6 +561,7 @@ const Agenda = () => {
       participanteIds,
     });
     setEventError("");
+    setParticipantSearchQuery("");
     setShowAddEvent(true);
   };
 
@@ -527,16 +574,6 @@ const Agenda = () => {
     }
 
     try {
-      const reuniaoId = Number(event.id);
-      const participantesDoEvento = participantesReuniao.filter((participante) => {
-        const participanteReuniaoId = participante.reuniao?.idReuniao ?? participante.reuniao?.id;
-        return Number(participanteReuniaoId) === reuniaoId;
-      });
-
-      if (participantesDoEvento.length > 0) {
-        await Promise.all(participantesDoEvento.map((participante) => deleteParticipanteReuniao(participante.id)));
-      }
-
       await deleteReuniao(Number(event.id));
     } catch {
       setEventError("Não foi possível excluir o agendamento.");
@@ -550,7 +587,7 @@ const Agenda = () => {
   };
 
   const isSavingEvent = creatingReuniao || updatingReuniao;
-  const isDeletingEvent = deletingReuniao || deletingParticipanteReuniao;
+  const isDeletingEvent = deletingReuniao;
   const todayDay = today.getDate();
   const isViewingCurrentMonth = currentMonth === today.getMonth() && currentYear === today.getFullYear();
 
@@ -700,15 +737,15 @@ const Agenda = () => {
                                 {ev.type === "virtual" ? <Video className="w-2.5 h-2.5" /> : <MapPin className="w-2.5 h-2.5" />}
                                 {ev.type === "virtual" ? "Virtual" : "Presencial"}
                               </div>
-                              <div className="mt-3 flex items-center justify-end gap-2">
-                                <button
-                                  type="button"
-                                  onClick={() => handleEditEvent(ev)}
-                                  className="h-7 rounded-md border border-border/25 px-2.5 text-[10px] font-medium text-muted-foreground transition-colors hover:border-accent/30 hover:text-accent"
-                                >
-                                  Editar
-                                </button>
-                                {!isGoogleExternalEvent(ev) && (
+                              {!isGoogleExternalEvent(ev) && (
+                                <div className="mt-3 flex items-center justify-end gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleEditEvent(ev)}
+                                    className="h-7 rounded-md border border-border/25 px-2.5 text-[10px] font-medium text-muted-foreground transition-colors hover:border-accent/30 hover:text-accent"
+                                  >
+                                    Editar
+                                  </button>
                                   <button
                                     type="button"
                                     disabled={isDeletingEvent}
@@ -717,8 +754,8 @@ const Agenda = () => {
                                   >
                                     Excluir
                                   </button>
-                                )}
-                              </div>
+                                </div>
+                              )}
                             </motion.div>
                           ))}
                         </div>
@@ -883,7 +920,7 @@ const Agenda = () => {
                                   </span>
                                 </div>
                               </div>
-                              {card.event && (
+                              {card.event && !isGoogleExternalEvent(card.event) && (
                                 <div className="mt-3 flex flex-wrap justify-end gap-2">
                                   <button
                                     type="button"
@@ -893,17 +930,15 @@ const Agenda = () => {
                                   >
                                     Editar
                                   </button>
-                                  {!isGoogleExternalEvent(card.event!) && (
-                                    <button
-                                      type="button"
-                                      disabled={isDeletingEvent}
-                                      onMouseDown={(e) => e.stopPropagation()}
-                                      onClick={() => handleDeleteEvent(card.event!)}
-                                      className="h-6 rounded-md border border-destructive/20 px-2 text-[9px] font-medium text-destructive transition-colors hover:bg-destructive/5 disabled:opacity-50"
-                                    >
-                                      Excluir
-                                    </button>
-                                  )}
+                                  <button
+                                    type="button"
+                                    disabled={isDeletingEvent}
+                                    onMouseDown={(e) => e.stopPropagation()}
+                                    onClick={() => handleDeleteEvent(card.event!)}
+                                    className="h-6 rounded-md border border-destructive/20 px-2 text-[9px] font-medium text-destructive transition-colors hover:bg-destructive/5 disabled:opacity-50"
+                                  >
+                                    Excluir
+                                  </button>
                                 </div>
                               )}
                             </motion.div>
@@ -946,8 +981,30 @@ const Agenda = () => {
                 </div>
                 <div>
                   <label className="text-[10px] text-muted-foreground/50 font-medium tracking-wider uppercase mb-1.5 block">Participantes</label>
+                  <div className="mb-2 flex h-9 items-center gap-2 rounded-lg border border-border/25 bg-background/50 px-3 text-muted-foreground/45 transition-colors focus-within:border-accent/40">
+                    <Search className="h-3.5 w-3.5 shrink-0" />
+                    <input
+                      type="text"
+                      value={participantSearchQuery}
+                      onChange={(e) => setParticipantSearchQuery(e.target.value)}
+                      placeholder="Filtrar por nome ou e-mail"
+                      className="min-w-0 flex-1 bg-transparent text-[12px] text-foreground outline-none placeholder:text-muted-foreground/35"
+                    />
+                    {participantSearchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setParticipantSearchQuery("")}
+                        className="flex h-5 w-5 items-center justify-center rounded-md text-muted-foreground/45 transition-colors hover:bg-muted/20 hover:text-foreground"
+                        aria-label="Limpar filtro de participantes"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    )}
+                  </div>
                   <div className="max-h-32 overflow-y-auto rounded-lg border border-border/25 bg-background/50 p-2 space-y-1.5">
-                    {usuarios.length > 0 ? usuarios.map((usuario) => {
+                    {usuarios.length === 0 ? (
+                      <p className="px-2 py-2 text-[11px] text-muted-foreground/40">Nenhum usuario cadastrado.</p>
+                    ) : filteredUsuarios.length > 0 ? filteredUsuarios.map((usuario) => {
                       const checked = eventForm.participanteIds.includes(usuario.id);
                       return (
                         <label key={usuario.id} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-[12px] text-foreground/75 transition-colors hover:bg-muted/20">
@@ -968,7 +1025,7 @@ const Agenda = () => {
                         </label>
                       );
                     }) : (
-                      <p className="px-2 py-2 text-[11px] text-muted-foreground/40">Nenhum usuario cadastrado.</p>
+                      <p className="px-2 py-2 text-[11px] text-muted-foreground/40">Nenhum participante encontrado para este filtro.</p>
                     )}
                   </div>
                   <p className="mt-1 text-[10px] text-muted-foreground/40">
@@ -1017,4 +1074,3 @@ const Agenda = () => {
 };
 
 export default Agenda;
-
