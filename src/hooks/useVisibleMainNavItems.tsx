@@ -8,6 +8,7 @@ import {
   FileCheck,
   UserCheck,
   ScrollText,
+  LayoutDashboard,
   type LucideIcon,
 } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -23,6 +24,7 @@ export interface MainNavItem {
 const mainNavItems: MainNavItem[] = [
   { icon: Home, label: "Home", path: "/dashboard" },
   { icon: FileText, label: "Contratos", path: "/contratos", permissions: ["CONTRATO_CRUD"] },
+  { icon: LayoutDashboard, label: "Kanban", path: "/contratos/kanban", permissions: ["CONTRATO_KANBAN"] },
   { icon: ScrollText, label: "Propostas", path: "/propostas", permissions: ["PROPOSTA_CRUD"] },
   { icon: CalendarIcon, label: "Agenda", path: "/agenda", permissions: ["REUNIAO_AGENDAMENTO"] },
   { icon: Shield, label: "Permissões", path: "/permissoes", permissions: ["PERMITIR_ACESSO", "CARGO_CRUD"] },

@@ -24,6 +24,16 @@ interface ContratoApi {
     id?: number;
     nomeCompleto?: string;
   } | null;
+  responsavel?: {
+    id?: number;
+    nomeCompleto?: string;
+    email?: string;
+  } | null;
+  participantes?: Array<{
+    id?: number;
+    nomeCompleto?: string;
+    email?: string;
+  }>;
   empresa?: {
     idEmpresa?: number;
     id?: number;
@@ -49,6 +59,13 @@ export interface Contrato {
   empresaNome: string;
   propostaId?: number | null;
   propostaTitulo?: string | null;
+  responsavelId?: number | null;
+  responsavelNome?: string | null;
+  participantes: Array<{
+    id: number;
+    nomeCompleto: string;
+    email?: string;
+  }>;
   urlPdf?: string | null;
   dataCriacao: string;
   dataAtualizacao: string;
@@ -68,11 +85,19 @@ interface CreateContratoWithFileDTO {
   file: File;
   empresaId: number;
   propostaId?: number | null;
+  responsavelId: number;
+  participanteIds: number[];
 }
 
 interface UpdateContratoStatusDTO {
   id: number;
   status: "APROVADO" | "REJEITADO";
+}
+
+interface UpdateContratoResponsaveisDTO {
+  id: number;
+  responsavelId: number;
+  participanteIds: number[];
 }
 
 function unwrap<T>(response: T | ApiEnvelope<T>): T {
@@ -133,6 +158,15 @@ function normalizeContrato(contrato: ContratoApi): Contrato {
     propostaTitulo: contrato.proposta?.idProposta
       ? getPropostaFileNameFromUrl(contrato.proposta.url)
       : null,
+    responsavelId: contrato.responsavel?.id ?? null,
+    responsavelNome: contrato.responsavel?.nomeCompleto ?? null,
+    participantes: (contrato.participantes ?? [])
+      .filter((participante) => participante.id)
+      .map((participante) => ({
+        id: participante.id ?? 0,
+        nomeCompleto: participante.nomeCompleto ?? `Usuário #${participante.id}`,
+        email: participante.email,
+      })),
     urlPdf: contrato.urlPdf ?? null,
     dataCriacao: contrato.dataInicio ?? "",
     dataAtualizacao: "",
@@ -193,11 +227,15 @@ export function useCreateContratoWithFile() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ file, empresaId, propostaId }: CreateContratoWithFileDTO) => {
+    mutationFn: async ({ file, empresaId, propostaId, responsavelId, participanteIds }: CreateContratoWithFileDTO) => {
       try {
         const formData = new FormData();
         formData.append("arquivo", file);
         formData.append("empresaId", String(empresaId));
+        formData.append("responsavelId", String(responsavelId));
+        participanteIds.forEach((participanteId) => {
+          formData.append("participanteIds", String(participanteId));
+        });
         if (propostaId) {
           formData.append("propostaId", String(propostaId));
         }
@@ -233,6 +271,29 @@ export function useUpdateContratoStatus() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["contratos"] });
+    },
+  });
+}
+
+export function useUpdateContratoResponsaveis() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, responsavelId, participanteIds }: UpdateContratoResponsaveisDTO) => {
+      try {
+        const response = await api.patch<ContratoApi>(`/contratos/${id}/responsaveis`, {
+          responsavelId,
+          participanteIds,
+        });
+        return normalizeContrato(response.data);
+      } catch (error) {
+        throw new Error(getApiErrorMessage(error));
+      }
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["contratos"] });
+      queryClient.invalidateQueries({ queryKey: ["contratos", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["contratos", variables.id, "kanban"] });
     },
   });
 }

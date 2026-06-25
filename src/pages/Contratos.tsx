@@ -22,6 +22,8 @@ import {
   useDesvincularPropostaContrato,
   useEmpresas,
   usePropostas,
+  useUsuarios,
+  useUpdateContratoResponsaveis,
   useUpdateContratoStatus,
   type Contrato,
   type HistoricoAprovacaoContrato,
@@ -93,6 +95,11 @@ const Contratos = () => {
   const [historyError, setHistoryError] = useState("");
   const [selectedEmpresaId, setSelectedEmpresaId] = useState("");
   const [selectedPropostaId, setSelectedPropostaId] = useState("");
+  const [selectedResponsavelId, setSelectedResponsavelId] = useState("");
+  const [selectedParticipanteIds, setSelectedParticipanteIds] = useState<number[]>([]);
+  const [responsaveisEditOpen, setResponsaveisEditOpen] = useState(false);
+  const [editResponsavelId, setEditResponsavelId] = useState("");
+  const [editParticipanteIds, setEditParticipanteIds] = useState<number[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -101,8 +108,10 @@ const Contratos = () => {
   const { data: contratos = [], isLoading, error } = useContratos();
   const { data: empresas = [] } = useEmpresas();
   const { data: propostas = [] } = usePropostas();
+  const { data: usuarios = [] } = useUsuarios();
   const createContratoWithFile = useCreateContratoWithFile();
   const updateContratoStatus = useUpdateContratoStatus();
+  const updateContratoResponsaveis = useUpdateContratoResponsaveis();
   const desvincularPropostaContrato = useDesvincularPropostaContrato();
 
   const basicUserData = useAuthStore((state) => state.basicUserData);
@@ -133,6 +142,11 @@ const Contratos = () => {
         !propostasVinculadas.has(proposta.idProposta),
     );
   }, [contratos, propostas, selectedEmpresaId]);
+
+  const usuariosAtivos = useMemo(
+    () => usuarios.filter((usuario) => !usuario.situacao || usuario.situacao === "ATIVO"),
+    [usuarios],
+  );
 
   useEffect(() => {
     if (searchParams.get("novo") !== "1") return;
@@ -186,9 +200,53 @@ const Contratos = () => {
     addFiles(e.dataTransfer.files);
   }
 
+  function openContratoModal(contrato: Contrato) {
+    setSelectedContrato(contrato);
+    setModalError("");
+    setResponsaveisEditOpen(false);
+    setEditResponsavelId(contrato.responsavelId ? String(contrato.responsavelId) : "");
+    setEditParticipanteIds(contrato.participantes.map((participante) => participante.id));
+  }
+
+  function handleStartEditResponsaveis(contrato: Contrato) {
+    setModalError("");
+    setResponsaveisEditOpen(true);
+    setEditResponsavelId(contrato.responsavelId ? String(contrato.responsavelId) : "");
+    setEditParticipanteIds(contrato.participantes.map((participante) => participante.id));
+  }
+
+  async function handleSaveResponsaveis() {
+    if (!selectedContrato) return;
+
+    const responsavelId = Number(editResponsavelId);
+    if (!editResponsavelId || !Number.isFinite(responsavelId) || responsavelId <= 0) {
+      setModalError("Selecione um responsável para o contrato.");
+      return;
+    }
+    if (editParticipanteIds.length === 0) {
+      setModalError("Selecione ao menos um ator para o contrato.");
+      return;
+    }
+
+    try {
+      const atualizado = await updateContratoResponsaveis.mutateAsync({
+        id: selectedContrato.id,
+        responsavelId,
+        participanteIds: editParticipanteIds,
+      });
+      setSelectedContrato(atualizado);
+      setResponsaveisEditOpen(false);
+      setActionMessage({ type: "success", text: "Responsável e atores atualizados com sucesso." });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Erro ao atualizar responsável e atores.";
+      setModalError(message);
+    }
+  }
+
   async function handleUpload() {
     const empresaId = Number(selectedEmpresaId);
     const propostaId = selectedPropostaId ? Number(selectedPropostaId) : null;
+    const responsavelId = Number(selectedResponsavelId);
 
     if (!selectedEmpresaId || !Number.isFinite(empresaId) || empresaId <= 0) {
       setUploadError("Selecione uma empresa para o contrato.");
@@ -197,6 +255,16 @@ const Contratos = () => {
 
     if (propostaId && contratos.some((contrato) => contrato.propostaId === propostaId)) {
       setUploadError("Esta proposta já está vinculada a outro contrato.");
+      return;
+    }
+
+    if (!selectedResponsavelId || !Number.isFinite(responsavelId) || responsavelId <= 0) {
+      setUploadError("Selecione um responsável para o contrato.");
+      return;
+    }
+
+    if (selectedParticipanteIds.length === 0) {
+      setUploadError("Selecione ao menos um ator para o contrato.");
       return;
     }
 
@@ -209,6 +277,8 @@ const Contratos = () => {
           file,
           empresaId,
           propostaId,
+          responsavelId,
+          participanteIds: selectedParticipanteIds,
         });
       }
       setUploading(false);
@@ -216,6 +286,8 @@ const Contratos = () => {
       setFiles([]);
       setSelectedEmpresaId("");
       setSelectedPropostaId("");
+      setSelectedResponsavelId("");
+      setSelectedParticipanteIds([]);
     } catch (error) {
       const message = error instanceof Error ? error.message : "Erro ao enviar contrato.";
       setUploadError(message);
@@ -444,6 +516,54 @@ const Contratos = () => {
                           ))}
                         </select>
                       </div>
+                      <div>
+                        <label className="text-[9px] text-muted-foreground/40 font-medium uppercase tracking-wider mb-1 block">Responsável</label>
+                        <select
+                          value={selectedResponsavelId}
+                          onChange={(e) => {
+                            const nextResponsavelId = Number(e.target.value);
+                            setSelectedResponsavelId(e.target.value);
+                            if (Number.isFinite(nextResponsavelId) && nextResponsavelId > 0) {
+                              setSelectedParticipanteIds((current) =>
+                                current.includes(nextResponsavelId) ? current : [...current, nextResponsavelId],
+                              );
+                            }
+                            setUploadError("");
+                          }}
+                          className="w-full h-9 px-2.5 rounded-lg border border-border/25 bg-background/50 text-[12px] outline-none focus:border-accent/40 transition-colors text-foreground"
+                        >
+                          <option value="">Selecione o responsável</option>
+                          {usuariosAtivos.map((usuario) => (
+                            <option key={usuario.id} value={usuario.id}>{usuario.nomeCompleto}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-[9px] text-muted-foreground/40 font-medium uppercase tracking-wider mb-1 block">Atores</label>
+                        <div className="max-h-[120px] overflow-y-auto rounded-lg border border-border/25 bg-background/50 p-2">
+                          {usuariosAtivos.map((usuario) => {
+                            const checked = selectedParticipanteIds.includes(usuario.id);
+                            return (
+                              <label key={usuario.id} className="flex items-center gap-2 rounded-md px-2 py-1.5 text-[12px] text-foreground/75 hover:bg-muted/20">
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={(e) => {
+                                    setSelectedParticipanteIds((current) =>
+                                      e.target.checked
+                                        ? Array.from(new Set([...current, usuario.id]))
+                                        : current.filter((id) => id !== usuario.id),
+                                    );
+                                    setUploadError("");
+                                  }}
+                                  className="h-3.5 w-3.5 rounded border-border/40 accent-[hsl(var(--accent))]"
+                                />
+                                <span className="truncate">{usuario.nomeCompleto}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
                     </div>
 
                     <AnimatePresence>
@@ -464,7 +584,7 @@ const Contratos = () => {
                     </AnimatePresence>
 
                     <div className="mt-3 flex items-center justify-end gap-2">
-                      <motion.button onClick={() => { setUploadOpen(false); setFiles([]); setUploadDone(false); setUploadError(""); setSelectedEmpresaId(""); setSelectedPropostaId(""); }} className="h-8 px-4 rounded-lg border border-border/30 text-[12px] text-muted-foreground hover:text-foreground transition-all" whileTap={{ scale: 0.97 }}>
+                      <motion.button onClick={() => { setUploadOpen(false); setFiles([]); setUploadDone(false); setUploadError(""); setSelectedEmpresaId(""); setSelectedPropostaId(""); setSelectedResponsavelId(""); setSelectedParticipanteIds([]); }} className="h-8 px-4 rounded-lg border border-border/30 text-[12px] text-muted-foreground hover:text-foreground transition-all" whileTap={{ scale: 0.97 }}>
                         Cancelar
                       </motion.button>
                       <motion.button onClick={handleUpload} disabled={files.length === 0 || uploading} className="h-8 px-5 rounded-lg bg-accent text-white text-[12px] font-medium hover:bg-accent/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed" whileTap={{ scale: 0.97 }}>
@@ -512,7 +632,7 @@ const Contratos = () => {
                   <div className="py-12 text-center text-[12px] text-muted-foreground/30">Nenhum contrato encontrado</div>
                 ) : (
                   filtered.map((c, i) => (
-                    <motion.div key={c.id} className="grid grid-cols-[1fr_1fr_120px_132px] items-center px-5 py-4 hover:bg-muted/10 transition-colors cursor-pointer group" onClick={() => { setSelectedContrato(c); setModalError(""); }} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }} whileHover={{ x: 2 }}>
+                    <motion.div key={c.id} className="grid grid-cols-[1fr_1fr_120px_132px] items-center px-5 py-4 hover:bg-muted/10 transition-colors cursor-pointer group" onClick={() => openContratoModal(c)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }} whileHover={{ x: 2 }}>
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="w-7 h-7 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
                           <FileText className="w-3.5 h-3.5 text-accent" />
@@ -589,6 +709,113 @@ const Contratos = () => {
                       </button>
                     )}
                   </div>
+                </div>
+                <div className="rounded-lg border border-border/20 bg-background/50 p-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <p className="text-[10px] text-muted-foreground/40 uppercase tracking-wider">Responsável e atores</p>
+                    {!responsaveisEditOpen ? (
+                      <button
+                        type="button"
+                        onClick={() => handleStartEditResponsaveis(selectedContrato)}
+                        className="rounded-md border border-border/25 px-2.5 py-1 text-[10px] font-semibold text-muted-foreground transition-colors hover:border-accent/40 hover:text-accent"
+                      >
+                        Editar
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setResponsaveisEditOpen(false);
+                          setModalError("");
+                        }}
+                        className="rounded-md border border-border/25 px-2.5 py-1 text-[10px] font-semibold text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        Cancelar
+                      </button>
+                    )}
+                  </div>
+
+                  {!responsaveisEditOpen ? (
+                    <div className="space-y-3">
+                      <div>
+                        <p className="mb-1 text-[10px] text-muted-foreground/40">Responsável</p>
+                        <p className="text-[12px] font-semibold text-foreground/80">{selectedContrato.responsavelNome || "Não definido"}</p>
+                      </div>
+                      <div>
+                        <p className="mb-1 text-[10px] text-muted-foreground/40">Atores</p>
+                        {selectedContrato.participantes.length === 0 ? (
+                          <p className="text-[12px] text-muted-foreground/45">Nenhum ator vinculado</p>
+                        ) : (
+                          <div className="flex flex-wrap gap-1.5">
+                            {selectedContrato.participantes.map((participante) => (
+                              <span key={participante.id} className="rounded-full border border-border/25 bg-muted/20 px-2 py-1 text-[10px] text-foreground/70">
+                                {participante.nomeCompleto}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div>
+                        <label className="mb-1 block text-[10px] text-muted-foreground/40">Responsável</label>
+                        <select
+                          value={editResponsavelId}
+                          onChange={(e) => {
+                            const nextResponsavelId = Number(e.target.value);
+                            setEditResponsavelId(e.target.value);
+                            if (Number.isFinite(nextResponsavelId) && nextResponsavelId > 0) {
+                              setEditParticipanteIds((current) =>
+                                current.includes(nextResponsavelId) ? current : [...current, nextResponsavelId],
+                              );
+                            }
+                            setModalError("");
+                          }}
+                          className="h-9 w-full rounded-lg border border-border/25 bg-background/50 px-2.5 text-[12px] text-foreground outline-none transition-colors focus:border-accent/40"
+                        >
+                          <option value="">Selecione o responsável</option>
+                          {usuariosAtivos.map((usuario) => (
+                            <option key={usuario.id} value={usuario.id}>{usuario.nomeCompleto}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <p className="mb-1 text-[10px] text-muted-foreground/40">Atores</p>
+                        <div className="max-h-[130px] overflow-y-auto rounded-lg border border-border/25 bg-background/50 p-2">
+                          {usuariosAtivos.map((usuario) => {
+                            const checked = editParticipanteIds.includes(usuario.id);
+                            return (
+                              <label key={usuario.id} className="flex items-center gap-2 rounded-md px-2 py-1.5 text-[12px] text-foreground/75 hover:bg-muted/20">
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={(e) => {
+                                    setEditParticipanteIds((current) =>
+                                      e.target.checked
+                                        ? Array.from(new Set([...current, usuario.id]))
+                                        : current.filter((id) => id !== usuario.id),
+                                    );
+                                    setModalError("");
+                                  }}
+                                  className="h-3.5 w-3.5 rounded border-border/40 accent-[hsl(var(--accent))]"
+                                />
+                                <span className="truncate">{usuario.nomeCompleto}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleSaveResponsaveis}
+                        disabled={updateContratoResponsaveis.isPending}
+                        className="h-9 w-full rounded-lg bg-accent text-[12px] font-semibold text-accent-foreground transition-colors hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {updateContratoResponsaveis.isPending ? "Salvando..." : "Salvar responsável e atores"}
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div className="flex gap-2">
                   <motion.button onClick={() => handleOpenContrato(selectedContrato)} disabled={!selectedContrato.urlPdf} className="flex-1 h-10 rounded-lg bg-accent text-accent-foreground text-[12px] font-semibold disabled:opacity-40 disabled:cursor-not-allowed" whileHover={{ scale: 1.02, y: -1 }} whileTap={{ scale: 0.98 }}>

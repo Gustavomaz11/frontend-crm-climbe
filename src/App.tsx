@@ -18,6 +18,7 @@ import Empresas from "./pages/Empresas.tsx";
 import Documentos from "./pages/Documentos.tsx";
 import EnviarDocumento from "./pages/EnviarDocumento.tsx";
 import Contratos from "./pages/Contratos.tsx";
+import ContratosKanban from "./pages/ContratosKanban.tsx";
 import Propostas from "./pages/Propostas.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import AprovarAcesso from "./pages/AprovarAcesso.tsx";
@@ -135,6 +136,14 @@ const App = () => (
               element={
                 <PrivateRoute>
                   <Contratos />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/contratos/kanban"
+              element={
+                <PrivateRoute>
+                  <ContratosKanban />
                 </PrivateRoute>
               }
             />

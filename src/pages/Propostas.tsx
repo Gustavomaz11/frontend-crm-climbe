@@ -430,7 +430,7 @@ const Propostas = () => {
                       </select>
                       </div>
                       <div>
-                        <label className="text-[9px] text-muted-foreground/40 font-medium uppercase tracking-wider mb-1 block">Valuation</label>
+                        <label className="text-[9px] text-muted-foreground/40 font-medium uppercase tracking-wider mb-1 block">Valor</label>
                         <div className="flex h-9 items-center gap-2 rounded-lg border border-border/25 bg-background/50 px-2.5 transition-colors focus-within:border-accent/40">
                           <DollarSign className="h-3.5 w-3.5 text-muted-foreground/35" />
                           <input
@@ -536,7 +536,7 @@ const Propostas = () => {
               <div className="grid grid-cols-[1fr_1fr_130px_120px_132px] px-5 py-2.5 border-b border-border/15 bg-muted/5">
                 <span className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider">Documento</span>
                 <span className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider">Empresa</span>
-                <span className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider">Valuation</span>
+                <span className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider">Valor</span>
                 <span className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider">Status</span>
                 <span className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider">Ações</span>
               </div>
@@ -636,7 +636,7 @@ const Propostas = () => {
                   </div>
                 </div>
                 <div className="rounded-lg border border-border/20 bg-background/50 p-4">
-                  <p className="text-[10px] text-muted-foreground/40 mb-1 uppercase tracking-wider">Valuation</p>
+                  <p className="text-[10px] text-muted-foreground/40 mb-1 uppercase tracking-wider">Valor</p>
                   <p className="text-[16px] font-semibold text-foreground/85">{formatCurrency(selectedProposta.valuation)}</p>
                 </div>
                 <div className="flex gap-2">
