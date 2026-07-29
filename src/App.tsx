@@ -29,6 +29,7 @@ import PipelineDashboard from "./pages/PipelineDashboard.tsx";
 import PipelineMotivosPerdaAdmin from "./pages/PipelineMotivosPerdaAdmin.tsx";
 import PipelineCampanhas from "./pages/PipelineCampanhas.tsx";
 import PipelineScripts from "./pages/PipelineScripts.tsx";
+import RevisaoDocumentoPublica from "./pages/RevisaoDocumentoPublica.tsx";
 
 const App = () => (
   <QueryProvider>
@@ -153,6 +154,7 @@ const App = () => (
                 </PrivateRoute>
               }
             />
+            <Route path="/revisao/:token" element={<RevisaoDocumentoPublica />} />
             <Route
               path="/pipeline-vendas"
               element={

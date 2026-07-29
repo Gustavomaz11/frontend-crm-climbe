@@ -12,6 +12,7 @@ import {
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import ClimbLogo from "@/components/login/ClimbLogo";
 import { UserAvatar } from "@/components/UserAvatar";
+import { RevisaoDocumentoDialog } from "@/components/revisoes/RevisaoDocumentoDialog";
 import {
   getContratoDownloadUrl,
   getContratoHistorico,
@@ -49,7 +50,7 @@ const STATUS_MAP: Record<FilterTab, string | null> = {
   "Rejeitado": "REJEITADO",
 };
 
-const ACCEPTED = ".pdf,.doc,.docx,.xls,.xlsx";
+const ACCEPTED = ".pdf,.ppt,.pptx";
 
 function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -80,6 +81,7 @@ const Contratos = () => {
   const [activeTab, setActiveTab] = useState<FilterTab>("Todos");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedContrato, setSelectedContrato] = useState<Contrato | null>(null);
+  const [reviewContratoId, setReviewContratoId] = useState<number | null>(null);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
@@ -481,7 +483,7 @@ const Contratos = () => {
                       </div>
                       <div className="text-center">
                         <p className="text-[13px] font-medium text-foreground/80">{dragOver ? "Solte os arquivos aqui" : "Clique para selecionar ou arraste o arquivo"}</p>
-                        <p className="text-[11px] text-muted-foreground/40 mt-0.5">PDF, DOC, DOCX, XLS, XLSX</p>
+                        <p className="text-[11px] text-muted-foreground/40 mt-0.5">PDF, PPT ou PPTX · o cliente receberá por e-mail</p>
                       </div>
                     </motion.div>
 
@@ -825,6 +827,9 @@ const Contratos = () => {
                     Ver Proposta
                   </motion.button>
                 </div>
+                <motion.button onClick={() => setReviewContratoId(selectedContrato.id)} className="h-10 w-full rounded-lg border border-accent/30 bg-accent/5 text-accent text-[12px] font-semibold" whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+                  Revisão do cliente
+                </motion.button>
                 {modalError && <p className="text-[12px] text-destructive">{modalError}</p>}
               </div>
             </motion.div>
@@ -873,6 +878,7 @@ const Contratos = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      <RevisaoDocumentoDialog open={reviewContratoId !== null} tipo="CONTRATO" referenciaId={reviewContratoId} onClose={() => setReviewContratoId(null)} />
     </div>
   );
 };

@@ -8,3 +8,4 @@ export * from "./useReunioes";
 export * from "./usePermissoes";
 export * from "./useUsuarios";
 export * from "./useParticipantesReuniao";
+export * from "./useRevisoesDocumento";
