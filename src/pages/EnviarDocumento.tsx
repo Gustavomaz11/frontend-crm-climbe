@@ -106,7 +106,7 @@ const EnviarDocumento = () => {
             </div>
             <div className="min-w-0">
               <h1 className="text-[20px] font-semibold text-foreground tracking-tight">Envio de documento</h1>
-              <p className="text-[12px] text-muted-foreground/55 mt-1">Anexe o arquivo solicitado pela equipe Climb.</p>
+              <p className="text-[12px] text-muted-foreground/55 mt-1">Anexe o arquivo solicitado pela equipe Climbe.</p>
             </div>
           </div>
         </div>

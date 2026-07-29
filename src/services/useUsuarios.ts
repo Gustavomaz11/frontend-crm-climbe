@@ -21,7 +21,14 @@ export interface Cargo {
   nome: string;
 }
 
-type OrigemSolicitacaoAcesso = "USUARIO" | "GOOGLE";
+export type OrigemSolicitacaoAcesso = "USUARIO" | "GOOGLE";
+
+export interface AprovarSolicitacaoAcessoDTO {
+  id: number;
+  origem: OrigemSolicitacaoAcesso;
+  cargoId: number;
+  permissaoIds: number[];
+}
 
 interface SolicitacaoAcessoApi {
   origem: OrigemSolicitacaoAcesso;
@@ -220,13 +227,15 @@ export function useAprovarSolicitacaoAcesso() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, origem }: { id: number; origem: OrigemSolicitacaoAcesso }) => {
+    mutationFn: async ({ id, origem, cargoId, permissaoIds }: AprovarSolicitacaoAcessoDTO) => {
+      const atribuicao = { cargoId, permissaoIds };
+
       if (origem === "GOOGLE") {
-        await api.post(`/usuarios/pendentes-google/${id}/aprovar`);
+        await api.post(`/usuarios/pendentes-google/${id}/aprovar`, atribuicao);
         return;
       }
 
-      await api.post(`/usuarios/${id}/aprovar`);
+      await api.post(`/usuarios/${id}/aprovar`, atribuicao);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["usuarios", "pendentes"] });

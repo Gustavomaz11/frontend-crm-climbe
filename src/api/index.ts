@@ -1,5 +1,6 @@
 import axios from "axios";
 import { parseCookies } from "nookies";
+import { ACCESS_TOKEN_COOKIE } from "@/lib/authCookies";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
@@ -13,9 +14,9 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   const cookies = parseCookies();
-  const token = cookies["@CLIMB:T"];
+  const token = cookies[ACCESS_TOKEN_COOKIE];
 
-  if (token) {
+  if (token && !config.headers.Authorization) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
@@ -59,7 +60,7 @@ api.interceptors.response.use(
           if (success) {
             // Se refresh foi bem-sucedido, pegar o novo token e re-tentar
             const cookies = parseCookies();
-            const token = cookies["@CLIMB:T"];
+            const token = cookies[ACCESS_TOKEN_COOKIE];
             originalRequest.headers.Authorization = `Bearer ${token}`;
             return api(originalRequest);
           }
@@ -78,7 +79,7 @@ api.interceptors.response.use(
           if (refreshed) {
             // Refresh bem-sucedido, processar fila e re-tentar
             const cookies = parseCookies();
-            const token = cookies["@CLIMB:T"];
+            const token = cookies[ACCESS_TOKEN_COOKIE];
             originalRequest.headers.Authorization = `Bearer ${token}`;
             processQueue(null, token);
             return api(originalRequest);

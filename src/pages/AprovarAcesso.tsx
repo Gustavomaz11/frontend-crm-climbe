@@ -16,18 +16,20 @@ import {
 } from "lucide-react";
 
 import ClimbLogo from "@/components/login/ClimbLogo";
+import { AprovacaoAcessoDialog } from "@/components/access/AprovacaoAcessoDialog";
 import { UserAvatar } from "@/components/UserAvatar";
-import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 import { useTheme } from "@/hooks/use-theme";
 import { useSidebarState } from "@/hooks/useSidebarState";
 import { useVisibleMainNavItems } from "@/hooks/useVisibleMainNavItems";
 import {
   useAprovarSolicitacaoAcesso,
+  useCargos,
   useRecusarSolicitacaoAcesso,
   useSolicitacoesAcesso,
   type SolicitacaoAcesso,
 } from "@/services/useUsuarios";
+import { usePermissoes } from "@/services/usePermissoes";
 import { useAuthStore } from "@/store/useAuthStore";
 
 type Status = "pendente" | "aprovado" | "recusado";
@@ -141,12 +143,16 @@ const AprovarAcesso = () => {
     key: string;
     acao: AcaoConfirmacao;
   } | null>(null);
+  const [cargoSelecionadoId, setCargoSelecionadoId] = useState<number | null>(null);
+  const [permissaoIdsSelecionadas, setPermissaoIdsSelecionadas] = useState<Set<number>>(new Set());
   const navigate = useNavigate();
   const navItems = useVisibleMainNavItems();
 
   const { data: solicitacoesPendentes = [], isLoading, isError, error } = useSolicitacoesAcesso();
   const aprovarSolicitacao = useAprovarSolicitacaoAcesso();
   const recusarSolicitacao = useRecusarSolicitacaoAcesso();
+  const { data: cargos = [], isLoading: loadingCargos } = useCargos();
+  const { data: permissoes = [], isLoading: loadingPermissoes } = usePermissoes();
 
   const basicUserData = useAuthStore((state) => state.basicUserData);
   const userData = useAuthStore((state) => state.userData);
@@ -189,17 +195,51 @@ const AprovarAcesso = () => {
   const solicitacaoConfirmada = solicitacoes.find((solicitacao) => solicitacao.key === confirmando?.key);
   const isProcessing = aprovarSolicitacao.isPending || recusarSolicitacao.isPending;
 
+  function abrirConfirmacao(key: string, acao: AcaoConfirmacao) {
+    setConfirmando({ key, acao });
+    setCargoSelecionadoId(null);
+    setPermissaoIdsSelecionadas(new Set());
+  }
+
+  function togglePermissao(permissaoId: number) {
+    setPermissaoIdsSelecionadas((atuais) => {
+      const proximas = new Set(atuais);
+      if (proximas.has(permissaoId)) {
+        proximas.delete(permissaoId);
+      } else {
+        proximas.add(permissaoId);
+      }
+      return proximas;
+    });
+  }
+
   async function handleConfirmar() {
     if (!confirmando || !solicitacaoConfirmada) return;
 
     const statusFinal: Status = confirmando.acao === "aprovar" ? "aprovado" : "recusado";
-    const mutation = confirmando.acao === "aprovar" ? aprovarSolicitacao : recusarSolicitacao;
+    if (confirmando.acao === "aprovar" && (!cargoSelecionadoId || permissaoIdsSelecionadas.size === 0)) {
+      toast({
+        title: "Defina o acesso",
+        description: "Selecione o cargo e ao menos uma permissão.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
-      await mutation.mutateAsync({
-        id: solicitacaoConfirmada.id,
-        origem: solicitacaoConfirmada.origem,
-      });
+      if (confirmando.acao === "aprovar") {
+        await aprovarSolicitacao.mutateAsync({
+          id: solicitacaoConfirmada.id,
+          origem: solicitacaoConfirmada.origem,
+          cargoId: cargoSelecionadoId!,
+          permissaoIds: Array.from(permissaoIdsSelecionadas),
+        });
+      } else {
+        await recusarSolicitacao.mutateAsync({
+          id: solicitacaoConfirmada.id,
+          origem: solicitacaoConfirmada.origem,
+        });
+      }
 
       setSolicitacoesConcluidas((prev) => [
         { ...solicitacaoConfirmada, status: statusFinal },
@@ -569,7 +609,7 @@ const AprovarAcesso = () => {
                                   <>
                                     <motion.button
                                       onClick={() =>
-                                        setConfirmando({ key: solicitacao.key, acao: "aprovar" })
+                                        abrirConfirmacao(solicitacao.key, "aprovar")
                                       }
                                       className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-emerald-400/10 text-emerald-500 border border-emerald-400/20 hover:bg-emerald-400/20 transition-all text-[11px] font-medium"
                                       whileHover={{ scale: 1.03 }}
@@ -580,7 +620,7 @@ const AprovarAcesso = () => {
                                     </motion.button>
                                     <motion.button
                                       onClick={() =>
-                                        setConfirmando({ key: solicitacao.key, acao: "recusar" })
+                                        abrirConfirmacao(solicitacao.key, "recusar")
                                       }
                                       className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-400/10 text-red-500 border border-red-400/20 hover:bg-red-400/20 transition-all text-[11px] font-medium"
                                       whileHover={{ scale: 1.03 }}
@@ -609,82 +649,20 @@ const AprovarAcesso = () => {
 
       <AnimatePresence>
         {confirmando && solicitacaoConfirmada && (
-          <>
-            <motion.div
-              className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => !isProcessing && setConfirmando(null)}
-            />
-            <motion.div
-              className="fixed z-50 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-sm"
-              initial={{ opacity: 0, scale: 0.95, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 10 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-            >
-              <div className="rounded-2xl border border-border/30 bg-card/95 backdrop-blur-xl shadow-2xl p-6 space-y-5">
-                <div className="flex items-center gap-3">
-                  <div
-                    className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                      confirmando.acao === "aprovar" ? "bg-emerald-400/10" : "bg-red-400/10"
-                    }`}
-                  >
-                    {confirmando.acao === "aprovar" ? (
-                      <Check className="w-5 h-5 text-emerald-500" />
-                    ) : (
-                      <X className="w-5 h-5 text-red-500" />
-                    )}
-                  </div>
-                  <div>
-                    <h2 className="text-[15px] font-semibold text-foreground">
-                      {confirmando.acao === "aprovar" ? "Aprovar acesso" : "Recusar acesso"}
-                    </h2>
-                    <p className="text-[11px] text-muted-foreground/50">
-                      {confirmando.acao === "aprovar"
-                        ? "O usuário poderá avançar no acesso à plataforma."
-                        : "A solicitação sairá da fila de pendentes."}
-                    </p>
-                  </div>
-                </div>
-
-                <p className="text-[12px] text-foreground/70 leading-relaxed">
-                  Tem certeza que deseja{" "}
-                  <strong>{confirmando.acao === "aprovar" ? "aprovar" : "recusar"}</strong> a solicitação
-                  de <strong>{solicitacaoConfirmada.nome}</strong>? A fila será atualizada imediatamente.
-                </p>
-
-                <div className="flex gap-2 pt-1">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="flex-1 text-[12px]"
-                    onClick={() => setConfirmando(null)}
-                    disabled={isProcessing}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button
-                    size="sm"
-                    className={`flex-1 text-[12px] ${
-                      confirmando.acao === "aprovar"
-                        ? "bg-emerald-500 hover:bg-emerald-600 text-white border-0"
-                        : "bg-red-500 hover:bg-red-600 text-white border-0"
-                    }`}
-                    onClick={handleConfirmar}
-                    disabled={isProcessing}
-                  >
-                    {isProcessing
-                      ? "Processando..."
-                      : confirmando.acao === "aprovar"
-                        ? "Sim, aprovar"
-                        : "Sim, recusar"}
-                  </Button>
-                </div>
-              </div>
-            </motion.div>
-          </>
+          <AprovacaoAcessoDialog
+            acao={confirmando.acao}
+            nomeUsuario={solicitacaoConfirmada.nome}
+            cargos={cargos}
+            permissoes={permissoes}
+            cargoId={cargoSelecionadoId}
+            permissaoIds={permissaoIdsSelecionadas}
+            isProcessing={isProcessing}
+            isLoadingOptions={loadingCargos || loadingPermissoes}
+            onCargoChange={setCargoSelecionadoId}
+            onTogglePermissao={togglePermissao}
+            onCancel={() => setConfirmando(null)}
+            onConfirm={handleConfirmar}
+          />
         )}
       </AnimatePresence>
     </div>

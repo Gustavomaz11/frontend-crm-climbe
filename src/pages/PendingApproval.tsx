@@ -115,7 +115,7 @@ const PendingApproval = () => {
             >
               <p className="text-base text-foreground/80 leading-relaxed">
                 Obrigado por sua solicitação! Nossa equipe está analisando seu
-                pedido de acesso à plataforma Climb. Você receberá uma
+                pedido de acesso à plataforma Climbe. Você receberá uma
                 notificação por email assim que a aprovação for concluída.
               </p>
 

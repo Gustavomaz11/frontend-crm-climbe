@@ -23,6 +23,12 @@ import Propostas from "./pages/Propostas.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import AprovarAcesso from "./pages/AprovarAcesso.tsx";
 import CadastroEmpresa from "./pages/CadastroEmpresa.tsx";
+import PipelineVendas from "./pages/PipelineVendas.tsx";
+import PipelineFunisAdmin from "./pages/PipelineFunisAdmin.tsx";
+import PipelineDashboard from "./pages/PipelineDashboard.tsx";
+import PipelineMotivosPerdaAdmin from "./pages/PipelineMotivosPerdaAdmin.tsx";
+import PipelineCampanhas from "./pages/PipelineCampanhas.tsx";
+import PipelineScripts from "./pages/PipelineScripts.tsx";
 
 const App = () => (
   <QueryProvider>
@@ -144,6 +150,54 @@ const App = () => (
               element={
                 <PrivateRoute>
                   <ContratosKanban />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/pipeline-vendas"
+              element={
+                <PrivateRoute>
+                  <PipelineVendas />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/pipeline-vendas/funis"
+              element={
+                <PrivateRoute>
+                  <PipelineFunisAdmin />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/pipeline-vendas/dashboard"
+              element={
+                <PrivateRoute>
+                  <PipelineDashboard />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/pipeline-vendas/motivos-perda"
+              element={
+                <PrivateRoute>
+                  <PipelineMotivosPerdaAdmin />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/pipeline-vendas/campanhas"
+              element={
+                <PrivateRoute>
+                  <PipelineCampanhas />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/pipeline-vendas/scripts"
+              element={
+                <PrivateRoute>
+                  <PipelineScripts />
                 </PrivateRoute>
               }
             />

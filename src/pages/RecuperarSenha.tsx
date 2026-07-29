@@ -118,7 +118,7 @@ const RecuperarSenha = () => {
                             onChange={(e) => setEmail(e.target.value)}
                             onFocus={() => setFocusedField("email")}
                             onBlur={() => setFocusedField(null)}
-                            placeholder="nome@climb.com.br"
+                            placeholder="nome@climbe.com.br"
                             className="w-full h-11 rounded-md border border-input bg-background px-3.5 text-sm text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-accent/60 focus:ring-1 focus:ring-accent/15 transition-all duration-200"
                           />
                           <motion.div
@@ -199,7 +199,7 @@ const RecuperarSenha = () => {
 
         <footer className="flex items-center justify-between px-6 md:px-10 lg:px-14 py-5">
           <span className="text-[9px] text-muted-foreground/25 tracking-wide">
-            © 2026 Climb Investimentos Independentes
+            © 2026 Climbe Investimentos Independentes
           </span>
           <span className="text-[9px] text-muted-foreground/25 font-mono">
             v3.1.0

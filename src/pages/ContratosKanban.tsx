@@ -3,12 +3,9 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   AlertCircle,
-  CalendarDays,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
-  Clock3,
-  GripVertical,
   LayoutDashboard,
   LogOut,
   Moon,
@@ -17,10 +14,12 @@ import {
   Search,
   Sun,
   Trash2,
-  UserRound,
   X,
 } from "lucide-react";
 import ClimbLogo from "@/components/login/ClimbLogo";
+import { KanbanTaskCard } from "@/components/kanban/KanbanTaskCard";
+import { KanbanTaskDialog, type KanbanTaskDraft } from "@/components/kanban/KanbanTaskDialog";
+import { KanbanTaskEditDialog } from "@/components/kanban/KanbanTaskEditDialog";
 import { UserAvatar } from "@/components/UserAvatar";
 import { useSidebarState } from "@/hooks/useSidebarState";
 import { useTheme } from "@/hooks/use-theme";
@@ -29,25 +28,22 @@ import { useAuthStore } from "@/store/useAuthStore";
 import {
   useContratoKanban,
   useContratos,
+  useCreateKanbanSubtarefa,
   useCreateKanbanRaia,
   useCreateKanbanTask,
+  useDeleteKanbanSubtarefa,
   useDeleteKanbanRaia,
   useDeleteKanbanTask,
   useMoveKanbanTask,
+  useToggleKanbanSubtarefa,
+  useUpdateKanbanSubtarefa,
   useUpdateKanbanRaia,
   useUpdateKanbanTask,
   type Contrato,
+  type ContratoKanbanSubtarefa,
   type ContratoKanbanTask,
   type KanbanTaskDTO,
 } from "@/services";
-
-interface TaskDraft {
-  titulo: string;
-  descricao: string;
-  responsavelId: string;
-  dataInicio: string;
-  dataFim: string;
-}
 
 interface PendingRaiaRemoval {
   id: number;
@@ -55,18 +51,14 @@ interface PendingRaiaRemoval {
   tarefas: number;
 }
 
-const emptyDraft: TaskDraft = {
+const emptyDraft: KanbanTaskDraft = {
   titulo: "",
   descricao: "",
+  prioridade: "MEDIA",
   responsavelId: "",
   dataInicio: "",
   dataFim: "",
 };
-
-function formatDate(value?: string | null) {
-  if (!value) return "-";
-  return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" }).format(new Date(`${value}T00:00:00`));
-}
 
 function getContratoLabel(contrato: Contrato) {
   return `CT-${contrato.id} · ${contrato.empresaNome}`;
@@ -79,8 +71,8 @@ const ContratosKanban = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [newRaiaTitle, setNewRaiaTitle] = useState("");
   const [taskModalRaiaId, setTaskModalRaiaId] = useState<number | null>(null);
-  const [taskDraft, setTaskDraft] = useState<TaskDraft>(emptyDraft);
-  const [editingTask, setEditingTask] = useState<ContratoKanbanTask | null>(null);
+  const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
+  const [taskDraft, setTaskDraft] = useState<KanbanTaskDraft>(emptyDraft);
   const [editingRaiaId, setEditingRaiaId] = useState<number | null>(null);
   const [editingRaiaTitle, setEditingRaiaTitle] = useState("");
   const [draggedTask, setDraggedTask] = useState<{ task: ContratoKanbanTask; fromRaiaId: number } | null>(null);
@@ -102,6 +94,10 @@ const ContratosKanban = () => {
       : contratosAprovados[0]?.id;
   const selectedContrato = contratosAprovados.find((contrato) => contrato.id === selectedContratoId);
   const { data: board, isLoading: boardLoading, error: boardError } = useContratoKanban(selectedContratoId);
+  const editingTask = useMemo(
+    () => board?.raias.flatMap((raia) => raia.tasks).find((task) => task.id === editingTaskId),
+    [board, editingTaskId],
+  );
 
   const createRaia = useCreateKanbanRaia();
   const updateRaia = useUpdateKanbanRaia();
@@ -110,6 +106,10 @@ const ContratosKanban = () => {
   const updateTask = useUpdateKanbanTask();
   const moveTask = useMoveKanbanTask();
   const deleteTask = useDeleteKanbanTask();
+  const createSubtask = useCreateKanbanSubtarefa();
+  const updateSubtask = useUpdateKanbanSubtarefa();
+  const toggleSubtask = useToggleKanbanSubtarefa();
+  const deleteSubtask = useDeleteKanbanSubtarefa();
 
   const basicUserData = useAuthStore((state) => state.basicUserData);
   const userData = useAuthStore((state) => state.userData);
@@ -147,12 +147,12 @@ const ContratosKanban = () => {
 
   function selectContrato(id: number) {
     setSearchParams({ contrato: String(id) });
-    setEditingTask(null);
     setEditingRaiaId(null);
     setDraggedTask(null);
     setDragOverRaiaId(null);
     setPendingRaiaRemoval(null);
     setTaskModalRaiaId(null);
+    setEditingTaskId(null);
     setTaskDraft(emptyDraft);
     setMessage(null);
   }
@@ -250,6 +250,7 @@ const ContratosKanban = () => {
           raiaId: taskModalRaiaId,
           titulo: taskDraft.titulo.trim(),
           descricao: taskDraft.descricao.trim(),
+          prioridade: taskDraft.prioridade,
           responsavelId: taskDraft.responsavelId ? Number(taskDraft.responsavelId) : null,
           dataInicio: taskDraft.dataInicio || undefined,
           dataFim: taskDraft.dataFim || undefined,
@@ -263,24 +264,26 @@ const ContratosKanban = () => {
     }
   }
 
-  async function handleSaveTask() {
-    if (!selectedContratoId || !editingTask) return;
+  async function handleSaveTask(task: ContratoKanbanTask) {
+    if (!selectedContratoId) return false;
     const payload: KanbanTaskDTO = {
-      raiaId: editingTask.raiaId,
-      titulo: editingTask.titulo,
-      descricao: editingTask.descricao || "",
-      responsavelId: editingTask.responsavel?.id ?? null,
-      dataInicio: editingTask.dataInicio || undefined,
-      dataFim: editingTask.dataFim || undefined,
-      posicao: editingTask.posicao,
+      raiaId: task.raiaId,
+      titulo: task.titulo,
+      descricao: task.descricao || "",
+      prioridade: task.prioridade,
+      responsavelId: task.responsavel?.id ?? null,
+      dataInicio: task.dataInicio || undefined,
+      dataFim: task.dataFim || undefined,
+      posicao: task.posicao,
     };
 
     try {
-      await updateTask.mutateAsync({ contratoId: selectedContratoId, taskId: editingTask.id, data: payload });
-      setEditingTask(null);
+      await updateTask.mutateAsync({ contratoId: selectedContratoId, taskId: task.id, data: payload });
       setMessage({ type: "success", text: "Tarefa atualizada." });
+      return true;
     } catch (error) {
       setMessage({ type: "error", text: error instanceof Error ? error.message : "Erro ao atualizar tarefa." });
+      return false;
     }
   }
 
@@ -332,10 +335,66 @@ const ContratosKanban = () => {
 
     try {
       await deleteTask.mutateAsync({ contratoId: selectedContratoId, taskId });
-      setEditingTask(null);
       setMessage({ type: "success", text: "Tarefa removida." });
     } catch (error) {
       setMessage({ type: "error", text: error instanceof Error ? error.message : "Erro ao remover tarefa." });
+    }
+  }
+
+  async function handleCreateSubtask(taskId: number, titulo: string) {
+    if (!selectedContratoId) return false;
+    try {
+      await createSubtask.mutateAsync({ contratoId: selectedContratoId, taskId, data: { titulo } });
+      setMessage({ type: "success", text: "Subtarefa criada." });
+      return true;
+    } catch (error) {
+      setMessage({ type: "error", text: error instanceof Error ? error.message : "Erro ao criar subtarefa." });
+      return false;
+    }
+  }
+
+  async function handleUpdateSubtask(taskId: number, subtarefa: ContratoKanbanSubtarefa) {
+    if (!selectedContratoId) return false;
+    try {
+      await updateSubtask.mutateAsync({
+        contratoId: selectedContratoId,
+        taskId,
+        subtarefaId: subtarefa.id,
+        data: {
+          titulo: subtarefa.titulo,
+          concluida: subtarefa.concluida,
+          posicao: subtarefa.posicao,
+        },
+      });
+      setMessage({ type: "success", text: "Subtarefa atualizada." });
+      return true;
+    } catch (error) {
+      setMessage({ type: "error", text: error instanceof Error ? error.message : "Erro ao atualizar subtarefa." });
+      return false;
+    }
+  }
+
+  async function handleToggleSubtask(taskId: number, subtarefa: ContratoKanbanSubtarefa) {
+    if (!selectedContratoId) return;
+    try {
+      await toggleSubtask.mutateAsync({
+        contratoId: selectedContratoId,
+        taskId,
+        subtarefaId: subtarefa.id,
+        concluida: !subtarefa.concluida,
+      });
+    } catch (error) {
+      setMessage({ type: "error", text: error instanceof Error ? error.message : "Erro ao concluir subtarefa." });
+    }
+  }
+
+  async function handleDeleteSubtask(taskId: number, subtarefaId: number) {
+    if (!selectedContratoId) return;
+    try {
+      await deleteSubtask.mutateAsync({ contratoId: selectedContratoId, taskId, subtarefaId });
+      setMessage({ type: "success", text: "Subtarefa removida." });
+    } catch (error) {
+      setMessage({ type: "error", text: error instanceof Error ? error.message : "Erro ao remover subtarefa." });
     }
   }
 
@@ -495,73 +554,22 @@ const ContratosKanban = () => {
                             {dragOverRaiaId === raia.id ? "Solte a tarefa aqui" : "Sem tarefas"}
                           </div>
                         ) : (
-                          raia.tasks.map((task) => {
-                            const canMoveTask = board.gestor || task.responsavel?.id === usuarioId;
-                            const isDragging = draggedTask?.task.id === task.id;
-
-                            return (
-                            <div
+                          raia.tasks.map((task) => (
+                            <KanbanTaskCard
                               key={task.id}
-                              draggable={canMoveTask && !moveTask.isPending && editingTask?.id !== task.id}
+                              task={task}
+                              gestor={board.gestor}
+                              usuarioId={usuarioId}
+                              isDragging={draggedTask?.task.id === task.id}
+                              movePending={moveTask.isPending}
+                              subtaskPending={createSubtask.isPending || updateSubtask.isPending || toggleSubtask.isPending || deleteSubtask.isPending}
                               onDragStart={(event) => handleTaskDragStart(event, task, raia.id)}
                               onDragEnd={handleTaskDragEnd}
-                              className={`group rounded-lg border border-border/20 bg-background/60 p-3 transition-all ${canMoveTask ? "cursor-grab active:cursor-grabbing hover:border-accent/25 hover:shadow-[0_8px_18px_-12px_hsl(var(--accent)/0.45)]" : ""} ${isDragging ? "opacity-45 ring-1 ring-accent/30" : ""}`}
-                            >
-                              {editingTask?.id === task.id ? (
-                                <div className="space-y-2">
-                                  <input value={editingTask.titulo} onChange={(e) => setEditingTask({ ...editingTask, titulo: e.target.value })} className="h-8 w-full rounded-md border border-border/25 bg-background px-2 text-[12px] outline-none focus:border-accent/40" />
-                                  <textarea value={editingTask.descricao || ""} onChange={(e) => setEditingTask({ ...editingTask, descricao: e.target.value })} className="min-h-[64px] w-full rounded-md border border-border/25 bg-background px-2 py-1.5 text-[12px] outline-none focus:border-accent/40" />
-                                  <select value={editingTask.responsavel?.id ?? ""} onChange={(e) => {
-                                    const responsavel = board.participantes.find((item) => item.id === Number(e.target.value)) || null;
-                                    setEditingTask({ ...editingTask, responsavel });
-                                  }} className="h-8 w-full rounded-md border border-border/25 bg-background px-2 text-[12px] outline-none focus:border-accent/40">
-                                    <option value="">Sem responsável</option>
-                                    {board.participantes.map((usuario) => <option key={usuario.id} value={usuario.id}>{usuario.nomeCompleto}</option>)}
-                                  </select>
-                                  <div className="grid grid-cols-2 gap-2">
-                                    <input type="date" value={editingTask.dataInicio || ""} onChange={(e) => setEditingTask({ ...editingTask, dataInicio: e.target.value })} className="h-8 rounded-md border border-border/25 bg-background px-2 text-[12px] outline-none focus:border-accent/40" />
-                                    <input type="date" value={editingTask.dataFim || ""} onChange={(e) => setEditingTask({ ...editingTask, dataFim: e.target.value })} className="h-8 rounded-md border border-border/25 bg-background px-2 text-[12px] outline-none focus:border-accent/40" />
-                                  </div>
-                                  <div className="flex justify-end gap-2">
-                                    <button type="button" onClick={() => setEditingTask(null)} className="flex h-8 w-8 items-center justify-center rounded-md border border-border/25 text-muted-foreground hover:text-foreground"><X className="h-3.5 w-3.5" /></button>
-                                    <button type="button" onClick={handleSaveTask} className="flex h-8 w-8 items-center justify-center rounded-md bg-accent text-accent-foreground"><Save className="h-3.5 w-3.5" /></button>
-                                  </div>
-                                </div>
-                              ) : (
-                                <>
-                                  {board.gestor ? (
-                                    <button type="button" onClick={() => setEditingTask(task)} className="w-full text-left">
-                                      <div className="flex items-start justify-between gap-2">
-                                        <p className="text-[13px] font-semibold text-foreground/85">{task.titulo}</p>
-                                        {canMoveTask && <GripVertical className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground/25 transition-colors group-hover:text-muted-foreground/50" />}
-                                      </div>
-                                      {task.descricao && <p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground/55">{task.descricao}</p>}
-                                    </button>
-                                  ) : (
-                                    <div className="w-full text-left">
-                                      <div className="flex items-start justify-between gap-2">
-                                        <p className="text-[13px] font-semibold text-foreground/85">{task.titulo}</p>
-                                        {canMoveTask && <GripVertical className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground/25 transition-colors group-hover:text-muted-foreground/50" />}
-                                      </div>
-                                      {task.descricao && <p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground/55">{task.descricao}</p>}
-                                    </div>
-                                  )}
-                                  <div className="mt-3 space-y-1 text-[10px] text-muted-foreground/50">
-                                    <div className="flex items-center gap-1.5"><UserRound className="h-3 w-3" /> {task.responsavel?.nomeCompleto || "Sem responsável"}</div>
-                                    <div className="flex items-center gap-1.5"><Clock3 className="h-3 w-3" /> {formatDate(task.dataInicio)} até {formatDate(task.dataFim)}</div>
-                                  </div>
-                                  {board.gestor && (
-                                    <div className="mt-3">
-                                      <button type="button" title="Remover tarefa" onClick={() => handleDeleteTask(task.id)} className="flex h-7 items-center gap-1.5 rounded-md border border-destructive/15 px-2 text-[10px] font-semibold text-destructive hover:bg-destructive/10">
-                                        <Trash2 className="h-3 w-3" /> Remover
-                                      </button>
-                                    </div>
-                                  )}
-                                </>
-                              )}
-                            </div>
-                            );
-                          })
+                              onEdit={(taskToEdit) => setEditingTaskId(taskToEdit.id)}
+                              onDelete={handleDeleteTask}
+                              onToggleSubtask={handleToggleSubtask}
+                            />
+                          ))
                         )}
                       </div>
 
@@ -619,64 +627,33 @@ const ContratosKanban = () => {
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {taskModalRaiaId && board?.gestor && (
-          <motion.div className="fixed inset-0 z-50 flex items-center justify-center p-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <motion.div className="absolute inset-0 bg-background/80 backdrop-blur-md" onClick={() => { setTaskModalRaiaId(null); setTaskDraft(emptyDraft); }} />
-            <motion.div className="relative z-10 w-full max-w-lg overflow-hidden rounded-2xl border border-border/30 bg-card/95 shadow-2xl backdrop-blur-xl" initial={{ scale: 0.92, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.92, opacity: 0, y: 20 }}>
-              <div className="flex items-center justify-between border-b border-border/20 p-5">
-                <div>
-                  <h2 className="text-[16px] font-semibold text-foreground">Nova tarefa</h2>
-                  <p className="mt-0.5 text-[11px] text-muted-foreground/50">
-                    {board.raias.find((raia) => raia.id === taskModalRaiaId)?.titulo || "Raia selecionada"}
-                  </p>
-                </div>
-                <button onClick={() => { setTaskModalRaiaId(null); setTaskDraft(emptyDraft); }} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/20 hover:text-foreground">
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-              <div className="space-y-3 p-5">
-                <div>
-                  <label className="mb-1 block text-[10px] text-muted-foreground/40 uppercase tracking-wider">Título</label>
-                  <input value={taskDraft.titulo} onChange={(e) => setTaskDraft((current) => ({ ...current, titulo: e.target.value }))} placeholder="Nome da tarefa" className="h-9 w-full rounded-lg border border-border/25 bg-background/60 px-3 text-[12px] text-foreground outline-none transition-colors focus:border-accent/40" />
-                </div>
-                <div>
-                  <label className="mb-1 block text-[10px] text-muted-foreground/40 uppercase tracking-wider">Descrição</label>
-                  <textarea value={taskDraft.descricao} onChange={(e) => setTaskDraft((current) => ({ ...current, descricao: e.target.value }))} placeholder="Detalhes da tarefa" className="min-h-[88px] w-full rounded-lg border border-border/25 bg-background/60 px-3 py-2 text-[12px] text-foreground outline-none transition-colors focus:border-accent/40" />
-                </div>
-                <div>
-                  <label className="mb-1 block text-[10px] text-muted-foreground/40 uppercase tracking-wider">Responsável</label>
-                  <select value={taskDraft.responsavelId} onChange={(e) => setTaskDraft((current) => ({ ...current, responsavelId: e.target.value }))} className="h-9 w-full rounded-lg border border-border/25 bg-background/60 px-3 text-[12px] text-foreground outline-none transition-colors focus:border-accent/40">
-                    <option value="">Sem responsável</option>
-                    {board.participantes.map((usuario) => <option key={usuario.id} value={usuario.id}>{usuario.nomeCompleto}</option>)}
-                  </select>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <label>
-                    <span className="mb-1 block text-[10px] text-muted-foreground/40 uppercase tracking-wider">Início</span>
-                    <span className="relative block">
-                      <CalendarDays className="pointer-events-none absolute left-2 top-2.5 h-3.5 w-3.5 text-muted-foreground/35" />
-                      <input type="date" value={taskDraft.dataInicio} onChange={(e) => setTaskDraft((current) => ({ ...current, dataInicio: e.target.value }))} className="h-9 w-full rounded-lg border border-border/25 bg-background/60 pl-8 pr-2 text-[12px] text-foreground outline-none transition-colors focus:border-accent/40" />
-                    </span>
-                  </label>
-                  <label>
-                    <span className="mb-1 block text-[10px] text-muted-foreground/40 uppercase tracking-wider">Fim</span>
-                    <input type="date" value={taskDraft.dataFim} onChange={(e) => setTaskDraft((current) => ({ ...current, dataFim: e.target.value }))} className="h-9 w-full rounded-lg border border-border/25 bg-background/60 px-2 text-[12px] text-foreground outline-none transition-colors focus:border-accent/40" />
-                  </label>
-                </div>
-                <div className="flex justify-end gap-2 pt-2">
-                  <button type="button" onClick={() => { setTaskModalRaiaId(null); setTaskDraft(emptyDraft); }} className="h-9 rounded-lg border border-border/30 px-4 text-[12px] font-semibold text-muted-foreground transition-colors hover:text-foreground">
-                    Cancelar
-                  </button>
-                  <button type="button" onClick={handleCreateTask} disabled={createTask.isPending} className="h-9 rounded-lg bg-accent px-4 text-[12px] font-semibold text-accent-foreground transition-colors hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-50">
-                    {createTask.isPending ? "Criando..." : "Criar tarefa"}
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {taskModalRaiaId && board?.gestor && (
+        <KanbanTaskDialog
+          raiaTitulo={board.raias.find((raia) => raia.id === taskModalRaiaId)?.titulo || "Raia selecionada"}
+          draft={taskDraft}
+          usuarios={board.usuariosDisponiveis || board.participantes}
+          isSaving={createTask.isPending}
+          onChange={setTaskDraft}
+          onClose={() => { setTaskModalRaiaId(null); setTaskDraft(emptyDraft); }}
+          onSubmit={handleCreateTask}
+        />
+      )}
+
+      {editingTask && board?.gestor && (
+        <KanbanTaskEditDialog
+          key={editingTask.id}
+          task={editingTask}
+          usuarios={board.usuariosDisponiveis || board.participantes}
+          isSaving={updateTask.isPending}
+          subtaskPending={createSubtask.isPending || updateSubtask.isPending || toggleSubtask.isPending || deleteSubtask.isPending}
+          onClose={() => setEditingTaskId(null)}
+          onSave={handleSaveTask}
+          onCreateSubtask={handleCreateSubtask}
+          onUpdateSubtask={handleUpdateSubtask}
+          onToggleSubtask={handleToggleSubtask}
+          onDeleteSubtask={handleDeleteSubtask}
+        />
+      )}
     </div>
   );
 };

@@ -16,6 +16,7 @@ import {
   useExchangeGoogleCode,
 } from "@/hooks/useAuth/useGoogleAuth";
 import { syncGoogleAccessToken } from "@/lib/googleAccessToken";
+import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from "@/lib/authCookies";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useUserRoleStore } from "@/store/useUserRoleStore";
 
@@ -52,12 +53,12 @@ const Index = () => {
         const { data } = response;
 
         // Salvar tokens
-        setCookie(null, "@CLIMB:T", data.accessToken, {
+        setCookie(null, ACCESS_TOKEN_COOKIE, data.accessToken, {
           maxAge: data.expiresIn,
           path: "/",
         });
 
-        setCookie(null, "@CLIMB:R", data.refreshToken, {
+        setCookie(null, REFRESH_TOKEN_COOKIE, data.refreshToken, {
           maxAge: 60 * 60 * 24 * 30,
           path: "/",
         });
@@ -143,12 +144,12 @@ const Index = () => {
         return;
       }
 
-      setCookie(null, "@CLIMB:T", response.accessToken, {
+      setCookie(null, ACCESS_TOKEN_COOKIE, response.accessToken, {
         maxAge: response.expiresIn,
         path: "/",
       });
 
-      setCookie(null, "@CLIMB:R", response.refreshToken, {
+      setCookie(null, REFRESH_TOKEN_COOKIE, response.refreshToken, {
         maxAge: 60 * 60 * 24 * 30,
         path: "/",
       });
@@ -321,7 +322,7 @@ const Index = () => {
                       onChange={(e) => setEmail(e.target.value)}
                       onFocus={() => setFocusedField("email")}
                       onBlur={() => setFocusedField(null)}
-                      placeholder="nome@climb.com.br"
+                      placeholder="nome@climbe.com.br"
                       className="h-11 w-full rounded-md border border-input bg-background px-3.5 text-sm text-foreground placeholder:text-muted-foreground/30 transition-all duration-200 focus:border-accent/60 focus:outline-none focus:ring-1 focus:ring-accent/15"
                     />
 
@@ -503,7 +504,7 @@ const Index = () => {
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 1.2 }}
           >
-            © 2026 Climb Investimentos Independentes
+            © 2026 Climbe Investimentos Independentes
           </motion.span>
 
           <motion.span

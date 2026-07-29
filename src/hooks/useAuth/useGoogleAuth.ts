@@ -32,7 +32,6 @@ interface CompleteRegistrationDTO {
   cpf: string;
   contato: string;
   senha: string;
-  cargoId: number;
 }
 
 interface CompleteRegistrationResponse {
@@ -84,7 +83,6 @@ export const useCompleteRegistration = () => {
           cpf: data.cpf,
           contato: data.contato,
           senha: data.senha,
-          cargoId: data.cargoId,
         },
         {
           headers: {

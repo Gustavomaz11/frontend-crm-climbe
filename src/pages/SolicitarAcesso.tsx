@@ -11,6 +11,7 @@ import {
   useExchangeGoogleCode,
 } from "@/hooks/useAuth/useGoogleAuth";
 import { syncGoogleAccessToken } from "@/lib/googleAccessToken";
+import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from "@/lib/authCookies";
 import { useCargos, useSolicitarAcessoUsuario } from "@/services/useUsuarios";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useUserRoleStore } from "@/store/useUserRoleStore";
@@ -64,24 +65,21 @@ const SolicitarAcesso = () => {
         });
 
         if (data.pendingToken) {
-          // Primeiro acesso: salvar pendingToken e cargoId para completar o cadastro
+          // Primeiro acesso: o cargo e as permissões são definidos pelo aprovador.
           sessionStorage.setItem("@CLIMB:PENDING_TOKEN", data.pendingToken);
-          sessionStorage.setItem(
-            "@CLIMB:PENDING_CARGO_ID",
-            String(data.usuario.cargoId ?? 0)
-          );
+          sessionStorage.removeItem("@CLIMB:PENDING_CARGO_ID");
           toast.success(`Bem-vindo, ${data.usuario.nomeCompleto}! Complete seu cadastro.`);
           navigate("/first-access");
           return;
         }
 
         // Login normal: salvar tokens
-        setCookie(null, "@CLIMB:T", data.accessToken, {
+        setCookie(null, ACCESS_TOKEN_COOKIE, data.accessToken, {
           maxAge: data.expiresIn,
           path: "/",
         });
 
-        setCookie(null, "@CLIMB:R", data.refreshToken, {
+        setCookie(null, REFRESH_TOKEN_COOKIE, data.refreshToken, {
           maxAge: 60 * 60 * 24 * 30,
           path: "/",
         });
@@ -592,7 +590,7 @@ const SolicitarAcesso = () => {
 
         <footer className="flex items-center justify-between px-6 md:px-10 lg:px-14 py-5">
           <span className="text-[9px] text-muted-foreground/25 tracking-wide">
-            © 2026 Climb Investimentos Independentes
+            © 2026 Climbe Investimentos Independentes
           </span>
           <span className="text-[9px] text-muted-foreground/25 font-mono">
             v3.1.0

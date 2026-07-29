@@ -17,6 +17,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { useCompleteRegistration } from "@/hooks/useAuth/useGoogleAuth";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useUserRoleStore } from "@/store/useUserRoleStore";
+import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from "@/lib/authCookies";
 
 const FirstAccess = () => {
   const { isDark, setIsDark } = useTheme();
@@ -125,8 +126,6 @@ const FirstAccess = () => {
     }
 
     const pendingToken = sessionStorage.getItem("@CLIMB:PENDING_TOKEN");
-    const cargoId = Number(sessionStorage.getItem("@CLIMB:PENDING_CARGO_ID") ?? 0);
-
     if (!pendingToken) {
       toast.error("Sessão expirada. Faça login novamente.");
       navigate("/solicitar-acesso");
@@ -139,15 +138,14 @@ const FirstAccess = () => {
         cpf: formData.cpf.replace(/\D/g, ""),
         contato: formData.contato,
         senha: formData.senha,
-        cargoId,
       });
 
-      setCookie(null, "@CLIMB:T", response.data.accessToken, {
+      setCookie(null, ACCESS_TOKEN_COOKIE, response.data.accessToken, {
         maxAge: 60 * 60 * 8,
         path: "/",
       });
 
-      setCookie(null, "@CLIMB:R", response.data.refreshToken, {
+      setCookie(null, REFRESH_TOKEN_COOKIE, response.data.refreshToken, {
         maxAge: 60 * 60 * 24 * 30,
         path: "/",
       });
@@ -161,7 +159,6 @@ const FirstAccess = () => {
       });
 
       sessionStorage.removeItem("@CLIMB:PENDING_TOKEN");
-      sessionStorage.removeItem("@CLIMB:PENDING_CARGO_ID");
 
       toast.success("Cadastro completado com sucesso!");
       navigate("/dashboard");

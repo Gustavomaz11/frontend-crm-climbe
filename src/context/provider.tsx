@@ -5,6 +5,11 @@ import { useNavigate } from "react-router-dom";
 import { api } from "@/api";
 import { setUnauthorizedCallback } from "@/api";
 import { syncGoogleAccessToken } from "@/lib/googleAccessToken";
+import {
+  ACCESS_TOKEN_COOKIE,
+  REFRESH_TOKEN_COOKIE,
+  clearLegacyAuthStorage,
+} from "@/lib/authCookies";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useUserRoleStore } from "@/store/useUserRoleStore";
 import { jwtDecode } from "jwt-decode";
@@ -60,9 +65,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
       refreshTokenInterval = null;
     }
 
-    destroyCookie(undefined, "@CLIMB:T");
-    destroyCookie(undefined, "@CLIMB:R");
-    destroyCookie(undefined, "@CLIMB:RT");
+    destroyCookie(undefined, ACCESS_TOKEN_COOKIE, { path: "/" });
+    destroyCookie(undefined, REFRESH_TOKEN_COOKIE, { path: "/" });
+    clearLegacyAuthStorage();
     destroyCookie(undefined, "email");
     syncGoogleAccessToken(null);
     clearSession();
@@ -74,7 +79,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   // Função para fazer refresh do token
   const performTokenRefresh = useCallback(async () => {
     try {
-      const { "@CLIMB:RT": refreshTokenCookie } = parseCookies();
+      const refreshTokenCookie = parseCookies()[REFRESH_TOKEN_COOKIE];
 
       if (!refreshTokenCookie) {
         throw new Error("Refresh token não encontrado");
@@ -85,7 +90,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       const isProduction = process.env.NODE_ENV === "production";
 
       // Atualizar token no cookie
-      setCookie(undefined, "@CLIMB:T", accessToken, {
+      setCookie(undefined, ACCESS_TOKEN_COOKIE, accessToken, {
         maxAge: 60 * 60 * 24 * 7,
         path: "/",
         secure: isProduction,
@@ -123,6 +128,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   // Configurar callback para 401
   useEffect(() => {
+    clearLegacyAuthStorage();
+  }, []);
+
+  useEffect(() => {
     setUnauthorizedCallback(async () => {
       return await performTokenRefresh();
     });
@@ -148,7 +157,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         const isProduction = process.env.NODE_ENV === "production";
 
         // Salvar access token
-        setCookie(undefined, "@CLIMB:T", accessToken, {
+        setCookie(undefined, ACCESS_TOKEN_COOKIE, accessToken, {
           maxAge: 60 * 60 * 24 * 7,
           path: "/",
           secure: isProduction,
@@ -156,7 +165,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
         });
 
         // Salvar refresh token em cookie mais seguro
-        setCookie(undefined, "@CLIMB:RT", refreshTokenData, {
+        setCookie(undefined, REFRESH_TOKEN_COOKIE, refreshTokenData, {
           maxAge: 60 * 60 * 24 * 7, // 7 dias
           path: "/",
           secure: isProduction,

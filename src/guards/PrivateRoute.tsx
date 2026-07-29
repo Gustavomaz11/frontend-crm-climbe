@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import { parseCookies } from "nookies";
 import { useAuthStore } from "@/store/useAuthStore";
+import { ACCESS_TOKEN_COOKIE } from "@/lib/authCookies";
 
 interface PrivateRouteProps {
   children: ReactNode;
@@ -9,9 +10,9 @@ interface PrivateRouteProps {
 
 export function PrivateRoute({ children }: PrivateRouteProps) {
   const { basicUserData } = useAuthStore();
-  const localToken = localStorage.getItem("@CLIMB:T");
+  const localToken = localStorage.getItem(ACCESS_TOKEN_COOKIE);
   const cookies = parseCookies();
-  const cookieToken = cookies["@CLIMB:T"];
+  const cookieToken = cookies[ACCESS_TOKEN_COOKIE];
 
   const isAuthenticated = Boolean(basicUserData || localToken || cookieToken);
 

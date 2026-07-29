@@ -1,9 +1,8 @@
 import { useState, type ReactNode } from 'react';
 import svgPathsTheme from '../../imports/svg-24pw80vll6';
 import { useTheme } from '../context/ThemeContext';
-import logo from '../../imports/Logo-vetorizada-escuro.svg';
-import logoBranca from '../../imports/Logo-vetorizada-claro.svg';
 import barrasClimbe from '../../imports/Barras-climbe.svg';
+import ClimbLogo from '../../components/login/ClimbLogo';
 
 type SidebarPage = 'home' | 'contratos' | 'climbe' | 'permissoes' | 'empresas' | 'configuracoes';
 
@@ -138,11 +137,11 @@ export default function Sidebar({ currentPage, onNavigate }: SidebarProps) {
                 className={`mx-auto block transition-all duration-300 ${isCollapsed ? 'h-[28px] w-[28px]' : 'h-[49px] w-[142px]'}`}
                 aria-label={isCollapsed ? 'Expandir sidebar' : 'Recolher sidebar'}
               >
-                <img
-                  src={isCollapsed ? barrasClimbe : theme === 'dark' ? logoBranca : logo}
-                  alt={isCollapsed ? 'Barras Climbe' : 'Logo'}
-                  className={`mx-auto object-contain ${isCollapsed ? 'w-[20px] h-[20px]' : 'w-full h-full'}`}
-                />
+                {isCollapsed ? (
+                  <img src={barrasClimbe} alt="Barras Climbe" className="mx-auto h-[20px] w-[20px] object-contain" />
+                ) : (
+                  <ClimbLogo className={`mx-auto h-full w-full ${theme === 'dark' ? 'text-white' : 'text-[#1f2937]'}`} />
+                )}
               </button>
             </div>
 

@@ -16,17 +16,30 @@ export interface UsuarioResumo {
   email?: string;
 }
 
+export type KanbanTaskPrioridade = "BAIXA" | "MEDIA" | "ALTA";
+
+export interface ContratoKanbanSubtarefa {
+  id: number;
+  titulo: string;
+  concluida: boolean;
+  posicao: number;
+  criadoEm?: string;
+  atualizadoEm?: string;
+}
+
 export interface ContratoKanbanTask {
   id: number;
   raiaId: number;
   titulo: string;
   descricao?: string | null;
+  prioridade: KanbanTaskPrioridade;
   responsavel?: UsuarioResumo | null;
   dataInicio?: string | null;
   dataFim?: string | null;
   posicao: number;
   criadoEm?: string;
   atualizadoEm?: string;
+  subtarefas: ContratoKanbanSubtarefa[];
 }
 
 export interface ContratoKanbanRaia {
@@ -44,6 +57,7 @@ export interface ContratoKanbanBoard {
   gestor: boolean;
   responsavel?: UsuarioResumo | null;
   participantes: UsuarioResumo[];
+  usuariosDisponiveis: UsuarioResumo[];
   raias: ContratoKanbanRaia[];
 }
 
@@ -56,6 +70,7 @@ export interface KanbanTaskDTO {
   raiaId: number;
   titulo: string;
   descricao?: string;
+  prioridade?: KanbanTaskPrioridade;
   responsavelId?: number | null;
   dataInicio?: string;
   dataFim?: string;
@@ -64,6 +79,12 @@ export interface KanbanTaskDTO {
 
 export interface MoveKanbanTaskDTO {
   raiaId: number;
+}
+
+export interface KanbanSubtarefaDTO {
+  titulo: string;
+  concluida?: boolean;
+  posicao?: number;
 }
 
 function unwrap<T>(response: T | ApiEnvelope<T>): T {
@@ -219,6 +240,125 @@ export function useDeleteKanbanTask() {
     mutationFn: async ({ contratoId, taskId }: { contratoId: number; taskId: number }) => {
       try {
         const response = await api.delete<ApiEnvelope<ContratoKanbanBoard>>(`/contratos/${contratoId}/kanban/tasks/${taskId}`);
+        return unwrap(response.data);
+      } catch (error) {
+        throw new Error(getApiErrorMessage(error));
+      }
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["contratos", variables.contratoId, "kanban"] });
+    },
+  });
+}
+
+export function useCreateKanbanSubtarefa() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      contratoId,
+      taskId,
+      data,
+    }: {
+      contratoId: number;
+      taskId: number;
+      data: KanbanSubtarefaDTO;
+    }) => {
+      try {
+        const response = await api.post<ApiEnvelope<ContratoKanbanBoard>>(
+          `/contratos/${contratoId}/kanban/tasks/${taskId}/subtasks`,
+          data,
+        );
+        return unwrap(response.data);
+      } catch (error) {
+        throw new Error(getApiErrorMessage(error));
+      }
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["contratos", variables.contratoId, "kanban"] });
+    },
+  });
+}
+
+export function useUpdateKanbanSubtarefa() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      contratoId,
+      taskId,
+      subtarefaId,
+      data,
+    }: {
+      contratoId: number;
+      taskId: number;
+      subtarefaId: number;
+      data: KanbanSubtarefaDTO;
+    }) => {
+      try {
+        const response = await api.put<ApiEnvelope<ContratoKanbanBoard>>(
+          `/contratos/${contratoId}/kanban/tasks/${taskId}/subtasks/${subtarefaId}`,
+          data,
+        );
+        return unwrap(response.data);
+      } catch (error) {
+        throw new Error(getApiErrorMessage(error));
+      }
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["contratos", variables.contratoId, "kanban"] });
+    },
+  });
+}
+
+export function useToggleKanbanSubtarefa() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      contratoId,
+      taskId,
+      subtarefaId,
+      concluida,
+    }: {
+      contratoId: number;
+      taskId: number;
+      subtarefaId: number;
+      concluida: boolean;
+    }) => {
+      try {
+        const response = await api.patch<ApiEnvelope<ContratoKanbanBoard>>(
+          `/contratos/${contratoId}/kanban/tasks/${taskId}/subtasks/${subtarefaId}/conclusao`,
+          { concluida },
+        );
+        return unwrap(response.data);
+      } catch (error) {
+        throw new Error(getApiErrorMessage(error));
+      }
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["contratos", variables.contratoId, "kanban"] });
+    },
+  });
+}
+
+export function useDeleteKanbanSubtarefa() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      contratoId,
+      taskId,
+      subtarefaId,
+    }: {
+      contratoId: number;
+      taskId: number;
+      subtarefaId: number;
+    }) => {
+      try {
+        const response = await api.delete<ApiEnvelope<ContratoKanbanBoard>>(
+          `/contratos/${contratoId}/kanban/tasks/${taskId}/subtasks/${subtarefaId}`,
+        );
         return unwrap(response.data);
       } catch (error) {
         throw new Error(getApiErrorMessage(error));
