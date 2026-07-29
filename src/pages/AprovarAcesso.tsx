@@ -112,7 +112,7 @@ function normalizeSolicitacao(solicitacao: SolicitacaoAcesso): SolicitacaoAcesso
     origemLabel: solicitacao.origem === "GOOGLE" ? "Google OAuth" : "Cadastro manual",
     dataSolicitacao: solicitacao.criadoEm,
     expiraEm: solicitacao.expiraEm,
-    status: "pendente",
+    status: solicitacao.status.toLowerCase() as Status,
     avatarUrl: solicitacao.avatarUrl,
     avatarFallback: getInitials(nome) || "US",
   };
@@ -138,7 +138,6 @@ const AprovarAcesso = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useSidebarState();
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<Status | "todos">("todos");
-  const [solicitacoesConcluidas, setSolicitacoesConcluidas] = useState<SolicitacaoAcessoView[]>([]);
   const [confirmando, setConfirmando] = useState<{
     key: string;
     acao: AcaoConfirmacao;
@@ -148,7 +147,7 @@ const AprovarAcesso = () => {
   const navigate = useNavigate();
   const navItems = useVisibleMainNavItems();
 
-  const { data: solicitacoesPendentes = [], isLoading, isError, error } = useSolicitacoesAcesso();
+  const { data: solicitacoesPersistidas = [], isLoading, isError, error } = useSolicitacoesAcesso();
   const aprovarSolicitacao = useAprovarSolicitacaoAcesso();
   const recusarSolicitacao = useRecusarSolicitacaoAcesso();
   const { data: cargos = [], isLoading: loadingCargos } = useCargos();
@@ -168,14 +167,10 @@ const AprovarAcesso = () => {
     userData?.pessoa?.fotoPerfil ||
     null;
 
-  const solicitacoes = useMemo(() => {
-    const chavesConcluidas = new Set(solicitacoesConcluidas.map((solicitacao) => solicitacao.key));
-    const pendentes = solicitacoesPendentes
-      .map(normalizeSolicitacao)
-      .filter((solicitacao) => !chavesConcluidas.has(solicitacao.key));
-
-    return [...pendentes, ...solicitacoesConcluidas];
-  }, [solicitacoesConcluidas, solicitacoesPendentes]);
+  const solicitacoes = useMemo(
+    () => solicitacoesPersistidas.map(normalizeSolicitacao),
+    [solicitacoesPersistidas],
+  );
 
   const filtered = solicitacoes.filter((solicitacao) => {
     const query = searchQuery.trim().toLowerCase();
@@ -216,7 +211,6 @@ const AprovarAcesso = () => {
   async function handleConfirmar() {
     if (!confirmando || !solicitacaoConfirmada) return;
 
-    const statusFinal: Status = confirmando.acao === "aprovar" ? "aprovado" : "recusado";
     if (confirmando.acao === "aprovar" && (!cargoSelecionadoId || permissaoIdsSelecionadas.size === 0)) {
       toast({
         title: "Defina o acesso",
@@ -241,10 +235,6 @@ const AprovarAcesso = () => {
         });
       }
 
-      setSolicitacoesConcluidas((prev) => [
-        { ...solicitacaoConfirmada, status: statusFinal },
-        ...prev.filter((item) => item.key !== solicitacaoConfirmada.key),
-      ]);
       setConfirmando(null);
       toast({
         title: confirmando.acao === "aprovar" ? "Acesso aprovado" : "Acesso recusado",

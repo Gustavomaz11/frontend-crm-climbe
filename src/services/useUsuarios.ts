@@ -41,6 +41,9 @@ interface SolicitacaoAcessoApi {
   cargoNome?: string | null;
   criadoEm?: string | null;
   expiraEm?: string | null;
+  status: "PENDENTE" | "APROVADO" | "RECUSADO";
+  decididoEm?: string | null;
+  decididoPor?: number | null;
 }
 
 export interface SolicitacaoAcesso {
@@ -54,6 +57,9 @@ export interface SolicitacaoAcesso {
   cargoNome?: string | null;
   criadoEm?: string | null;
   expiraEm?: string | null;
+  status: "PENDENTE" | "APROVADO" | "RECUSADO";
+  decididoEm?: string | null;
+  decididoPor?: number | null;
 }
 
 export interface Usuario {
@@ -123,6 +129,9 @@ function normalizeSolicitacaoAcesso(solicitacao: SolicitacaoAcessoApi): Solicita
     cargoNome: solicitacao.cargoNome,
     criadoEm: solicitacao.criadoEm,
     expiraEm: solicitacao.expiraEm,
+    status: solicitacao.status,
+    decididoEm: solicitacao.decididoEm,
+    decididoPor: solicitacao.decididoPor,
   };
 }
 
@@ -148,9 +157,9 @@ export function useCargos() {
 
 export function useSolicitacoesAcesso() {
   return useQuery<SolicitacaoAcesso[]>({
-    queryKey: ["usuarios", "pendentes"],
+    queryKey: ["usuarios", "solicitacoes"],
     queryFn: async () => {
-      const response = await api.get<SolicitacaoAcessoApi[]>("/usuarios/pendentes");
+      const response = await api.get<SolicitacaoAcessoApi[]>("/usuarios/solicitacoes");
       return response.data.map(normalizeSolicitacaoAcesso);
     },
   });
@@ -177,7 +186,7 @@ export function useCreateUsuario() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["usuarios"] });
-      queryClient.invalidateQueries({ queryKey: ["usuarios", "pendentes"] });
+      queryClient.invalidateQueries({ queryKey: ["usuarios", "solicitacoes"] });
     },
   });
 }
@@ -191,7 +200,7 @@ export function useSolicitarAcessoUsuario() {
       return response.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["usuarios", "pendentes"] });
+      queryClient.invalidateQueries({ queryKey: ["usuarios", "solicitacoes"] });
     },
   });
 }
@@ -238,7 +247,7 @@ export function useAprovarSolicitacaoAcesso() {
       await api.post(`/usuarios/${id}/aprovar`, atribuicao);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["usuarios", "pendentes"] });
+      queryClient.invalidateQueries({ queryKey: ["usuarios", "solicitacoes"] });
       queryClient.invalidateQueries({ queryKey: ["usuarios"] });
     },
   });
@@ -257,7 +266,7 @@ export function useRecusarSolicitacaoAcesso() {
       await api.post(`/usuarios/${id}/recusar`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["usuarios", "pendentes"] });
+      queryClient.invalidateQueries({ queryKey: ["usuarios", "solicitacoes"] });
       queryClient.invalidateQueries({ queryKey: ["usuarios"] });
     },
   });
