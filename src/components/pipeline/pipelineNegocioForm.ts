@@ -1,4 +1,10 @@
 import type { PipelineNegocio, PipelineNegocioInput } from "@/services/usePipelineVendas";
+import {
+  estrategiaComercialOptions,
+  normalizePipelineNegocioOption,
+  origemNegocioOptions,
+  servicoInteresseOptions,
+} from "./pipelineNegocioOptions";
 
 export interface PipelineNegocioDraft {
   empresaId: string;
@@ -41,9 +47,9 @@ export const negocioToDraft = (negocio: PipelineNegocio): PipelineNegocioDraft =
   responsavelId: String(negocio.responsavelId),
   etapaId: String(negocio.etapaId),
   dataReuniao: negocio.dataReuniao?.slice(0, 16) || "",
-  origemNegocio: negocio.origemNegocio,
-  estrategiaComercial: negocio.estrategiaComercial,
-  servicoInteresse: negocio.servicoInteresse,
+  origemNegocio: normalizePipelineNegocioOption(negocio.origemNegocio, origemNegocioOptions),
+  estrategiaComercial: normalizePipelineNegocioOption(negocio.estrategiaComercial, estrategiaComercialOptions),
+  servicoInteresse: normalizePipelineNegocioOption(negocio.servicoInteresse, servicoInteresseOptions),
   valorEstimadoProposta: negocio.valorEstimadoProposta ? String(negocio.valorEstimadoProposta) : "",
   observacoes: negocio.observacoes || "",
 });

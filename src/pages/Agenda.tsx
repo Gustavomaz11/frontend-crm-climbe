@@ -21,6 +21,7 @@ import {
   useUsuarios,
 } from "@/services";
 import { useAuthStore } from "@/store/useAuthStore";
+import { shouldShowAgendaReuniao } from "./agendaVisibility";
 
 interface AgendaEvent {
   id: string;
@@ -229,13 +230,12 @@ const Agenda = () => {
   const { data: reunioes = [] } = useReunioes();
   const { data: empresas = [] } = useEmpresas();
   const { data: usuarios = [] } = useUsuarios();
-  const { data: participantesReuniao = [], isFetched: participantesReuniaoFetched } = useParticipantesReuniao();
+  const { data: participantesReuniao = [] } = useParticipantesReuniao();
   const { mutateAsync: createReuniao, isPending: creatingReuniao } = useCreateReuniao();
   const { mutateAsync: updateReuniao, isPending: updatingReuniao } = useUpdateReuniao();
   const { mutateAsync: deleteReuniao, isPending: deletingReuniao } = useDeleteReuniao();
   const basicUserData = useAuthStore((state) => state.basicUserData);
   const userData = useAuthStore((state) => state.userData);
-  const currentUserId = basicUserData?.id ?? userData?.id;
 
   const today = new Date();
   const currentMonth = visibleDate.getMonth();
@@ -287,33 +287,9 @@ const Agenda = () => {
   }, [weekDays]);
 
   const calendarGrid = useMemo(() => buildCalendarGrid(currentYear, currentMonth), [currentMonth, currentYear]);
-  const participanteIdsByReuniao = useMemo(() => {
-    const grouped = new Map<number, Set<number>>();
-
-    participantesReuniao.forEach((participante) => {
-      const reuniaoId = participante.reuniao?.idReuniao ?? participante.reuniao?.id;
-      const usuarioId = participante.usuario?.id;
-
-      if (typeof reuniaoId !== "number" || typeof usuarioId !== "number") return;
-
-      const ids = grouped.get(reuniaoId) ?? new Set<number>();
-      ids.add(usuarioId);
-      grouped.set(reuniaoId, ids);
-    });
-
-    return grouped;
-  }, [participantesReuniao]);
-
   const agendaEvents = useMemo<AgendaEvent[]>(() => {
     return reunioes
-      .filter((reuniao) => {
-        if (!participantesReuniaoFetched || !currentUserId) return true;
-
-        const reuniaoId = reuniao.id ?? reuniao.idReuniao;
-        if (typeof reuniaoId !== "number") return false;
-
-        return participanteIdsByReuniao.get(reuniaoId)?.has(currentUserId) ?? false;
-      })
+      .filter(shouldShowAgendaReuniao)
       .map((reuniao) => {
         const date = new Date(reuniao.dataHora);
         if (Number.isNaN(date.getTime())) return null;
@@ -349,7 +325,7 @@ const Agenda = () => {
       })
       .filter((event): event is AgendaEvent => event !== null)
       .sort((a, b) => `${a.dateKey} ${a.hora ?? a.time}`.localeCompare(`${b.dateKey} ${b.hora ?? b.time}`));
-  }, [reunioes, empresas, participantesReuniaoFetched, currentUserId, participanteIdsByReuniao]);
+  }, [reunioes, empresas]);
 
   const filteredAgendaEvents = useMemo(
     () => agendaEvents.filter((event) => matchesSearch(event, searchQuery)),

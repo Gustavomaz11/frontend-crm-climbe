@@ -3,6 +3,11 @@ import type { Empresa } from "@/services/useEmpresas";
 import type { PipelineEtapa } from "@/services/usePipelineVendas";
 import type { Usuario } from "@/services/useUsuarios";
 import type { PipelineNegocioDraft } from "./pipelineNegocioForm";
+import {
+  estrategiaComercialOptions,
+  origemNegocioOptions,
+  servicoInteresseOptions,
+} from "./pipelineNegocioOptions";
 
 interface PipelineNegocioFormFieldsProps {
   draft: PipelineNegocioDraft;
@@ -47,10 +52,10 @@ export const PipelineNegocioFormFields = ({
       <label><span className={labelClass}>E-mail *</span><input type="email" value={draft.email} onChange={(event) => update("email", event.target.value)} disabled={disabled} className={fieldClass} /></label>
       <label><span className={labelClass}>Etapa atual</span><select value={draft.etapaId} onChange={(event) => update("etapaId", event.target.value)} disabled={disabled} className={fieldClass}><option value="">Primeira etapa do funil</option>{etapas.map((etapa) => <option key={etapa.id} value={etapa.id}>{etapa.nome}</option>)}</select></label>
       <label><span className={labelClass}>Data da reunião</span><input type="datetime-local" value={draft.dataReuniao} onChange={(event) => update("dataReuniao", event.target.value)} disabled={disabled} className={fieldClass} /></label>
-      <label><span className={labelClass}>Origem do negócio *</span><input value={draft.origemNegocio} onChange={(event) => update("origemNegocio", event.target.value)} disabled={disabled} className={fieldClass} placeholder="Indicação, site, evento..." /></label>
-      <label><span className={labelClass}>Serviço de interesse *</span><input value={draft.servicoInteresse} onChange={(event) => update("servicoInteresse", event.target.value)} disabled={disabled} className={fieldClass} /></label>
+      <label><span className={labelClass}>Origem do negócio *</span><select value={draft.origemNegocio} onChange={(event) => update("origemNegocio", event.target.value)} disabled={disabled} className={fieldClass}><option value="">Selecione</option>{origemNegocioOptions.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
+      <label><span className={labelClass}>Serviço de interesse *</span><select value={draft.servicoInteresse} onChange={(event) => update("servicoInteresse", event.target.value)} disabled={disabled} className={fieldClass}><option value="">Selecione</option>{servicoInteresseOptions.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
       <label><span className={labelClass}>Valor estimado da proposta</span><input type="number" min="0" step="0.01" value={draft.valorEstimadoProposta} onChange={(event) => update("valorEstimadoProposta", event.target.value)} disabled={disabled} className={fieldClass} /></label>
-      <label className="md:col-span-2"><span className={labelClass}>Estratégia comercial *</span><textarea value={draft.estrategiaComercial} onChange={(event) => update("estrategiaComercial", event.target.value)} disabled={disabled} className={`${fieldClass} min-h-20 py-2.5`} /></label>
+      <label className="md:col-span-2"><span className={labelClass}>Estratégia comercial *</span><select value={draft.estrategiaComercial} onChange={(event) => update("estrategiaComercial", event.target.value)} disabled={disabled} className={fieldClass}><option value="">Selecione</option>{estrategiaComercialOptions.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
       <label className="md:col-span-2"><span className={labelClass}>Observações</span><textarea value={draft.observacoes} onChange={(event) => update("observacoes", event.target.value)} disabled={disabled} className={`${fieldClass} min-h-24 py-2.5`} /></label>
     </div>
   );

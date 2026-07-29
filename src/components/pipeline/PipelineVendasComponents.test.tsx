@@ -2,9 +2,18 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { PipelineNegocioCard } from "./PipelineNegocioCard";
 import {
+  PipelineNegocioFormFields,
+} from "./PipelineNegocioFormFields";
+import {
+  estrategiaComercialOptions,
+  origemNegocioOptions,
+  servicoInteresseOptions,
+} from "./pipelineNegocioOptions";
+import {
   draftToNegocioInput,
   emptyPipelineNegocioDraft,
   isPipelineNegocioDraftValid,
+  negocioToDraft,
 } from "./pipelineNegocioForm";
 import type { PipelineNegocio } from "@/services/usePipelineVendas";
 
@@ -78,5 +87,44 @@ describe("Pipeline de Vendas", () => {
       etapaId: 3,
       valorEstimadoProposta: 150000,
     });
+  });
+
+  it("oferece listas fechadas para origem, serviço e estratégia comercial", () => {
+    render(
+      <PipelineNegocioFormFields
+        draft={emptyPipelineNegocioDraft}
+        setDraft={vi.fn()}
+        empresas={[]}
+        usuarios={[]}
+        etapas={[]}
+        disabled={false}
+      />,
+    );
+
+    expect(screen.getByLabelText("Origem do negócio *").tagName).toBe("SELECT");
+    expect(screen.getByLabelText("Serviço de interesse *").tagName).toBe("SELECT");
+    expect(screen.getByLabelText("Estratégia comercial *").tagName).toBe("SELECT");
+    origemNegocioOptions.forEach((option) =>
+      expect(screen.getByRole("option", { name: option })).toBeInTheDocument(),
+    );
+    servicoInteresseOptions.forEach((option) =>
+      expect(screen.getByRole("option", { name: option })).toBeInTheDocument(),
+    );
+    estrategiaComercialOptions.forEach((option) =>
+      expect(screen.getByRole("option", { name: option })).toBeInTheDocument(),
+    );
+  });
+
+  it("normaliza opções legadas e rejeita valores fora das listas", () => {
+    const draft = negocioToDraft({
+      ...negocio,
+      origemNegocio: "site",
+      estrategiaComercial: "Diagnóstico consultivo",
+      servicoInteresse: "M&A",
+    });
+
+    expect(draft.origemNegocio).toBe("Site");
+    expect(draft.estrategiaComercial).toBe("");
+    expect(draft.servicoInteresse).toBe("");
   });
 });

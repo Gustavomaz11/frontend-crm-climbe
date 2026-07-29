@@ -148,6 +148,15 @@ function normalizeReuniao(reuniao: ReuniaoApi): Reuniao {
   };
 }
 
+export function mergeCreatedReuniao(
+  current: Reuniao[] | undefined,
+  created: Reuniao,
+): Reuniao[] {
+  return [...(current ?? []).filter((item) => item.id !== created.id), created].sort(
+    (left, right) => left.dataHora.localeCompare(right.dataHora),
+  );
+}
+
 function buildCreatePayload(data: CreateReuniaoDTO) {
   return {
     titulo: data.titulo,
@@ -258,7 +267,10 @@ export function useCreateReuniao() {
       );
       return normalizeReuniao(response.data);
     },
-    onSuccess: () => {
+    onSuccess: (created) => {
+      queryClient.setQueryData<Reuniao[]>(["reunioes"], (current) =>
+        mergeCreatedReuniao(current, created),
+      );
       queryClient.invalidateQueries({ queryKey: ["reunioes"] });
       queryClient.invalidateQueries({ queryKey: ["participantes-reuniao"] });
     },

@@ -47,6 +47,7 @@ import {
   getPropostaDownloadUrl,
   getPropostaFileNameFromUrl,
   useContratos,
+  useCreateReuniao,
   useEmpresas,
   useReunioes,
   useDocumentos,
@@ -56,6 +57,10 @@ import {
 } from "@/services";
 
 import { useAuthStore } from "@/store/useAuthStore";
+import {
+  calendarDateInput,
+  shiftDashboardCalendarMonth,
+} from "./dashboardCalendar";
 
 /* ══════════════════════════════════════════════════
    TYPES
@@ -113,6 +118,14 @@ interface StageItem {
   docs: string[];
 }
 
+interface DashboardMeetingForm {
+  titulo: string;
+  empresaId: string;
+  data: string;
+  hora: string;
+  local: string;
+}
+
 /* ══════════════════════════════════════════════════
    CONSTS
    ══════════════════════════════════════════════════ */
@@ -123,6 +136,14 @@ const badgeStyles: Record<PipelineRow["badge"], string> = {
   proposal: "bg-destructive/15 text-destructive border-destructive/20",
   direct: "bg-muted text-muted-foreground border-border/30",
 };
+
+const initialDashboardMeetingForm = (date = new Date()): DashboardMeetingForm => ({
+  titulo: "",
+  empresaId: "",
+  data: calendarDateInput(date.getFullYear(), date.getMonth(), date.getDate()),
+  hora: "",
+  local: "",
+});
 
 /* ══════════════════════════════════════════════════
    HELPERS
@@ -369,6 +390,13 @@ const Dashboard = () => {
   const [empresaSearch, setEmpresaSearch] = useState("");
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [showAddMeeting, setShowAddMeeting] = useState(false);
+  const [calendarDate, setCalendarDate] = useState(
+    () => new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+  );
+  const [meetingForm, setMeetingForm] = useState<DashboardMeetingForm>(() =>
+    initialDashboardMeetingForm(),
+  );
+  const [meetingError, setMeetingError] = useState("");
   const [selectedStage, setSelectedStage] = useState<{
     label: string;
     docs: string[];
@@ -391,6 +419,8 @@ const Dashboard = () => {
     isLoading: loadingReunioes,
     isError: errorReunioes,
   } = useReunioes();
+  const { mutateAsync: createReuniao, isPending: creatingReuniao } =
+    useCreateReuniao();
 
   const {
     data: documentos = [],
@@ -447,8 +477,12 @@ const Dashboard = () => {
 
 
   const today = new Date();
-  const currentMonth = today.getMonth();
-  const currentYear = today.getFullYear();
+  const currentMonth = calendarDate.getMonth();
+  const currentYear = calendarDate.getFullYear();
+  const calendarMonthLabel = calendarDate.toLocaleDateString("pt-BR", {
+    month: "long",
+    year: "numeric",
+  });
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -1279,22 +1313,95 @@ const Dashboard = () => {
     );
   };
 
+  const changeCalendarMonth = (amount: number) => {
+    setCalendarDate((date) => shiftDashboardCalendarMonth(date, amount));
+    setSelectedDay(null);
+  };
+
+  const openMeetingForm = () => {
+    const isCurrentMonth =
+      currentMonth === today.getMonth() && currentYear === today.getFullYear();
+    const initialDay = selectedDay ?? (isCurrentMonth ? today.getDate() : 1);
+    const initialDate = new Date(currentYear, currentMonth, initialDay);
+
+    setMeetingError("");
+    setMeetingForm(initialDashboardMeetingForm(initialDate));
+    setShowAddMeeting(true);
+  };
+
+  const closeMeetingForm = () => {
+    setMeetingError("");
+    setShowAddMeeting(false);
+  };
+
+  const selectCalendarDay = (day: number) => {
+    setSelectedDay(day === selectedDay ? null : day);
+
+    if (showAddMeeting) {
+      setMeetingForm((form) => ({
+        ...form,
+        data: calendarDateInput(currentYear, currentMonth, day),
+      }));
+    }
+  };
+
+  const handleCreateMeeting = async () => {
+    setMeetingError("");
+
+    if (
+      !meetingForm.titulo.trim() ||
+      !meetingForm.empresaId ||
+      !meetingForm.data ||
+      !meetingForm.hora
+    ) {
+      setMeetingError("Preencha título, empresa, data e horário.");
+      return;
+    }
+
+    try {
+      await createReuniao({
+        titulo: meetingForm.titulo.trim(),
+        empresaId: Number(meetingForm.empresaId),
+        data: meetingForm.data,
+        hora: meetingForm.hora,
+        local: meetingForm.local.trim(),
+        presencial: true,
+        status: "AGENDADA",
+      });
+
+      const [year, month, day] = meetingForm.data.split("-").map(Number);
+      setCalendarDate(new Date(year, month - 1, 1));
+      setSelectedDay(day);
+      setMeetingForm(initialDashboardMeetingForm(new Date(year, month - 1, day)));
+      setShowAddMeeting(false);
+    } catch {
+      setMeetingError("Não foi possível confirmar o agendamento.");
+    }
+  };
+
   const renderCalendar = (expanded = false) => (
     <div>
       <div className="mb-3 flex items-center justify-between">
         <h4 className="text-[12px] font-semibold text-foreground">
-          {today.toLocaleDateString("pt-BR", {
-            month: "long",
-            year: "numeric",
-          })}
+          {calendarMonthLabel}
         </h4>
 
         <div className="flex items-center gap-0.5">
-          <button className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted/20 hover:text-foreground">
+          <button
+            type="button"
+            aria-label="Mês anterior"
+            onClick={() => changeCalendarMonth(-1)}
+            className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted/20 hover:text-foreground"
+          >
             <ChevronLeft className="h-3 w-3" />
           </button>
 
-          <button className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted/20 hover:text-foreground">
+          <button
+            type="button"
+            aria-label="Próximo mês"
+            onClick={() => changeCalendarMonth(1)}
+            className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted/20 hover:text-foreground"
+          >
             <ChevronRight className="h-3 w-3" />
           </button>
         </div>
@@ -1314,7 +1421,10 @@ const Dashboard = () => {
       <div className={`grid grid-cols-7 ${expanded ? "gap-1.5" : "gap-0.5"}`}>
         {getCalendarDays(currentYear, currentMonth).map((day, index) => {
           const hasMeeting = day !== null && highlightedDays.includes(day);
-          const isToday = day === today.getDate();
+          const isToday =
+            day === today.getDate() &&
+            currentMonth === today.getMonth() &&
+            currentYear === today.getFullYear();
           const isSelected = day === selectedDay;
 
           return (
@@ -1336,8 +1446,8 @@ const Dashboard = () => {
               whileHover={day ? { scale: expanded ? 1.05 : 1.08 } : undefined}
               whileTap={day ? { scale: 0.95 } : undefined}
               onClick={() => {
-                if (day && hasMeeting) {
-                  setSelectedDay(day === selectedDay ? null : day);
+                if (day) {
+                  selectCalendarDay(day);
                 }
               }}
             >
@@ -1403,7 +1513,8 @@ const Dashboard = () => {
         <div className="mt-5 border-t border-border/15 pt-4">
           {!showAddMeeting ? (
             <motion.button
-              onClick={() => setShowAddMeeting(true)}
+              type="button"
+              onClick={openMeetingForm}
               className="flex h-9 w-full items-center justify-center gap-2 rounded-lg border border-dashed border-accent/30 text-[12px] font-medium text-accent transition-all hover:bg-accent/5"
               whileHover={{ y: -1 }}
               whileTap={{ scale: 0.98 }}
@@ -1423,31 +1534,67 @@ const Dashboard = () => {
               <input
                 type="text"
                 placeholder="Título"
+                value={meetingForm.titulo}
+                onChange={(event) =>
+                  setMeetingForm((form) => ({ ...form, titulo: event.target.value }))
+                }
                 className="h-9 w-full rounded-lg border border-border/25 bg-background/50 px-3 text-[12px] outline-none transition-colors placeholder:text-muted-foreground/30 focus:border-accent/40"
               />
 
               <div className="grid grid-cols-2 gap-3">
-                <input
-                  type="text"
-                  placeholder="Empresa"
+                <select
+                  aria-label="Empresa"
+                  value={meetingForm.empresaId}
+                  onChange={(event) =>
+                    setMeetingForm((form) => ({ ...form, empresaId: event.target.value }))
+                  }
                   className="h-9 rounded-lg border border-border/25 bg-background/50 px-3 text-[12px] outline-none transition-colors placeholder:text-muted-foreground/30 focus:border-accent/40"
-                />
+                >
+                  <option value="">Selecione a empresa</option>
+                  {empresas.map((empresa) => (
+                    <option key={empresa.id} value={empresa.id}>
+                      {empresa.nome}
+                    </option>
+                  ))}
+                </select>
                 <input
-                  type="text"
-                  placeholder="Horário (HH:MM)"
+                  type="time"
+                  aria-label="Horário"
+                  value={meetingForm.hora}
+                  onChange={(event) =>
+                    setMeetingForm((form) => ({ ...form, hora: event.target.value }))
+                  }
                   className="h-9 rounded-lg border border-border/25 bg-background/50 px-3 text-[12px] outline-none transition-colors placeholder:text-muted-foreground/30 focus:border-accent/40"
                 />
               </div>
 
               <input
+                type="date"
+                aria-label="Data"
+                value={meetingForm.data}
+                onChange={(event) => setMeetingForm((form) => ({ ...form, data: event.target.value }))}
+                className="h-9 w-full rounded-lg border border-border/25 bg-background/50 px-3 text-[12px] outline-none transition-colors focus:border-accent/40"
+              />
+
+              <input
                 type="text"
                 placeholder="Local / Link"
+                value={meetingForm.local}
+                onChange={(event) =>
+                  setMeetingForm((form) => ({ ...form, local: event.target.value }))
+                }
                 className="h-9 w-full rounded-lg border border-border/25 bg-background/50 px-3 text-[12px] outline-none transition-colors placeholder:text-muted-foreground/30 focus:border-accent/40"
               />
 
+              {meetingError && (
+                <p className="text-[11px] text-destructive">{meetingError}</p>
+              )}
+
               <div className="flex items-center justify-end gap-2">
                 <motion.button
-                  onClick={() => setShowAddMeeting(false)}
+                  type="button"
+                  onClick={closeMeetingForm}
+                  disabled={creatingReuniao}
                   className="h-8 rounded-md px-3 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
                   whileTap={{ scale: 0.98 }}
                 >
@@ -1455,12 +1602,14 @@ const Dashboard = () => {
                 </motion.button>
 
                 <motion.button
-                  onClick={() => setShowAddMeeting(false)}
-                  className="h-8 rounded-md bg-accent px-4 text-[11px] font-medium text-accent-foreground"
+                  type="button"
+                  onClick={() => void handleCreateMeeting()}
+                  disabled={creatingReuniao}
+                  className="h-8 rounded-md bg-accent px-4 text-[11px] font-medium text-accent-foreground disabled:cursor-not-allowed disabled:opacity-50"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  Confirmar
+                  {creatingReuniao ? "Salvando..." : "Confirmar"}
                 </motion.button>
               </div>
             </motion.div>
@@ -1926,7 +2075,7 @@ const Dashboard = () => {
                     <motion.button
                       onClick={() => {
                         setMaxCalendar(true);
-                        setShowAddMeeting(true);
+                        openMeetingForm();
                       }}
                       className="h-7 rounded-md border border-accent/20 bg-accent/10 px-3 text-[10px] font-medium text-accent"
                       whileHover={{ scale: 1.02 }}
@@ -2085,12 +2234,9 @@ const Dashboard = () => {
         isOpen={maxCalendar}
         onClose={() => {
           setMaxCalendar(false);
-          setShowAddMeeting(false);
+          closeMeetingForm();
         }}
-        title={`Calendário — ${today.toLocaleDateString("pt-BR", {
-          month: "long",
-          year: "numeric",
-        })}`}
+        title={`Calendário — ${calendarMonthLabel}`}
       >
         {renderCalendar(true)}
       </MaximizeModal>
