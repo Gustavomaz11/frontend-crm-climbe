@@ -1,6 +1,19 @@
 import axios from "axios";
+import type { AxiosError, InternalAxiosRequestConfig } from "axios";
+import { jwtDecode } from "jwt-decode";
 import { parseCookies } from "nookies";
-import { ACCESS_TOKEN_COOKIE } from "@/lib/authCookies";
+import {
+  ACCESS_TOKEN_COOKIE,
+  REFRESH_TOKEN_COOKIE,
+} from "@/lib/authCookies";
+
+interface RetryableRequestConfig extends InternalAxiosRequestConfig {
+  _retry?: boolean;
+}
+
+interface DecodedAccessToken {
+  exp?: number;
+}
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
@@ -46,12 +59,45 @@ const processQueue = (error: unknown, token: string | null = null) => {
   failedQueue = [];
 };
 
+const isExpiredAccessToken = (token?: string) => {
+  if (!token) return true;
+
+  try {
+    const { exp } = jwtDecode<DecodedAccessToken>(token);
+    return !exp || exp * 1000 <= Date.now();
+  } catch {
+    return true;
+  }
+};
+
+const isPublicAuthRequest = (url?: string) =>
+  Boolean(url && /^\/?auth\//.test(url));
+
+const shouldRefreshSession = (
+  error: AxiosError,
+  originalRequest?: RetryableRequestConfig,
+) => {
+  if (!originalRequest || originalRequest._retry || isPublicAuthRequest(originalRequest.url)) {
+    return false;
+  }
+
+  const status = error.response?.status;
+  const cookies = parseCookies();
+  const refreshToken = cookies[REFRESH_TOKEN_COOKIE];
+  if (!refreshToken) return false;
+
+  if (status === 401) return true;
+  if (status !== 403) return false;
+
+  return isExpiredAccessToken(cookies[ACCESS_TOKEN_COOKIE]);
+};
+
 api.interceptors.response.use(
   (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
+  async (error: AxiosError) => {
+    const originalRequest = error.config as RetryableRequestConfig | undefined;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (shouldRefreshSession(error, originalRequest)) {
       if (isRefreshing) {
         // Se já está refrescando, adicionar à fila
         return new Promise((resolve, reject) => {

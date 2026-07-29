@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Eye, EyeOff, ArrowRight, Moon, Sun, Loader2 } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AxiosError } from "axios";
-import { setCookie } from "nookies";
 import { toast } from "sonner";
 
 import ClimbLogo from "@/components/login/ClimbLogo";
@@ -16,7 +15,7 @@ import {
   useExchangeGoogleCode,
 } from "@/hooks/useAuth/useGoogleAuth";
 import { syncGoogleAccessToken } from "@/lib/googleAccessToken";
-import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from "@/lib/authCookies";
+import { saveAccessToken, saveRefreshToken } from "@/lib/authCookies";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useUserRoleStore } from "@/store/useUserRoleStore";
 
@@ -52,16 +51,8 @@ const Index = () => {
 
         const { data } = response;
 
-        // Salvar tokens
-        setCookie(null, ACCESS_TOKEN_COOKIE, data.accessToken, {
-          maxAge: data.expiresIn,
-          path: "/",
-        });
-
-        setCookie(null, REFRESH_TOKEN_COOKIE, data.refreshToken, {
-          maxAge: 60 * 60 * 24 * 30,
-          path: "/",
-        });
+        saveAccessToken(data.accessToken, data.expiresIn);
+        saveRefreshToken(data.refreshToken);
 
         // Salvar dados do usuário
         setBasicUserData({
@@ -144,15 +135,8 @@ const Index = () => {
         return;
       }
 
-      setCookie(null, ACCESS_TOKEN_COOKIE, response.accessToken, {
-        maxAge: response.expiresIn,
-        path: "/",
-      });
-
-      setCookie(null, REFRESH_TOKEN_COOKIE, response.refreshToken, {
-        maxAge: 60 * 60 * 24 * 30,
-        path: "/",
-      });
+      saveAccessToken(response.accessToken, response.expiresIn);
+      saveRefreshToken(response.refreshToken);
 
       setBasicUserData({
         id: response.usuario?.id,

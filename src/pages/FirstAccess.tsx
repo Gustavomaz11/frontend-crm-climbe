@@ -11,13 +11,12 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { setCookie } from "nookies";
 import ClimbLogo from "@/components/login/ClimbLogo";
 import { useTheme } from "@/hooks/use-theme";
 import { useCompleteRegistration } from "@/hooks/useAuth/useGoogleAuth";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useUserRoleStore } from "@/store/useUserRoleStore";
-import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from "@/lib/authCookies";
+import { saveAccessToken, saveRefreshToken } from "@/lib/authCookies";
 
 const FirstAccess = () => {
   const { isDark, setIsDark } = useTheme();
@@ -140,15 +139,8 @@ const FirstAccess = () => {
         senha: formData.senha,
       });
 
-      setCookie(null, ACCESS_TOKEN_COOKIE, response.data.accessToken, {
-        maxAge: 60 * 60 * 8,
-        path: "/",
-      });
-
-      setCookie(null, REFRESH_TOKEN_COOKIE, response.data.refreshToken, {
-        maxAge: 60 * 60 * 24 * 30,
-        path: "/",
-      });
+      saveAccessToken(response.data.accessToken, response.data.expiresIn);
+      saveRefreshToken(response.data.refreshToken);
 
       setRole(response.data.usuario.cargoNome || "USER");
       setBasicUserData({

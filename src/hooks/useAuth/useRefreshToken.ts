@@ -1,6 +1,5 @@
-import { api } from "@/api";
 import { useMutation } from "@tanstack/react-query";
-import { AxiosError } from "axios";
+import axios, { AxiosError } from "axios";
 
 export interface RefreshTokenRequest {
   refreshToken: string;
@@ -11,11 +10,18 @@ export interface RefreshTokenResponse {
   expiresIn: number;
 }
 
+const refreshApi = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
 const refreshTokenRequest = async (
   refreshToken: string,
 ): Promise<RefreshTokenResponse> => {
   try {
-    const response = await api.post("/auth/refresh", {
+    const response = await refreshApi.post("/auth/refresh", {
       refreshToken,
     });
 

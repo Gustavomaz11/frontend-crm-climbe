@@ -1809,17 +1809,6 @@ const Dashboard = () => {
             </div>
 
             <div className="flex items-center gap-2">
-              <motion.div
-                className="flex h-9 items-center gap-2 rounded-lg border border-border/25 bg-card/30 px-3 text-muted-foreground/40 backdrop-blur-sm"
-                whileHover={{ borderColor: "hsl(var(--accent) / 0.3)" }}
-              >
-                <Search className="h-3.5 w-3.5" />
-                <span className="text-[12px]">Buscar...</span>
-                <kbd className="ml-4 rounded border border-border/30 px-1.5 py-0.5 text-[9px] text-muted-foreground/25">
-                  ⌘K
-                </kbd>
-              </motion.div>
-
               <motion.button
                 onClick={() => setMaxNotifications(true)}
                 className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-border/25 bg-card/20 text-muted-foreground transition-all duration-200 hover:border-accent/30 hover:text-foreground"

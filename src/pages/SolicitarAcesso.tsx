@@ -2,7 +2,6 @@ import { useState, useCallback, useEffect, type FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Moon, Sun, Loader2 } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { setCookie } from "nookies";
 import { toast } from "sonner";
 import ClimbLogo from "@/components/login/ClimbLogo";
 import { useTheme } from "@/hooks/use-theme";
@@ -11,7 +10,7 @@ import {
   useExchangeGoogleCode,
 } from "@/hooks/useAuth/useGoogleAuth";
 import { syncGoogleAccessToken } from "@/lib/googleAccessToken";
-import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from "@/lib/authCookies";
+import { saveAccessToken, saveRefreshToken } from "@/lib/authCookies";
 import { useCargos, useSolicitarAcessoUsuario } from "@/services/useUsuarios";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useUserRoleStore } from "@/store/useUserRoleStore";
@@ -74,15 +73,8 @@ const SolicitarAcesso = () => {
         }
 
         // Login normal: salvar tokens
-        setCookie(null, ACCESS_TOKEN_COOKIE, data.accessToken, {
-          maxAge: data.expiresIn,
-          path: "/",
-        });
-
-        setCookie(null, REFRESH_TOKEN_COOKIE, data.refreshToken, {
-          maxAge: 60 * 60 * 24 * 30,
-          path: "/",
-        });
+        saveAccessToken(data.accessToken, data.expiresIn);
+        saveRefreshToken(data.refreshToken);
 
         setRole(data.usuario.cargoNome || "USER");
 

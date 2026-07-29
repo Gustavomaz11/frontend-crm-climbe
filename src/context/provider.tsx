@@ -1,18 +1,21 @@
 import type { PropsWithChildren } from "react";
 import { createContext, useCallback, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
-import { api } from "@/api";
 import { setUnauthorizedCallback } from "@/api";
 import { syncGoogleAccessToken } from "@/lib/googleAccessToken";
 import {
   ACCESS_TOKEN_COOKIE,
   REFRESH_TOKEN_COOKIE,
+  clearAuthCookies,
   clearLegacyAuthStorage,
+  saveAccessToken,
+  saveRefreshToken,
 } from "@/lib/authCookies";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useUserRoleStore } from "@/store/useUserRoleStore";
 import { jwtDecode } from "jwt-decode";
+import { isAxiosError } from "axios";
 import { destroyCookie, parseCookies, setCookie } from "nookies";
 import { toast } from "sonner";
 
@@ -21,7 +24,8 @@ import { useSignIn } from "@/hooks/useAuth/useSignIn";
 import type { SignInCredentials } from "@/hooks/useAuth/useSignIn";
 
 interface DecodedToken {
-  roles: string[];
+  roles?: string[];
+  exp?: number;
 }
 
 // Variável global para armazenar o timer de refresh
@@ -31,6 +35,15 @@ let tokenExpiresAt: number | null = null;
 // Função para calcular tempo de expiração
 const calculateExpiresAt = (expiresIn: number): number => {
   return Date.now() + expiresIn;
+};
+
+const readTokenExpiresAt = (accessToken: string): number | null => {
+  try {
+    const { exp } = jwtDecode<DecodedToken>(accessToken);
+    return exp ? exp * 1000 : null;
+  } catch {
+    return null;
+  }
 };
 
 // Função para verificar se o token está perto de expirar (5 minutos antes)
@@ -51,6 +64,7 @@ export const AuthContext = createContext<AuthContextProps | null>(null);
 
 export function AuthProvider({ children }: PropsWithChildren) {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const { mutateAsync: signIn, isPending } = useSignIn();
   const { mutateAsync: refreshToken } = useRefreshToken();
@@ -65,8 +79,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       refreshTokenInterval = null;
     }
 
-    destroyCookie(undefined, ACCESS_TOKEN_COOKIE, { path: "/" });
-    destroyCookie(undefined, REFRESH_TOKEN_COOKIE, { path: "/" });
+    clearAuthCookies();
     clearLegacyAuthStorage();
     destroyCookie(undefined, "email");
     syncGoogleAccessToken(null);
@@ -78,35 +91,27 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   // Função para fazer refresh do token
   const performTokenRefresh = useCallback(async () => {
+    const refreshTokenCookie = parseCookies()[REFRESH_TOKEN_COOKIE];
+    if (!refreshTokenCookie) {
+      handleLogout();
+      return false;
+    }
+
     try {
-      const refreshTokenCookie = parseCookies()[REFRESH_TOKEN_COOKIE];
-
-      if (!refreshTokenCookie) {
-        throw new Error("Refresh token não encontrado");
-      }
-
       const response = await refreshToken(refreshTokenCookie);
       const { accessToken, expiresIn } = response;
-      const isProduction = process.env.NODE_ENV === "production";
 
-      // Atualizar token no cookie
-      setCookie(undefined, ACCESS_TOKEN_COOKIE, accessToken, {
-        maxAge: 60 * 60 * 24 * 7,
-        path: "/",
-        secure: isProduction,
-        sameSite: "strict",
-      });
-
-      // Atualizar header da API
-      api.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
+      saveAccessToken(accessToken, expiresIn);
 
       // Atualizar tempo de expiração
       tokenExpiresAt = calculateExpiresAt(expiresIn);
 
       return true;
-    } catch {
-      // Se refresh falhar, fazer logout
-      handleLogout();
+    } catch (error) {
+      const status = isAxiosError(error) ? error.response?.status : undefined;
+      if (status && [400, 401, 403].includes(status)) {
+        handleLogout();
+      }
       return false;
     }
   }, [refreshToken, handleLogout]);
@@ -137,6 +142,26 @@ export function AuthProvider({ children }: PropsWithChildren) {
     });
   }, [performTokenRefresh]);
 
+  useEffect(() => {
+    const cookies = parseCookies();
+    const accessToken = cookies[ACCESS_TOKEN_COOKIE];
+    const refreshTokenCookie = cookies[REFRESH_TOKEN_COOKIE];
+
+    if (accessToken) {
+      tokenExpiresAt = readTokenExpiresAt(accessToken);
+      setupRefreshTimer();
+
+      if (isTokenNearExpiration() && refreshTokenCookie) {
+        void performTokenRefresh();
+      }
+      return;
+    }
+
+    if (refreshTokenCookie && location.pathname !== "/") {
+      void performTokenRefresh();
+    }
+  }, [location.pathname, performTokenRefresh, setupRefreshTimer]);
+
   const handleSignIn = useCallback(
     async ({ email, senha }: SignInCredentials) => {
       try {
@@ -154,34 +179,16 @@ export function AuthProvider({ children }: PropsWithChildren) {
         // Email vem em data.usuario.email
         const userEmail = usuario?.email || email;
 
-        const isProduction = process.env.NODE_ENV === "production";
-
-        // Salvar access token
-        setCookie(undefined, ACCESS_TOKEN_COOKIE, accessToken, {
-          maxAge: 60 * 60 * 24 * 7,
-          path: "/",
-          secure: isProduction,
-          sameSite: "strict",
-        });
-
-        // Salvar refresh token em cookie mais seguro
-        setCookie(undefined, REFRESH_TOKEN_COOKIE, refreshTokenData, {
-          maxAge: 60 * 60 * 24 * 7, // 7 dias
-          path: "/",
-          secure: isProduction,
-          sameSite: "strict",
-        });
+        saveAccessToken(accessToken, expiresIn);
+        saveRefreshToken(refreshTokenData);
 
         // Salvar email
         setCookie(undefined, "email", userEmail, {
           maxAge: 60 * 60 * 24 * 7,
           path: "/",
-          secure: isProduction,
+          secure: window.location.protocol === "https:",
           sameSite: "strict",
         });
-
-        // Atualizar header da API
-        api.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
 
         tokenExpiresAt = calculateExpiresAt(expiresIn);
 
