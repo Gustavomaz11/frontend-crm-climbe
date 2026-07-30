@@ -520,6 +520,9 @@ const SolicitarAcesso = () => {
                           </>
                         )}
                       </motion.button>
+                      <p className="text-center text-[11px] text-muted-foreground/60">
+                        O login aceita qualquer conta Google. A sincronização da agenda é exclusiva para contas @climbe.com.br.
+                      </p>
                     </form>
                   </motion.div>
                 ) : (

@@ -296,7 +296,7 @@ const Index = () => {
               >
                 <div>
                   <label className="mb-1.5 block text-[11px] font-medium tracking-wide text-muted-foreground/70">
-                    E-mail corporativo
+                    E-mail
                   </label>
 
                   <div className="group relative">
@@ -306,7 +306,7 @@ const Index = () => {
                       onChange={(e) => setEmail(e.target.value)}
                       onFocus={() => setFocusedField("email")}
                       onBlur={() => setFocusedField(null)}
-                      placeholder="nome@climbe.com.br"
+                      placeholder="nome@empresa.com.br"
                       className="h-11 w-full rounded-md border border-input bg-background px-3.5 text-sm text-foreground placeholder:text-muted-foreground/30 transition-all duration-200 focus:border-accent/60 focus:outline-none focus:ring-1 focus:ring-accent/15"
                     />
 
@@ -470,6 +470,9 @@ const Index = () => {
                     </>
                   )}
                 </motion.button>
+                <p className="text-center text-[11px] text-muted-foreground/60">
+                  O login aceita qualquer conta Google. A sincronização da agenda é exclusiva para contas @climbe.com.br.
+                </p>
               </motion.form>
             </div>
 
