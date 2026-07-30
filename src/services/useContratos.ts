@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import { api } from "@/api";
 import { getPropostaFileNameFromUrl } from "./usePropostas";
+import type { CommercialService } from "./commercialProposal";
 
 interface ApiEnvelope<T> {
   success: boolean;
@@ -19,6 +20,7 @@ interface ContratoApi {
   proposta?: {
     idProposta?: number;
     url?: string;
+    servico?: CommercialService | null;
   } | null;
   usuario?: {
     id?: number;
@@ -45,6 +47,9 @@ interface ContratoApi {
   dataFim?: string;
   urlPdf?: string;
   status?: string;
+  servico?: CommercialService | null;
+  dataAprovacao?: string | null;
+  parcelas?: Array<{ id?: number; numero?: number; vencimento?: string; valor?: number; status?: string }>;
 }
 
 export interface Contrato {
@@ -69,6 +74,9 @@ export interface Contrato {
   urlPdf?: string | null;
   dataCriacao: string;
   dataAtualizacao: string;
+  servico?: CommercialService | null;
+  dataAprovacao?: string | null;
+  parcelas: Array<{ id: number; numero: number; vencimento: string; valor: number; status: string }>;
 }
 
 export interface HistoricoAprovacaoContrato {
@@ -170,6 +178,15 @@ function normalizeContrato(contrato: ContratoApi): Contrato {
     urlPdf: contrato.urlPdf ?? null,
     dataCriacao: contrato.dataInicio ?? "",
     dataAtualizacao: "",
+    servico: contrato.servico ?? contrato.proposta?.servico ?? null,
+    dataAprovacao: contrato.dataAprovacao ?? null,
+    parcelas: (contrato.parcelas ?? []).map((item) => ({
+      id: item.id ?? 0,
+      numero: item.numero ?? 0,
+      vencimento: item.vencimento ?? "",
+      valor: Number(item.valor ?? 0),
+      status: item.status ?? "PENDENTE",
+    })),
   };
 }
 

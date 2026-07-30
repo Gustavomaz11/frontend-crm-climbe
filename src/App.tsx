@@ -19,6 +19,7 @@ import Permissoes from "./pages/Permissoes.tsx";
 import Empresas from "./pages/Empresas.tsx";
 import Documentos from "./pages/Documentos.tsx";
 import EnviarDocumento from "./pages/EnviarDocumento.tsx";
+import EnviarDocumentosLote from "./pages/EnviarDocumentosLote.tsx";
 import Contratos from "./pages/Contratos.tsx";
 import ContratosKanban from "./pages/ContratosKanban.tsx";
 import Propostas from "./pages/Propostas.tsx";
@@ -77,6 +78,14 @@ const App = () => (
               }
             />
             <Route
+              path="/documentos/enviar/lote/:token"
+              element={
+                <PublicRoute>
+                  <EnviarDocumentosLote />
+                </PublicRoute>
+              }
+            />
+            <Route
               path="/documentos/enviar/:token"
               element={
                 <PublicRoute>
@@ -128,6 +137,14 @@ const App = () => (
             />
             <Route
               path="/empresas/cadastro"
+              element={
+                <PrivateRoute>
+                  <CadastroEmpresa />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/empresas/:id/editar"
               element={
                 <PrivateRoute>
                   <CadastroEmpresa />

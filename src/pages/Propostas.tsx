@@ -13,6 +13,7 @@ import { Link, useNavigate } from "react-router-dom";
 import ClimbLogo from "@/components/login/ClimbLogo";
 import { UserAvatar } from "@/components/UserAvatar";
 import { RevisaoDocumentoDialog } from "@/components/revisoes/RevisaoDocumentoDialog";
+import { createEmptyProposalConfig, PropostaCommercialFields } from "@/components/propostas/PropostaCommercialFields";
 import { useAuthStore } from "@/store/useAuthStore";
 import {
   getPropostaDownloadUrl,
@@ -21,6 +22,9 @@ import {
   useEmpresas,
   usePropostas,
   useUpdatePropostaStatus,
+  useUsuarios,
+  getServiceLabel,
+  type CommercialService,
   type HistoricoAprovacaoProposta,
   type PropostaStatus,
 } from "@/services";
@@ -38,6 +42,7 @@ interface Proposta {
   valuation: number | null;
   status: PropostaStatus;
   url: string;
+  servico?: CommercialService | null;
 }
 
 type FilterTab = "Todos" | "Pendente" | "Aprovada" | "Rejeitada";
@@ -115,6 +120,7 @@ const Propostas = () => {
   const [historyError, setHistoryError] = useState("");
   const [selectedEmpresaId, setSelectedEmpresaId] = useState("");
   const [valuationInput, setValuationInput] = useState("");
+  const [commercialConfig, setCommercialConfig] = useState(createEmptyProposalConfig);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const navItems = useVisibleMainNavItems();
@@ -133,6 +139,7 @@ const Propostas = () => {
     null;
 
   const { data: empresas = [] } = useEmpresas();
+  const { data: usuarios = [] } = useUsuarios();
   const { data: propostas = [], isLoading: propostasLoading, error: propostasError } = usePropostas();
   const createPropostaWithFile = useCreatePropostaWithFile();
   const updatePropostaStatus = useUpdatePropostaStatus();
@@ -154,6 +161,7 @@ const Propostas = () => {
         valuation: proposta.valuation == null ? null : Number(proposta.valuation),
         status: proposta.status,
         url: proposta.url,
+        servico: proposta.servico,
       })),
     [empresasById, propostas],
   );
@@ -213,6 +221,15 @@ const Propostas = () => {
       return;
     }
 
+    if (!commercialConfig.servico || !commercialConfig.mesInicio) {
+      setUploadError("Selecione o serviço e o mês de início da proposta.");
+      return;
+    }
+    if (commercialConfig.reajustes.some((item) => item.mesVigencia < 1 || item.mesVigencia > 24 || item.valor <= 0)) {
+      setUploadError("Confira o mês e o valor dos reajustes informados.");
+      return;
+    }
+
     setUploading(true);
     setUploadError("");
 
@@ -222,6 +239,10 @@ const Propostas = () => {
           file,
           empresaId,
           valuation,
+          configuracao: {
+            ...commercialConfig,
+            mesInicio: `${commercialConfig.mesInicio}-01`,
+          },
         });
       }
       setUploading(false);
@@ -229,6 +250,7 @@ const Propostas = () => {
       setFiles([]);
       setSelectedEmpresaId("");
       setValuationInput("");
+      setCommercialConfig(createEmptyProposalConfig());
     } catch (error) {
       const message = error instanceof Error ? error.message : "Erro ao enviar proposta.";
       setUploadError(message);
@@ -447,6 +469,8 @@ const Propostas = () => {
                       </div>
                     </div>
 
+                    <PropostaCommercialFields value={commercialConfig} usuarios={usuarios} onChange={(next) => { setCommercialConfig(next); setUploadError(""); }} />
+
                     {/* File list */}
                     <AnimatePresence>
                       {files.length > 0 && (
@@ -483,7 +507,7 @@ const Propostas = () => {
                     {/* Actions */}
                     <div className="mt-3 flex items-center justify-end gap-2">
                       <motion.button
-                        onClick={() => { setUploadOpen(false); setFiles([]); setUploadDone(false); setUploadError(""); setSelectedEmpresaId(""); setValuationInput(""); }}
+                        onClick={() => { setUploadOpen(false); setFiles([]); setUploadDone(false); setUploadError(""); setSelectedEmpresaId(""); setValuationInput(""); setCommercialConfig(createEmptyProposalConfig()); }}
                         className="h-8 px-4 rounded-lg border border-border/30 text-[12px] text-muted-foreground hover:text-foreground transition-all"
                         whileTap={{ scale: 0.97 }}
                       >
@@ -640,6 +664,10 @@ const Propostas = () => {
                 <div className="rounded-lg border border-border/20 bg-background/50 p-4">
                   <p className="text-[10px] text-muted-foreground/40 mb-1 uppercase tracking-wider">Valor</p>
                   <p className="text-[16px] font-semibold text-foreground/85">{formatCurrency(selectedProposta.valuation)}</p>
+                </div>
+                <div className="rounded-lg border border-border/20 bg-background/50 p-4">
+                  <p className="text-[10px] text-muted-foreground/40 mb-1 uppercase tracking-wider">Serviço</p>
+                  <p className="text-[13px] font-semibold text-foreground/85">{getServiceLabel(selectedProposta.servico)}</p>
                 </div>
                 <div className="flex gap-2">
                   <motion.button

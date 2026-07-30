@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTheme } from "@/hooks/use-theme";
 import { useSidebarState } from "@/hooks/useSidebarState";
 import { useVisibleMainNavItems } from "@/hooks/useVisibleMainNavItems";
@@ -8,11 +8,17 @@ import {
   LogOut, Sun, Moon, ChevronLeft, ChevronRight, UserCheck, ArrowLeft,
   CheckCircle2, ScrollText, AlertCircle,
 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import ClimbLogo from "@/components/login/ClimbLogo";
 import { UserAvatar } from "@/components/UserAvatar";
 import { useAuthStore } from "@/store/useAuthStore";
-import { useCreateEmpresa, CreateEmpresaDTO } from "@/services";
+import {
+  CreateEmpresaDTO,
+  empresaToForm,
+  useCreateEmpresa,
+  useEmpresaById,
+  useUpdateEmpresa,
+} from "@/services";
 import { FileCheck } from "lucide-react";
 
 const UF_OPTIONS = [
@@ -129,7 +135,11 @@ const CadastroEmpresa = () => {
   const [cepLoading, setCepLoading] = useState(false);
   const [cepMessage, setCepMessage] = useState("");
   const navigate = useNavigate();
+  const { id: empresaIdParam } = useParams();
   const navItems = useVisibleMainNavItems();
+  const empresaId = Number(empresaIdParam);
+  const isEditing = Boolean(empresaIdParam) && Number.isInteger(empresaId) && empresaId > 0;
+  const hydratedEmpresaId = useRef<number | null>(null);
 
   const basicUserData = useAuthStore((state) => state.basicUserData);
   const userData = useAuthStore((state) => state.userData);
@@ -144,7 +154,21 @@ const CadastroEmpresa = () => {
     userData?.pessoa?.fotoPerfil ||
     null;
 
-  const { mutate: createEmpresa, isPending } = useCreateEmpresa();
+  const { data: empresa, isLoading: isEmpresaLoading, error: empresaError } = useEmpresaById(
+    isEditing ? empresaId : 0,
+  );
+  const { mutate: createEmpresa, isPending: isCreating } = useCreateEmpresa();
+  const { mutate: updateEmpresa, isPending: isUpdating } = useUpdateEmpresa();
+  const isPending = isCreating || isUpdating;
+
+  useEffect(() => {
+    if (!isEditing || !empresa || hydratedEmpresaId.current === empresa.id) {
+      return;
+    }
+
+    setForm(empresaToForm(empresa));
+    hydratedEmpresaId.current = empresa.id;
+  }, [empresa, isEditing]);
 
   function set(field: keyof CreateEmpresaDTO, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -222,13 +246,19 @@ const CadastroEmpresa = () => {
       return;
     }
 
-    createEmpresa(form, {
+    const mutationOptions = {
       onSuccess: () => setSuccess(true),
-      onError: (error) => {
-        const message = error instanceof Error ? error.message : "Erro ao cadastrar empresa.";
-        setErrorMessage(message);
+      onError: (error: Error) => {
+        setErrorMessage(error.message || `Erro ao ${isEditing ? "atualizar" : "cadastrar"} empresa.`);
       },
-    });
+    };
+
+    if (isEditing) {
+      updateEmpresa({ id: empresaId, data: form }, mutationOptions);
+      return;
+    }
+
+    createEmpresa(form, mutationOptions);
   }
 
   const requiredFilled =
@@ -351,8 +381,14 @@ const CadastroEmpresa = () => {
 
           <div className="px-6 pt-6 pb-8 max-w-3xl mx-auto">
             <div className="mb-6">
-              <h1 className="text-[22px] font-bold text-foreground tracking-tight">Cadastrar Empresa</h1>
-              <p className="text-[12px] text-muted-foreground/50 mt-0.5">Preencha os dados para registrar uma nova empresa na plataforma.</p>
+              <h1 className="text-[22px] font-bold text-foreground tracking-tight">
+                {isEditing ? "Editar Empresa" : "Cadastrar Empresa"}
+              </h1>
+              <p className="text-[12px] text-muted-foreground/50 mt-0.5">
+                {isEditing
+                  ? "Atualize as informações cadastrais da empresa."
+                  : "Preencha os dados para registrar uma nova empresa na plataforma."}
+              </p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-5">
@@ -366,6 +402,16 @@ const CadastroEmpresa = () => {
                   >
                     <AlertCircle className="h-4 w-4 shrink-0" />
                     <span>{errorMessage}</span>
+                  </motion.div>
+                )}
+                {isEditing && empresaError && !errorMessage && (
+                  <motion.div
+                    className="flex items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-[12px] text-destructive"
+                    initial={{ opacity: 0, y: -6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
+                    <AlertCircle className="h-4 w-4 shrink-0" />
+                    <span>Não foi possível carregar os dados da empresa.</span>
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -560,11 +606,15 @@ const CadastroEmpresa = () => {
                 </motion.button>
                 <motion.button
                   type="submit"
-                  disabled={!requiredFilled || isPending}
+                  disabled={!requiredFilled || isPending || (isEditing && isEmpresaLoading)}
                   className="h-9 px-6 rounded-lg bg-accent text-white text-[13px] font-medium hover:bg-accent/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                   whileTap={{ scale: 0.97 }}
                 >
-                  {isPending ? "Salvando..." : "Cadastrar Empresa"}
+                  {isPending
+                    ? "Salvando..."
+                    : isEditing
+                      ? "Salvar Alterações"
+                      : "Cadastrar Empresa"}
                 </motion.button>
               </motion.div>
             </form>
@@ -593,19 +643,23 @@ const CadastroEmpresa = () => {
                   <CheckCircle2 className="w-6 h-6 text-accent" />
                 </div>
                 <div>
-                  <h2 className="text-[16px] font-semibold text-foreground">Empresa cadastrada!</h2>
+                  <h2 className="text-[16px] font-semibold text-foreground">
+                    {isEditing ? "Empresa atualizada!" : "Empresa cadastrada!"}
+                  </h2>
                   <p className="text-[12px] text-muted-foreground/50 mt-1">
-                    {form.nomeFantasia || form.razaoSocial} foi registrada com sucesso.
+                    {form.nomeFantasia || form.razaoSocial} foi {isEditing ? "atualizada" : "registrada"} com sucesso.
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  <motion.button
-                    onClick={() => { setSuccess(false); setForm(emptyForm); }}
-                    className="flex-1 h-9 rounded-lg border border-border/30 text-[12px] text-muted-foreground hover:text-foreground transition-all"
-                    whileTap={{ scale: 0.97 }}
-                  >
-                    Cadastrar outra
-                  </motion.button>
+                  {!isEditing && (
+                    <motion.button
+                      onClick={() => { setSuccess(false); setForm(emptyForm); }}
+                      className="flex-1 h-9 rounded-lg border border-border/30 text-[12px] text-muted-foreground hover:text-foreground transition-all"
+                      whileTap={{ scale: 0.97 }}
+                    >
+                      Cadastrar outra
+                    </motion.button>
+                  )}
                   <motion.button
                     onClick={() => navigate("/empresas")}
                     className="flex-1 h-9 rounded-lg bg-accent text-white text-[12px] font-medium hover:bg-accent/90 transition-all"

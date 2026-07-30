@@ -1,6 +1,26 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import { api } from "@/api";
+import type { CommercialService } from "./commercialProposal";
+
+export interface PropostaReajuste {
+  mesVigencia: number;
+  valor: number;
+}
+
+export interface PropostaCommercialConfig {
+  servico: CommercialService;
+  mesInicio?: string | null;
+  recorrenciaMeses?: number | null;
+  quantidadeParcelas?: number | null;
+  parcelasIguais: boolean;
+  comissaoTecnicoPercentual?: number | null;
+  comissaoComercialPercentual?: number | null;
+  equipeTecnicaIds: number[];
+  equipeComercialIds: number[];
+  reajustes: PropostaReajuste[];
+  observacoes?: string | null;
+}
 
 interface ApiEnvelope<T> {
   success: boolean;
@@ -18,6 +38,17 @@ export interface PropostaApi {
   valuation: number | null;
   status: PropostaStatus;
   dataCriacao: string;
+  servico?: CommercialService | null;
+  mesInicio?: string | null;
+  recorrenciaMeses?: number | null;
+  quantidadeParcelas?: number | null;
+  parcelasIguais?: boolean;
+  comissaoTecnicoPercentual?: number | null;
+  comissaoComercialPercentual?: number | null;
+  equipeTecnicaIds?: number[];
+  equipeComercialIds?: number[];
+  reajustes?: PropostaReajuste[];
+  observacoes?: string | null;
 }
 
 export interface HistoricoAprovacaoProposta {
@@ -41,6 +72,7 @@ interface CreatePropostaWithFileDTO {
   file: File;
   empresaId: number;
   valuation: number;
+  configuracao: PropostaCommercialConfig;
 }
 
 interface UpdatePropostaStatusDTO {
@@ -107,12 +139,13 @@ export function useCreatePropostaWithFile() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ file, empresaId, valuation }: CreatePropostaWithFileDTO) => {
+    mutationFn: async ({ file, empresaId, valuation, configuracao }: CreatePropostaWithFileDTO) => {
       try {
         const formData = new FormData();
         formData.append("arquivo", file);
         formData.append("empresaId", String(empresaId));
         formData.append("valuation", valuation.toFixed(2));
+        formData.append("configuracao", new Blob([JSON.stringify(configuracao)], { type: "application/json" }));
 
         const response = await api.post<ApiEnvelope<PropostaApi>>("/propostas/upload", formData, {
           headers: {

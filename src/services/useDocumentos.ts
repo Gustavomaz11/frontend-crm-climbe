@@ -52,6 +52,31 @@ export interface DocumentoUploadInfo {
   tokenExpiraEm?: string | null;
 }
 
+export const REQUESTABLE_DOCUMENTS = [
+  "Balancete", "Balanço", "DRE", "Planilha gerencial", "PGDAS", "Cartão CNPJ",
+  "Contrato social", "Empréstimos bancários", "Certidões negativas", "Extrato bancário",
+  "Nota fiscal", "Extrato do cartão de crédito", "Documentos judiciais", "Extrato de dívidas",
+] as const;
+
+interface DocumentoLoteApi {
+  id: number;
+  empresaId: number;
+  nomeEmpresa: string;
+  emailDestinatario: string;
+  tokenExpiraEm: string;
+  documentos: DocumentoApi[];
+}
+
+export interface DocumentoLote extends Omit<DocumentoLoteApi, "documentos"> {
+  documentos: Documento[];
+}
+
+export interface SolicitarDocumentosLoteDTO {
+  empresaId: number;
+  documentos: string[];
+  emailDestinatario: string;
+}
+
 interface CreateDocumentoDTO {
   nome: string;
   descricao: string;
@@ -165,6 +190,21 @@ export function useSolicitarDocumento() {
   });
 }
 
+export function useSolicitarDocumentosLote() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: SolicitarDocumentosLoteDTO) => {
+      try {
+        const response = await api.post<DocumentoLoteApi>("/documentos/solicitar-lote", data);
+        return { ...response.data, documentos: response.data.documentos.map(normalizeDocumento) };
+      } catch (error) {
+        throw new Error(getApiErrorMessage(error));
+      }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["documentos"] }),
+  });
+}
+
 export function useReenviarSolicitacaoDocumento() {
   const queryClient = useQueryClient();
 
@@ -259,6 +299,28 @@ export async function enviarDocumentoPorToken(token: string, file: File) {
       },
     });
 
+    return normalizeDocumento(response.data);
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error));
+  }
+}
+
+export async function getDocumentoLoteUploadInfo(token: string) {
+  try {
+    const response = await api.get<DocumentoLoteApi>(`/documentos/public/lote/${token}`);
+    return { ...response.data, documentos: response.data.documentos.map(normalizeDocumento) };
+  } catch (error) {
+    throw new Error(getApiErrorMessage(error));
+  }
+}
+
+export async function enviarDocumentoLotePorToken(token: string, documentoId: number, file: File) {
+  try {
+    const formData = new FormData();
+    formData.append("arquivo", file);
+    const response = await api.patch<DocumentoApi>(`/documentos/public/lote/${token}/${documentoId}/enviar`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
     return normalizeDocumento(response.data);
   } catch (error) {
     throw new Error(getApiErrorMessage(error));

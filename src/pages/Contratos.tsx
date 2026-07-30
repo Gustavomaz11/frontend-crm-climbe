@@ -24,6 +24,7 @@ import {
   useEmpresas,
   usePropostas,
   useUsuarios,
+  getServiceLabel,
   useUpdateContratoResponsaveis,
   useUpdateContratoStatus,
   type Contrato,
@@ -144,6 +145,21 @@ const Contratos = () => {
         !propostasVinculadas.has(proposta.idProposta),
     );
   }, [contratos, propostas, selectedEmpresaId]);
+  const selectedProposal = useMemo(
+    () => propostasAprovadasDaEmpresa.find((item) => String(item.idProposta) === selectedPropostaId),
+    [propostasAprovadasDaEmpresa, selectedPropostaId],
+  );
+
+  const handleProposalSelection = (value: string) => {
+    setSelectedPropostaId(value);
+    const proposta = propostasAprovadasDaEmpresa.find((item) => String(item.idProposta) === value);
+    if (proposta) {
+      const equipeIds = Array.from(new Set([...(proposta.equipeTecnicaIds || []), ...(proposta.equipeComercialIds || [])]));
+      setSelectedParticipanteIds(equipeIds);
+      if (!selectedResponsavelId && equipeIds.length > 0) setSelectedResponsavelId(String(equipeIds[0]));
+    }
+    setUploadError("");
+  };
 
   const usuariosAtivos = useMemo(
     () => usuarios.filter((usuario) => !usuario.situacao || usuario.situacao === "ATIVO"),
@@ -505,7 +521,7 @@ const Contratos = () => {
                         <label className="text-[9px] text-muted-foreground/40 font-medium uppercase tracking-wider mb-1 block">Proposta aprovada</label>
                         <select
                           value={selectedPropostaId}
-                          onChange={(e) => { setSelectedPropostaId(e.target.value); setUploadError(""); }}
+                          onChange={(e) => handleProposalSelection(e.target.value)}
                           disabled={!selectedEmpresaId}
                           className="w-full h-9 px-2.5 rounded-lg border border-border/25 bg-background/50 text-[12px] outline-none focus:border-accent/40 transition-colors text-foreground disabled:opacity-45 disabled:cursor-not-allowed"
                         >
@@ -517,6 +533,11 @@ const Contratos = () => {
                             </option>
                           ))}
                         </select>
+                        {selectedProposal && (
+                          <p className="mt-1.5 rounded-md border border-accent/20 bg-accent/5 px-2 py-1.5 text-[11px] text-accent">
+                            Serviço da proposta: <strong>{getServiceLabel(selectedProposal.servico)}</strong>
+                          </p>
+                        )}
                       </div>
                       <div>
                         <label className="text-[9px] text-muted-foreground/40 font-medium uppercase tracking-wider mb-1 block">Responsável</label>

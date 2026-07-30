@@ -19,8 +19,9 @@ import {
   useDocumentos,
   useEmpresas,
   useReenviarSolicitacaoDocumento,
-  useSolicitarDocumento,
+  useSolicitarDocumentosLote,
   useValidarDocumento,
+  REQUESTABLE_DOCUMENTS,
   type Documento,
   type DocumentoStatus,
 } from "@/services";
@@ -55,8 +56,7 @@ const Documentos = () => {
   const [selectedDoc, setSelectedDoc] = useState<Documento | null>(null);
   const [requestOpen, setRequestOpen] = useState(false);
   const [selectedEmpresaId, setSelectedEmpresaId] = useState("");
-  const [titulo, setTitulo] = useState("");
-  const [tipoDocumento, setTipoDocumento] = useState("");
+  const [selectedDocumentTypes, setSelectedDocumentTypes] = useState<string[]>([]);
   const [emailDestinatario, setEmailDestinatario] = useState("");
   const [requestMessage, setRequestMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [modalError, setModalError] = useState("");
@@ -78,7 +78,7 @@ const Documentos = () => {
 
   const { data: documentos = [], isLoading, error } = useDocumentos();
   const { data: empresas = [] } = useEmpresas();
-  const solicitarDocumento = useSolicitarDocumento();
+  const solicitarDocumentos = useSolicitarDocumentosLote();
   const reenviarSolicitacaoDocumento = useReenviarSolicitacaoDocumento();
   const deleteDocumento = useDeleteDocumento();
   const validarDocumento = useValidarDocumento();
@@ -120,8 +120,8 @@ const Documentos = () => {
       setRequestMessage({ type: "error", text: "Selecione uma empresa para solicitar o documento." });
       return;
     }
-    if (!titulo.trim()) {
-      setRequestMessage({ type: "error", text: "Informe o título do documento solicitado." });
+    if (selectedDocumentTypes.length === 0) {
+      setRequestMessage({ type: "error", text: "Selecione ao menos um documento." });
       return;
     }
     if (!emailDestinatario.trim()) {
@@ -130,15 +130,13 @@ const Documentos = () => {
     }
 
     try {
-      await solicitarDocumento.mutateAsync({
+      await solicitarDocumentos.mutateAsync({
         empresaId,
-        titulo: titulo.trim(),
-        tipoDocumento: tipoDocumento.trim() || titulo.trim(),
+        documentos: selectedDocumentTypes,
         emailDestinatario: emailDestinatario.trim(),
       });
-      setRequestMessage({ type: "success", text: "Solicitação criada e e-mail enviado para anexo." });
-      setTitulo("");
-      setTipoDocumento("");
+      setRequestMessage({ type: "success", text: "Solicitações criadas e um único link foi enviado por e-mail." });
+      setSelectedDocumentTypes([]);
       setEmailDestinatario("");
       setSelectedEmpresaId("");
       setRequestOpen(false);
@@ -346,8 +344,8 @@ const Documentos = () => {
             <motion.div className="relative z-10 w-full max-w-xl rounded-2xl border border-border/30 bg-card/95 backdrop-blur-xl shadow-2xl overflow-hidden" initial={{ scale: 0.92, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.92, opacity: 0, y: 20 }}>
               <div className="flex items-center justify-between p-5 border-b border-border/20">
                 <div>
-                  <h2 className="text-[16px] font-semibold text-foreground">Solicitar documento</h2>
-                  <p className="text-[11px] text-muted-foreground/50 mt-0.5">Envie um link de anexo para a empresa ou outro destinatário.</p>
+                  <h2 className="text-[16px] font-semibold text-foreground">Solicitar documentos</h2>
+                  <p className="text-[11px] text-muted-foreground/50 mt-0.5">Marque os itens; o cliente receberá um único link para todos os anexos.</p>
                 </div>
                 <button onClick={() => setRequestOpen(false)} className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/20"><X className="w-4 h-4" /></button>
               </div>
@@ -363,13 +361,26 @@ const Documentos = () => {
                 </div>
 
                 <div>
-                  <label className="text-[9px] text-muted-foreground/40 font-medium uppercase tracking-wider mb-1 block">Título do documento</label>
-                  <input value={titulo} onChange={(e) => setTitulo(e.target.value)} placeholder="Ex.: Contrato social atualizado" className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[12px] outline-none focus:border-accent/40 transition-colors text-foreground placeholder:text-muted-foreground/30" />
-                </div>
-
-                <div>
-                  <label className="text-[9px] text-muted-foreground/40 font-medium uppercase tracking-wider mb-1 block">Tipo ou categoria</label>
-                  <input value={tipoDocumento} onChange={(e) => setTipoDocumento(e.target.value)} placeholder="Opcional" className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[12px] outline-none focus:border-accent/40 transition-colors text-foreground placeholder:text-muted-foreground/30" />
+                  <div className="mb-2 flex items-center justify-between">
+                    <label className="text-[9px] text-muted-foreground/40 font-medium uppercase tracking-wider">Documentos</label>
+                    <span className="text-[10px] text-accent">{selectedDocumentTypes.length} selecionado(s)</span>
+                  </div>
+                  <div className="grid max-h-56 grid-cols-2 gap-2 overflow-y-auto pr-1">
+                    {REQUESTABLE_DOCUMENTS.map((documento) => {
+                      const checked = selectedDocumentTypes.includes(documento);
+                      return (
+                        <label key={documento} className={`flex cursor-pointer items-center gap-2 rounded-lg border p-2.5 text-[11px] transition-colors ${checked ? "border-accent/40 bg-accent/10 text-accent" : "border-border/25 bg-background/40 text-foreground/70"}`}>
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => setSelectedDocumentTypes((current) => checked ? current.filter((item) => item !== documento) : [...current, documento])}
+                            className="accent-[hsl(var(--accent))]"
+                          />
+                          {documento}
+                        </label>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 <div>
@@ -380,9 +391,9 @@ const Documentos = () => {
                   </div>
                 </div>
 
-                <button onClick={handleSolicitarDocumento} disabled={solicitarDocumento.isPending} className="w-full h-10 rounded-lg bg-accent text-accent-foreground text-[12px] font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                <button onClick={handleSolicitarDocumento} disabled={solicitarDocumentos.isPending} className="w-full h-10 rounded-lg bg-accent text-accent-foreground text-[12px] font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                   <Send className="w-4 h-4" />
-                  {solicitarDocumento.isPending ? "Enviando..." : "Enviar solicitação"}
+                  {solicitarDocumentos.isPending ? "Enviando..." : "Enviar solicitação em lote"}
                 </button>
               </div>
             </motion.div>
