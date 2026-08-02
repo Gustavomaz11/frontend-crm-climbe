@@ -17,6 +17,7 @@ import {
 
 import ClimbLogo from "@/components/login/ClimbLogo";
 import { AprovacaoAcessoDialog } from "@/components/access/AprovacaoAcessoDialog";
+import { GerenciamentoAcessos } from "@/components/access/GerenciamentoAcessos";
 import { UserAvatar } from "@/components/UserAvatar";
 import { toast } from "@/hooks/use-toast";
 import { useTheme } from "@/hooks/use-theme";
@@ -137,6 +138,7 @@ const AprovarAcesso = () => {
   const { isDark, setIsDark } = useTheme();
   const [sidebarCollapsed, setSidebarCollapsed] = useSidebarState();
   const [searchQuery, setSearchQuery] = useState("");
+  const [visao, setVisao] = useState<"solicitacoes" | "acessos">("solicitacoes");
   const [filterStatus, setFilterStatus] = useState<Status | "todos">("todos");
   const [confirmando, setConfirmando] = useState<{
     key: string;
@@ -381,9 +383,25 @@ const AprovarAcesso = () => {
                   Gerencie cadastros manuais e solicitações criadas pelo login Google.
                 </p>
               </div>
+              <div className="flex items-center rounded-lg border border-border/25 bg-card/40 p-1">
+                <button
+                  onClick={() => setVisao("solicitacoes")}
+                  className={`rounded-md px-3 py-1.5 text-[11px] font-medium transition-colors ${visao === "solicitacoes" ? "bg-accent/15 text-accent" : "text-muted-foreground/50 hover:text-foreground"}`}
+                >
+                  Solicitações
+                </button>
+                <button
+                  onClick={() => setVisao("acessos")}
+                  className={`rounded-md px-3 py-1.5 text-[11px] font-medium transition-colors ${visao === "acessos" ? "bg-accent/15 text-accent" : "text-muted-foreground/50 hover:text-foreground"}`}
+                >
+                  Acessos
+                </button>
+              </div>
             </div>
           </div>
 
+          {visao === "solicitacoes" ? (
+          <>
           <div className="px-6 pb-4 grid grid-cols-3 gap-3">
             {[
               {
@@ -634,6 +652,10 @@ const AprovarAcesso = () => {
               </div>
             </motion.div>
           </div>
+          </>
+          ) : (
+            <GerenciamentoAcessos usuarioAtualId={basicUserData?.id || userData?.id} />
+          )}
         </main>
       </div>
 

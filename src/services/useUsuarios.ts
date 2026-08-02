@@ -165,6 +165,16 @@ export function useSolicitacoesAcesso() {
   });
 }
 
+export function useAcessosUsuarios() {
+  return useQuery<Usuario[]>({
+    queryKey: ["usuarios", "acessos"],
+    queryFn: async () => {
+      const response = await api.get<UsuarioApi[]>("/usuarios/acessos");
+      return response.data.map(normalizeUsuario);
+    },
+  });
+}
+
 export function useUsuarioById(id: number) {
   return useQuery<Usuario>({
     queryKey: ["usuarios", id],
@@ -268,6 +278,34 @@ export function useRecusarSolicitacaoAcesso() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["usuarios", "solicitacoes"] });
       queryClient.invalidateQueries({ queryKey: ["usuarios"] });
+    },
+  });
+}
+
+export function useRevogarAcesso() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      await api.post(`/usuarios/${id}/revogar`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["usuarios"] });
+      queryClient.invalidateQueries({ queryKey: ["usuarios", "acessos"] });
+    },
+  });
+}
+
+export function useReativarAcesso() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      await api.post(`/usuarios/${id}/reativar`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["usuarios"] });
+      queryClient.invalidateQueries({ queryKey: ["usuarios", "acessos"] });
     },
   });
 }
