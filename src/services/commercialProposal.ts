@@ -26,3 +26,14 @@ export const isRecurringService = (service?: CommercialService | null) =>
 
 export const getServiceLabel = (service?: CommercialService | null) =>
   SERVICE_OPTIONS.find((item) => item.value === service)?.label ?? "Serviço não informado";
+
+export const getProposalBillingCount = (
+  service: CommercialService,
+  recurrenceMonths?: number | null,
+  installmentCount?: number | null,
+) => {
+  if (isRecurringService(service)) {
+    return recurrenceMonths && recurrenceMonths > 0 ? recurrenceMonths : 24;
+  }
+  return installmentCount && installmentCount > 0 ? installmentCount : 1;
+};

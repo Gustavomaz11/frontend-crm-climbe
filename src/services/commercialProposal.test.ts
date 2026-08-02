@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isRecurringService, SERVICE_OPTIONS } from "./commercialProposal";
+import { getProposalBillingCount, isRecurringService, SERVICE_OPTIONS } from "./commercialProposal";
 
 describe("catálogo comercial", () => {
   it("expõe todos os serviços aceitos no envio da proposta", () => {
@@ -13,5 +13,11 @@ describe("catálogo comercial", () => {
     expect(isRecurringService("FINANCE_SUPPORT")).toBe(true);
     expect(isRecurringService("VALUATION")).toBe(false);
     expect(isRecurringService("CONSORCIO")).toBe(false);
+  });
+
+  it("calcula a quantidade usada para dividir o valor total", () => {
+    expect(getProposalBillingCount("BPO", 24, 1)).toBe(24);
+    expect(getProposalBillingCount("BPO", 0, 1)).toBe(24);
+    expect(getProposalBillingCount("VALUATION", null, 6)).toBe(6);
   });
 });
