@@ -33,6 +33,8 @@ import PipelineMotivosPerdaAdmin from "./pages/PipelineMotivosPerdaAdmin.tsx";
 import PipelineCampanhas from "./pages/PipelineCampanhas.tsx";
 import PipelineScripts from "./pages/PipelineScripts.tsx";
 import RevisaoDocumentoPublica from "./pages/RevisaoDocumentoPublica.tsx";
+import Perfil from "./pages/Perfil.tsx";
+import Cargos from "./pages/Cargos.tsx";
 
 const App = () => (
   <QueryProvider>
@@ -124,6 +126,22 @@ const App = () => (
               element={
                 <PrivateRoute>
                   <Permissoes />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/cargos"
+              element={
+                <PrivateRoute>
+                  <Cargos />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/perfil"
+              element={
+                <PrivateRoute>
+                  <Perfil />
                 </PrivateRoute>
               }
             />

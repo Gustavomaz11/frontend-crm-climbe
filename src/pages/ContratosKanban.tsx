@@ -21,9 +21,9 @@ import { KanbanTaskCard } from "@/components/kanban/KanbanTaskCard";
 import { KanbanTaskDialog, type KanbanTaskDraft } from "@/components/kanban/KanbanTaskDialog";
 import { KanbanTaskEditDialog } from "@/components/kanban/KanbanTaskEditDialog";
 import { UserAvatar } from "@/components/UserAvatar";
+import { AppSidebarNav } from "@/components/layout/AppSidebarNav";
 import { useSidebarState } from "@/hooks/useSidebarState";
 import { useTheme } from "@/hooks/use-theme";
-import { useVisibleMainNavItems } from "@/hooks/useVisibleMainNavItems";
 import { useAuthStore } from "@/store/useAuthStore";
 import {
   useContratoKanban,
@@ -80,7 +80,6 @@ const ContratosKanban = () => {
   const [pendingRaiaRemoval, setPendingRaiaRemoval] = useState<PendingRaiaRemoval | null>(null);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const navigate = useNavigate();
-  const navItems = useVisibleMainNavItems();
 
   const { data: contratos = [], isLoading: contratosLoading } = useContratos();
   const contratosAprovados = useMemo(
@@ -409,14 +408,8 @@ const ContratosKanban = () => {
           <div className={`flex h-16 items-center border-b border-border/20 ${sidebarCollapsed ? "justify-center px-2" : "px-5"}`}>
             {sidebarCollapsed ? <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent/10 text-xs font-bold text-accent">C</div> : <ClimbLogo className="h-[16px] text-foreground" />}
           </div>
-          <nav className="flex-1 space-y-1 px-2 py-4">
-            {navItems.map((item) => (
-              <motion.button key={item.label} onClick={() => navigate(item.path)} className={`group relative flex w-full items-center gap-3 rounded-lg transition-all ${sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"} ${item.label === "Kanban" ? "bg-accent/10 text-accent" : "text-muted-foreground hover:bg-muted/30 hover:text-foreground"}`} whileHover={{ x: sidebarCollapsed ? 0 : 2 }} whileTap={{ scale: 0.98 }}>
-                {item.label === "Kanban" && <motion.div className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-accent" />}
-                <item.icon className="h-[18px] w-[18px] shrink-0" />
-                {!sidebarCollapsed && <span className="text-[13px] font-medium">{item.label}</span>}
-              </motion.button>
-            ))}
+          <nav className="min-h-0 flex-1 overflow-y-auto px-2 py-4">
+            <AppSidebarNav collapsed={sidebarCollapsed} />
           </nav>
           <div className="space-y-1 border-t border-border/20 px-2 py-3">
             <motion.button onClick={() => setIsDark(!isDark)} className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground transition-all hover:bg-muted/30 hover:text-foreground ${sidebarCollapsed ? "justify-center" : ""}`} whileTap={{ scale: 0.98 }}>

@@ -15,6 +15,7 @@ import {
   ListX,
   Megaphone,
   FileCode2,
+  BriefcaseBusiness,
   type LucideIcon,
 } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -40,6 +41,7 @@ const mainNavItems: MainNavItem[] = [
   { icon: ScrollText, label: "Propostas", path: "/propostas", permissions: ["PROPOSTA_CRUD"] },
   { icon: CalendarIcon, label: "Agenda", path: "/agenda", permissions: ["REUNIAO_AGENDAMENTO"] },
   { icon: Shield, label: "Permissões", path: "/permissoes", permissions: ["PERMITIR_ACESSO", "CARGO_CRUD"] },
+  { icon: BriefcaseBusiness, label: "Cargos", path: "/cargos", permissions: ["CARGO_CRUD"] },
   { icon: Building2, label: "Empresas", path: "/empresas" },
   {
     icon: FileCheck,

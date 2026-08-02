@@ -1,7 +1,6 @@
 import { useMemo, useContext, useState } from "react";
 import { useTheme } from "@/hooks/use-theme";
 import { useSidebarState } from "@/hooks/useSidebarState";
-import { useVisibleMainNavItems } from "@/hooks/useVisibleMainNavItems";
 import { useNavigate, Link, useLocation } from "react-router-dom";
 import { AuthContext } from "@/context/provider";
 import { motion, AnimatePresence } from "framer-motion";
@@ -39,6 +38,7 @@ import {
 
 import ClimbLogo from "@/components/login/ClimbLogo";
 import { UserAvatar } from "@/components/UserAvatar";
+import { AppSidebarNav } from "@/components/layout/AppSidebarNav";
 
 // ajuste estes imports se sua pasta estiver diferente
 import {
@@ -369,7 +369,6 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const authContext = useContext(AuthContext);
-  const navItems = useVisibleMainNavItems();
 
   const basicUserData = useAuthStore((state) => state.basicUserData);
   const userData = useAuthStore((state) => state.userData);
@@ -1698,37 +1697,8 @@ const Dashboard = () => {
             )}
           </div>
 
-          <nav className="flex-1 space-y-1 px-2 py-4">
-            {navItems.map((item) => {
-              const isActive = location.pathname === item.path;
-
-              return (
-                <motion.button
-                  key={item.label}
-                  onClick={() => navigate(item.path)}
-                  className={`group relative flex w-full items-center gap-3 rounded-lg transition-all duration-200 ${
-                    sidebarCollapsed
-                      ? "justify-center px-2 py-2.5"
-                      : "px-3 py-2.5"
-                  } ${
-                    isActive
-                      ? "bg-accent/10 text-accent"
-                      : "text-muted-foreground hover:bg-muted/30 hover:text-foreground"
-                  }`}
-                  whileHover={{ x: sidebarCollapsed ? 0 : 2 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  {isActive && (
-                    <motion.div className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-accent" />
-                  )}
-
-                  <item.icon className="h-[18px] w-[18px] shrink-0" />
-                  {!sidebarCollapsed && (
-                    <span className="text-[13px] font-medium">{item.label}</span>
-                  )}
-                </motion.button>
-              );
-            })}
+          <nav className="min-h-0 flex-1 overflow-y-auto px-2 py-4">
+            <AppSidebarNav collapsed={sidebarCollapsed} />
           </nav>
 
           <div className="space-y-1 border-t border-border/20 px-2 py-3">

@@ -1,12 +1,14 @@
 import { motion } from "framer-motion";
 
 import { cn } from "@/lib/utils";
+import { useNavigate } from "react-router-dom";
 
 interface UserAvatarProps {
   name?: string | null;
   photoUrl?: string | null;
   className?: string;
   initialsClassName?: string;
+  openProfileOnClick?: boolean;
 }
 
 function getInitials(name?: string | null) {
@@ -27,11 +29,19 @@ export function UserAvatar({
   photoUrl,
   className,
   initialsClassName,
+  openProfileOnClick = true,
 }: UserAvatarProps) {
+  const navigate = useNavigate();
+
   return (
-    <motion.div
+    <motion.button
+      type="button"
+      aria-label="Abrir meu perfil"
+      title="Meu perfil"
+      onClick={() => openProfileOnClick && navigate("/perfil")}
       className={cn(
-        "flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg border border-accent/20 bg-accent/15",
+        "flex h-9 w-9 items-center justify-center overflow-hidden rounded-lg border border-accent/20 bg-accent/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50",
+        openProfileOnClick && "cursor-pointer",
         className,
       )}
       whileHover={{ scale: 1.03 }}
@@ -48,6 +58,6 @@ export function UserAvatar({
           {getInitials(name)}
         </span>
       )}
-    </motion.div>
+    </motion.button>
   );
 }

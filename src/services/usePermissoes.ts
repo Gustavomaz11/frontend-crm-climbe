@@ -49,6 +49,26 @@ interface CreatePermissaoDTO {
   descricao: string;
 }
 
+interface GrupoPermissaoApi {
+  id: number;
+  nome: string;
+  descricao?: string | null;
+  permissoes: PermissaoApi[];
+}
+
+export interface GrupoPermissao {
+  id: number;
+  nome: string;
+  descricao: string;
+  permissoes: Permissao[];
+}
+
+export interface SalvarGrupoPermissaoDTO {
+  nome: string;
+  descricao?: string;
+  permissaoIds: number[];
+}
+
 function unwrap<T>(response: T | ApiEnvelope<T>): T {
   if (
     response &&
@@ -111,6 +131,55 @@ export function usePermissoes() {
       const response = await api.get<PermissaoApi[]>("/permissoes");
       return response.data.map(normalizePermissao);
     },
+  });
+}
+
+function normalizeGrupo(grupo: GrupoPermissaoApi): GrupoPermissao {
+  return {
+    id: grupo.id,
+    nome: grupo.nome,
+    descricao: grupo.descricao || "",
+    permissoes: grupo.permissoes.map(normalizePermissao),
+  };
+}
+
+export function useGruposPermissoes() {
+  return useQuery<GrupoPermissao[]>({
+    queryKey: ["grupos-permissoes"],
+    queryFn: async () => {
+      const response = await api.get<GrupoPermissaoApi[]>("/grupos-permissoes");
+      return response.data.map(normalizeGrupo);
+    },
+  });
+}
+
+export function useCreateGrupoPermissao() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: SalvarGrupoPermissaoDTO) => {
+      const response = await api.post<GrupoPermissaoApi>("/grupos-permissoes", data);
+      return normalizeGrupo(response.data);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["grupos-permissoes"] }),
+  });
+}
+
+export function useUpdateGrupoPermissao() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: SalvarGrupoPermissaoDTO }) => {
+      const response = await api.put<GrupoPermissaoApi>(`/grupos-permissoes/${id}`, data);
+      return normalizeGrupo(response.data);
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["grupos-permissoes"] }),
+  });
+}
+
+export function useDeleteGrupoPermissao() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => api.delete(`/grupos-permissoes/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["grupos-permissoes"] }),
   });
 }
 

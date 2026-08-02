@@ -2,7 +2,7 @@ import { motion } from "framer-motion";
 import { Check, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import type { Permissao } from "@/services/usePermissoes";
+import type { GrupoPermissao, Permissao } from "@/services/usePermissoes";
 import type { Cargo } from "@/services/useUsuarios";
 
 type AcaoConfirmacao = "aprovar" | "recusar";
@@ -12,12 +12,14 @@ interface AprovacaoAcessoDialogProps {
   nomeUsuario: string;
   cargos: Cargo[];
   permissoes: Permissao[];
+  grupos: GrupoPermissao[];
   cargoId: number | null;
   permissaoIds: Set<number>;
   isProcessing: boolean;
   isLoadingOptions: boolean;
   onCargoChange: (cargoId: number | null) => void;
   onTogglePermissao: (permissaoId: number) => void;
+  onApplyGrupo: (permissaoIds: number[]) => void;
   onCancel: () => void;
   onConfirm: () => void;
 }
@@ -27,12 +29,14 @@ export const AprovacaoAcessoDialog = ({
   nomeUsuario,
   cargos,
   permissoes,
+  grupos,
   cargoId,
   permissaoIds,
   isProcessing,
   isLoadingOptions,
   onCargoChange,
   onTogglePermissao,
+  onApplyGrupo,
   onCancel,
   onConfirm,
 }: AprovacaoAcessoDialogProps) => {
@@ -92,6 +96,23 @@ export const AprovacaoAcessoDialog = ({
               </div>
 
               <div>
+                {grupos.length > 0 && (
+                  <div className="mb-4">
+                    <label className="mb-1.5 block text-[11px] font-medium text-foreground/75">Grupo de permissões</label>
+                    <select
+                      defaultValue=""
+                      onChange={(event) => {
+                        const grupo = grupos.find((item) => item.id === Number(event.target.value));
+                        if (grupo) onApplyGrupo(grupo.permissoes.map((permissao) => permissao.id));
+                      }}
+                      disabled={isProcessing}
+                      className="h-10 w-full rounded-lg border border-border/30 bg-background px-3 text-[12px] text-foreground outline-none focus:border-accent/50"
+                    >
+                      <option value="">Aplicar um grupo...</option>
+                      {grupos.map((grupo) => <option key={grupo.id} value={grupo.id}>{grupo.nome}</option>)}
+                    </select>
+                  </div>
+                )}
                 <div className="mb-2 flex items-center justify-between">
                   <label className="text-[11px] font-medium text-foreground/75">
                     Permissões <span className="text-red-500">*</span>

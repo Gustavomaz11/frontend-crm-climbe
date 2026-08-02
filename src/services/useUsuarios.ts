@@ -19,6 +19,14 @@ interface UsuarioApi {
 export interface Cargo {
   id: number;
   nome: string;
+  ativo?: boolean;
+}
+
+export interface AtualizarMeuPerfilDTO {
+  nomeCompleto: string;
+  email: string;
+  cpf: string;
+  contato: string;
 }
 
 export type OrigemSolicitacaoAcesso = "USUARIO" | "GOOGLE";
@@ -161,6 +169,78 @@ export function useSolicitacoesAcesso() {
     queryFn: async () => {
       const response = await api.get<SolicitacaoAcessoApi[]>("/usuarios/solicitacoes");
       return response.data.map(normalizeSolicitacaoAcesso);
+    },
+  });
+}
+
+export function useCreateCargo() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (nome: string) => {
+      const response = await api.post<Cargo>("/cargos", { nome });
+      return response.data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cargos"] }),
+  });
+}
+
+export function useUpdateCargo() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, nome }: { id: number; nome: string }) => {
+      const response = await api.put<Cargo>(`/cargos/${id}`, { nome });
+      return response.data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cargos"] }),
+  });
+}
+
+export function useDeleteCargo() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => api.delete(`/cargos/${id}`),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cargos"] }),
+  });
+}
+
+export function useMeuPerfil() {
+  return useQuery<Usuario>({
+    queryKey: ["usuarios", "me"],
+    queryFn: async () => {
+      const response = await api.get<UsuarioApi>("/usuarios/me");
+      return normalizeUsuario(response.data);
+    },
+  });
+}
+
+export function useAtualizarMeuPerfil() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: AtualizarMeuPerfilDTO) => {
+      const response = await api.put<UsuarioApi>("/usuarios/me", data);
+      return normalizeUsuario(response.data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["usuarios", "me"] });
+      queryClient.invalidateQueries({ queryKey: ["usuarios"] });
+    },
+  });
+}
+
+export function useAtualizarFotoPerfil() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (foto: File) => {
+      const formData = new FormData();
+      formData.append("foto", foto);
+      const response = await api.post<UsuarioApi>("/usuarios/me/foto", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      return normalizeUsuario(response.data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["usuarios", "me"] });
+      queryClient.invalidateQueries({ queryKey: ["usuarios"] });
     },
   });
 }

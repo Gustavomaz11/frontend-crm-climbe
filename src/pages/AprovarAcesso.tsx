@@ -19,10 +19,10 @@ import ClimbLogo from "@/components/login/ClimbLogo";
 import { AprovacaoAcessoDialog } from "@/components/access/AprovacaoAcessoDialog";
 import { GerenciamentoAcessos } from "@/components/access/GerenciamentoAcessos";
 import { UserAvatar } from "@/components/UserAvatar";
+import { AppSidebarNav } from "@/components/layout/AppSidebarNav";
 import { toast } from "@/hooks/use-toast";
 import { useTheme } from "@/hooks/use-theme";
 import { useSidebarState } from "@/hooks/useSidebarState";
-import { useVisibleMainNavItems } from "@/hooks/useVisibleMainNavItems";
 import {
   useAprovarSolicitacaoAcesso,
   useCargos,
@@ -31,7 +31,7 @@ import {
   useUsuarioById,
   type SolicitacaoAcesso,
 } from "@/services/useUsuarios";
-import { usePermissoes } from "@/services/usePermissoes";
+import { useGruposPermissoes, usePermissoes } from "@/services/usePermissoes";
 import { useAuthStore } from "@/store/useAuthStore";
 
 type Status = "pendente" | "aprovado" | "recusado";
@@ -148,13 +148,13 @@ const AprovarAcesso = () => {
   const [cargoSelecionadoId, setCargoSelecionadoId] = useState<number | null>(null);
   const [permissaoIdsSelecionadas, setPermissaoIdsSelecionadas] = useState<Set<number>>(new Set());
   const navigate = useNavigate();
-  const navItems = useVisibleMainNavItems();
 
   const { data: solicitacoesPersistidas = [], isLoading, isError, error } = useSolicitacoesAcesso();
   const aprovarSolicitacao = useAprovarSolicitacaoAcesso();
   const recusarSolicitacao = useRecusarSolicitacaoAcesso();
   const { data: cargos = [], isLoading: loadingCargos } = useCargos();
   const { data: permissoes = [], isLoading: loadingPermissoes } = usePermissoes();
+  const { data: gruposPermissoes = [] } = useGruposPermissoes();
 
   const basicUserData = useAuthStore((state) => state.basicUserData);
   const userData = useAuthStore((state) => state.userData);
@@ -290,29 +290,8 @@ const AprovarAcesso = () => {
             )}
           </div>
 
-          <nav className="flex-1 py-4 px-2 space-y-1">
-            {navItems.map((item) => {
-              const isActive = item.path === "/aprovar-acesso";
-
-              return (
-                <motion.button
-                  key={item.label}
-                  onClick={() => navigate(item.path)}
-                  className={`w-full flex items-center gap-3 rounded-lg transition-all group relative ${
-                    sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"
-                  } ${
-                    isActive
-                      ? "bg-accent/10 text-accent"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
-                  }`}
-                  whileHover={{ x: sidebarCollapsed ? 0 : 2 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <item.icon className="w-[18px] h-[18px] shrink-0" />
-                  {!sidebarCollapsed && <span className="text-[13px] font-medium">{item.label}</span>}
-                </motion.button>
-              );
-            })}
+          <nav className="min-h-0 flex-1 overflow-y-auto py-4 px-2">
+            <AppSidebarNav collapsed={sidebarCollapsed} />
           </nav>
 
           <div className="border-t border-border/20 py-3 px-2 space-y-1">
@@ -669,12 +648,14 @@ const AprovarAcesso = () => {
             nomeUsuario={solicitacaoConfirmada.nome}
             cargos={cargos}
             permissoes={permissoes}
+            grupos={gruposPermissoes}
             cargoId={cargoSelecionadoId}
             permissaoIds={permissaoIdsSelecionadas}
             isProcessing={isProcessing}
             isLoadingOptions={loadingCargos || loadingPermissoes}
             onCargoChange={setCargoSelecionadoId}
             onTogglePermissao={togglePermissao}
+            onApplyGrupo={(ids) => setPermissaoIdsSelecionadas(new Set(ids))}
             onCancel={() => setConfirmando(null)}
             onConfirm={handleConfirmar}
           />

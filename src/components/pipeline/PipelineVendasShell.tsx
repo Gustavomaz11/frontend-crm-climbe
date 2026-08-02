@@ -4,9 +4,9 @@ import { ChevronLeft, ChevronRight, LogOut, Moon, Search, Sun } from "lucide-rea
 import { Link, useNavigate } from "react-router-dom";
 import ClimbLogo from "@/components/login/ClimbLogo";
 import { UserAvatar } from "@/components/UserAvatar";
+import { AppSidebarNav } from "@/components/layout/AppSidebarNav";
 import { useSidebarState } from "@/hooks/useSidebarState";
 import { useTheme } from "@/hooks/use-theme";
-import { useVisibleMainNavItems } from "@/hooks/useVisibleMainNavItems";
 import { useAuthStore } from "@/store/useAuthStore";
 
 interface PipelineVendasShellProps extends PropsWithChildren {
@@ -20,7 +20,6 @@ export const PipelineVendasShell = ({ search, onSearchChange, searchPlaceholder 
   const { isDark, setIsDark } = useTheme();
   const [sidebarCollapsed, setSidebarCollapsed] = useSidebarState();
   const navigate = useNavigate();
-  const navItems = useVisibleMainNavItems();
   const basicUserData = useAuthStore((state) => state.basicUserData);
   const userData = useAuthStore((state) => state.userData);
   const userName = basicUserData?.nomeCompleto || userData?.nomeCompleto || userData?.pessoa?.nomeCompleto || "Usuário";
@@ -32,11 +31,8 @@ export const PipelineVendasShell = ({ search, onSearchChange, searchPlaceholder 
       <div className="relative z-10 flex min-h-screen">
         <motion.aside className={`fixed inset-y-0 left-0 z-30 flex flex-col border-r border-border/30 bg-card/60 backdrop-blur-xl transition-all duration-300 ${sidebarCollapsed ? "w-[72px]" : "w-[220px]"}`} initial={false} animate={{ x: 0 }}>
           <div className={`flex h-16 items-center border-b border-border/20 ${sidebarCollapsed ? "justify-center px-2" : "px-5"}`}>{sidebarCollapsed ? <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent/10 text-xs font-bold text-accent">C</div> : <ClimbLogo className="h-[16px] text-foreground" />}</div>
-          <nav className="flex-1 space-y-1 px-2 py-4">
-            {navItems.map((item) => {
-              const active = item.path === activePath;
-              return <motion.button key={item.label} onClick={() => navigate(item.path)} className={`group relative flex w-full items-center gap-3 rounded-lg transition-all ${sidebarCollapsed ? "justify-center px-2 py-2.5" : "px-3 py-2.5"} ${active ? "bg-accent/10 text-accent" : "text-muted-foreground hover:bg-muted/30 hover:text-foreground"}`} whileHover={{ x: sidebarCollapsed ? 0 : 2 }} whileTap={{ scale: 0.98 }}>{active && <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-accent" />}<item.icon className="h-[18px] w-[18px] shrink-0" />{!sidebarCollapsed && <span className="text-[13px] font-medium">{item.label}</span>}</motion.button>;
-            })}
+          <nav className="min-h-0 flex-1 overflow-y-auto px-2 py-4">
+            <AppSidebarNav collapsed={sidebarCollapsed} />
           </nav>
           <div className="space-y-1 border-t border-border/20 px-2 py-3">
             <motion.button onClick={() => setIsDark(!isDark)} className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground hover:bg-muted/30 hover:text-foreground ${sidebarCollapsed ? "justify-center" : ""}`} whileTap={{ scale: 0.98 }}><AnimatePresence mode="wait"><motion.span key={isDark ? "sun" : "moon"} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>{isDark ? <Sun className="h-[18px] w-[18px]" /> : <Moon className="h-[18px] w-[18px]" />}</motion.span></AnimatePresence>{!sidebarCollapsed && <span className="text-[13px] font-medium">{isDark ? "Modo claro" : "Modo escuro"}</span>}</motion.button>
