@@ -148,6 +148,7 @@ const FirstAccess = () => {
         email: response.data.usuario.email,
         nomeCompleto: response.data.usuario.nomeCompleto,
         fotoPerfil: response.data.usuario.fotoPerfil,
+        cargoNome: response.data.usuario.cargoNome,
       });
 
       sessionStorage.removeItem("@CLIMB:PENDING_TOKEN");

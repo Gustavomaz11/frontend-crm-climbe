@@ -32,6 +32,7 @@ export interface BasicUserData {
   email?: string;
   nomeCompleto?: string;
   fotoPerfil?: string | null;
+  cargoNome?: string | null;
 }
 
 interface AuthState {

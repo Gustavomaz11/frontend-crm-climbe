@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Ban, CheckCircle2, RotateCcw, Search, ShieldCheck, User } from "lucide-react";
+import { Ban, CheckCircle2, Pencil, RotateCcw, Search, ShieldCheck, User } from "lucide-react";
 
 import {
   AlertDialog,
@@ -14,6 +14,8 @@ import {
 import { toast } from "@/hooks/use-toast";
 import {
   useAcessosUsuarios,
+  useAlterarCargoUsuario,
+  useCargos,
   useReativarAcesso,
   useRevogarAcesso,
   type Usuario,
@@ -35,9 +37,12 @@ export const GerenciamentoAcessos = ({ usuarioAtualId }: GerenciamentoAcessosPro
   const [filtro, setFiltro] = useState<FiltroAcesso>("todos");
   const [busca, setBusca] = useState("");
   const [confirmacao, setConfirmacao] = useState<{ usuario: Usuario; acao: AcaoAcesso } | null>(null);
+  const [edicaoCargo, setEdicaoCargo] = useState<{ usuario: Usuario; cargoId: number | null } | null>(null);
   const { data: usuarios = [], isLoading, isError, error } = useAcessosUsuarios();
+  const { data: cargos = [] } = useCargos();
   const revogar = useRevogarAcesso();
   const reativar = useReativarAcesso();
+  const alterarCargo = useAlterarCargoUsuario();
   const processando = revogar.isPending || reativar.isPending;
 
   const filtrados = useMemo(() => {
@@ -68,6 +73,22 @@ export const GerenciamentoAcessos = ({ usuarioAtualId }: GerenciamentoAcessosPro
       });
     } catch (err) {
       toast({ title: "Erro ao atualizar acesso", description: mensagemErro(err), variant: "destructive" });
+    }
+  };
+
+  const abrirEdicaoCargo = (usuario: Usuario) => {
+    const cargoAtual = cargos.find((cargo) => cargo.nome === usuario.cargo);
+    setEdicaoCargo({ usuario, cargoId: cargoAtual?.id || null });
+  };
+
+  const salvarCargo = async () => {
+    if (!edicaoCargo?.cargoId) return;
+    try {
+      await alterarCargo.mutateAsync({ id: edicaoCargo.usuario.id, cargoId: edicaoCargo.cargoId });
+      toast({ title: "Cargo atualizado", description: `O cargo de ${edicaoCargo.usuario.nomeCompleto} foi atualizado.` });
+      setEdicaoCargo(null);
+    } catch (err) {
+      toast({ title: "Erro ao atualizar cargo", description: mensagemErro(err), variant: "destructive" });
     }
   };
 
@@ -108,10 +129,13 @@ export const GerenciamentoAcessos = ({ usuarioAtualId }: GerenciamentoAcessosPro
                     <td className="px-5 py-3"><p className="text-[12px] font-medium">{usuario.nomeCompleto}</p><p className="text-[10px] text-muted-foreground/45">{usuario.email}</p></td>
                     <td className="px-4 py-3 text-[11px] text-foreground/70">{usuario.cargo}</td>
                     <td className="px-4 py-3"><span className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-medium ${usuario.situacao === "ATIVO" ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-500" : "border-red-400/20 bg-red-400/10 text-red-500"}`}>{usuario.situacao === "ATIVO" ? <CheckCircle2 className="h-2.5 w-2.5" /> : <Ban className="h-2.5 w-2.5" />}{usuario.situacao === "ATIVO" ? "Ativo" : "Revogado"}</span></td>
-                    <td className="px-5 py-3 text-right">
-                      {usuario.id === usuarioAtualId ? <span className="text-[10px] italic text-muted-foreground/40">Sessão atual</span>
-                        : usuario.situacao === "ATIVO" ? <button onClick={() => setConfirmacao({ usuario, acao: "revogar" })} className="inline-flex items-center gap-1 rounded-lg border border-red-400/20 bg-red-400/10 px-2.5 py-1.5 text-[11px] font-medium text-red-500 hover:bg-red-400/20"><Ban className="h-3 w-3" />Revogar</button>
-                        : <button onClick={() => setConfirmacao({ usuario, acao: "reativar" })} className="inline-flex items-center gap-1 rounded-lg border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-1.5 text-[11px] font-medium text-emerald-500 hover:bg-emerald-400/20"><RotateCcw className="h-3 w-3" />Reativar</button>}
+                    <td className="px-5 py-3">
+                      <div className="flex items-center justify-end gap-2">
+                        <button onClick={() => abrirEdicaoCargo(usuario)} className="inline-flex items-center gap-1 rounded-lg border border-border/30 bg-muted/15 px-2.5 py-1.5 text-[11px] font-medium text-foreground/70 hover:bg-muted/30"><Pencil className="h-3 w-3" />Cargo</button>
+                        {usuario.id === usuarioAtualId ? <span className="text-[10px] italic text-muted-foreground/40">Sessão atual</span>
+                          : usuario.situacao === "ATIVO" ? <button onClick={() => setConfirmacao({ usuario, acao: "revogar" })} className="inline-flex items-center gap-1 rounded-lg border border-red-400/20 bg-red-400/10 px-2.5 py-1.5 text-[11px] font-medium text-red-500 hover:bg-red-400/20"><Ban className="h-3 w-3" />Revogar</button>
+                          : <button onClick={() => setConfirmacao({ usuario, acao: "reativar" })} className="inline-flex items-center gap-1 rounded-lg border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-1.5 text-[11px] font-medium text-emerald-500 hover:bg-emerald-400/20"><RotateCcw className="h-3 w-3" />Reativar</button>}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -124,6 +148,23 @@ export const GerenciamentoAcessos = ({ usuarioAtualId }: GerenciamentoAcessosPro
         <AlertDialogContent>
           <AlertDialogHeader><AlertDialogTitle>{confirmacao?.acao === "revogar" ? "Revogar acesso" : "Reativar acesso"}</AlertDialogTitle><AlertDialogDescription>{confirmacao?.acao === "revogar" ? `${confirmacao.usuario.nomeCompleto} perderá o acesso imediatamente. O cargo e as permissões serão preservados.` : `${confirmacao?.usuario.nomeCompleto} voltará a acessar a plataforma com o mesmo cargo e as mesmas permissões.`}</AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter><AlertDialogCancel disabled={processando}>Cancelar</AlertDialogCancel><AlertDialogAction disabled={processando} onClick={(event) => { event.preventDefault(); void confirmar(); }} className={confirmacao?.acao === "revogar" ? "bg-red-500 hover:bg-red-600" : "bg-emerald-500 hover:bg-emerald-600"}>{processando ? "Processando..." : confirmacao?.acao === "revogar" ? "Revogar acesso" : "Reativar acesso"}</AlertDialogAction></AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={Boolean(edicaoCargo)} onOpenChange={(aberto) => !aberto && !alterarCargo.isPending && setEdicaoCargo(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Alterar cargo</AlertDialogTitle>
+            <AlertDialogDescription>Selecione o novo cargo de {edicaoCargo?.usuario.nomeCompleto}. As permissões atuais não serão modificadas.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <select value={edicaoCargo?.cargoId || ""} onChange={(event) => setEdicaoCargo((atual) => atual ? { ...atual, cargoId: Number(event.target.value) } : null)} className="h-10 w-full rounded-lg border border-border/30 bg-background px-3 text-[12px] outline-none focus:border-accent/50">
+            <option value="">Selecione o cargo</option>
+            {cargos.map((cargo) => <option key={cargo.id} value={cargo.id}>{cargo.nome}</option>)}
+          </select>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={alterarCargo.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction disabled={alterarCargo.isPending || !edicaoCargo?.cargoId} onClick={(event) => { event.preventDefault(); void salvarCargo(); }}> {alterarCargo.isPending ? "Salvando..." : "Salvar cargo"}</AlertDialogAction>
+          </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </>

@@ -60,6 +60,7 @@ const Index = () => {
           email: data.usuario.email,
           nomeCompleto: data.usuario.nomeCompleto,
           fotoPerfil: data.usuario.fotoPerfil,
+          cargoNome: data.usuario.cargoNome,
         });
 
         // Salvar role
@@ -143,6 +144,7 @@ const Index = () => {
         email: response.usuario?.email,
         nomeCompleto: response.usuario?.nomeCompleto,
         fotoPerfil: response.usuario?.fotoPerfil,
+        cargoNome: response.usuario?.cargoNome,
       });
 
       const possibleRole =

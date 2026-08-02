@@ -28,6 +28,7 @@ import {
   useCargos,
   useRecusarSolicitacaoAcesso,
   useSolicitacoesAcesso,
+  useUsuarioById,
   type SolicitacaoAcesso,
 } from "@/services/useUsuarios";
 import { usePermissoes } from "@/services/usePermissoes";
@@ -157,12 +158,14 @@ const AprovarAcesso = () => {
 
   const basicUserData = useAuthStore((state) => state.basicUserData);
   const userData = useAuthStore((state) => state.userData);
+  const usuarioAtualId = basicUserData?.id || userData?.id;
+  const { data: usuarioAtual } = useUsuarioById(usuarioAtualId || 0);
   const userName =
     basicUserData?.nomeCompleto ||
     userData?.nomeCompleto ||
     userData?.pessoa?.nomeCompleto ||
     "Usuário";
-  const userEmail = basicUserData?.email || userData?.email || "";
+  const userCargo = usuarioAtual?.cargo || basicUserData?.cargoNome || userData?.cargo || "Cargo não informado";
   const userPhoto =
     basicUserData?.fotoPerfil ||
     userData?.fotoPerfil ||
@@ -368,7 +371,7 @@ const AprovarAcesso = () => {
               <UserAvatar name={userName} photoUrl={userPhoto} />
               <div className="text-right">
                 <p className="text-[12px] font-medium text-foreground">{userName}</p>
-                <p className="text-[10px] text-muted-foreground/40">{userEmail || "Sessão ativa"}</p>
+                <p className="text-[10px] text-muted-foreground/40">{userCargo}</p>
               </div>
             </div>
           </motion.header>
@@ -654,7 +657,7 @@ const AprovarAcesso = () => {
           </div>
           </>
           ) : (
-            <GerenciamentoAcessos usuarioAtualId={basicUserData?.id || userData?.id} />
+            <GerenciamentoAcessos usuarioAtualId={usuarioAtualId} />
           )}
         </main>
       </div>

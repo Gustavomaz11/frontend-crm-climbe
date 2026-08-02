@@ -61,6 +61,7 @@ const SolicitarAcesso = () => {
           email: data.usuario.email,
           nomeCompleto: data.usuario.nomeCompleto,
           fotoPerfil: data.usuario.fotoPerfil,
+          cargoNome: data.usuario.cargoNome,
         });
 
         if (data.pendingToken) {

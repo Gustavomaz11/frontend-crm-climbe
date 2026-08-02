@@ -309,3 +309,16 @@ export function useReativarAcesso() {
     },
   });
 }
+
+export function useAlterarCargoUsuario() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, cargoId }: { id: number; cargoId: number }) => {
+      await api.patch(`/usuarios/${id}/cargo`, { cargoId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["usuarios"] });
+    },
+  });
+}
