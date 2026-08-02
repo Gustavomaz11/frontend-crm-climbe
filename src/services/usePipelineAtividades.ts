@@ -62,6 +62,7 @@ export interface PipelineTarefaFiltros {
 
 export interface PipelineComentario {
   id: number;
+  comentarioPaiId?: number | null;
   autorId: number;
   autorNome: string;
   conteudo: string;
@@ -180,10 +181,14 @@ export const usePipelineComentarios = (negocioId?: number, enabled = true) => us
 export const useCreatePipelineComentario = () => {
   const invalidate = useInvalidateAtividades();
   return useMutation({
-    mutationFn: async ({ negocioId, conteudo }: { negocioId: number; conteudo: string }) => {
+    mutationFn: async ({ negocioId, conteudo, comentarioPaiId }: {
+      negocioId: number;
+      conteudo: string;
+      comentarioPaiId?: number | null;
+    }) => {
       try {
         return unwrap((await api.post<ApiResponse<PipelineComentario>>(
-          `/pipeline-vendas/negocios/${negocioId}/comentarios`, { conteudo },
+          `/pipeline-vendas/negocios/${negocioId}/comentarios`, { conteudo, comentarioPaiId },
         )).data);
       } catch (error) {
         throw new Error(getErrorMessage(error));

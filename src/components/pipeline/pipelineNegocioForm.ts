@@ -1,4 +1,5 @@
 import type { PipelineNegocio, PipelineNegocioInput } from "@/services/usePipelineVendas";
+import type { Empresa } from "@/services/useEmpresas";
 import {
   estrategiaComercialOptions,
   normalizePipelineNegocioOption,
@@ -36,6 +37,22 @@ export const emptyPipelineNegocioDraft: PipelineNegocioDraft = {
   servicoInteresse: "",
   valorEstimadoProposta: "",
   observacoes: "",
+};
+
+export const empresaToNegocioContactFields = (
+  empresa: Empresa,
+): Pick<PipelineNegocioDraft, "nomeEmpresa" | "nomeContato" | "telefone" | "email"> => {
+  const contatoRepresentante = empresa.representanteContato.trim();
+  const contatoRepresentanteEhEmail = contatoRepresentante.includes("@");
+
+  return {
+    nomeEmpresa: empresa.nome.trim(),
+    nomeContato: empresa.representanteNome.trim(),
+    telefone: empresa.telefone.trim()
+      || (!contatoRepresentanteEhEmail ? contatoRepresentante : ""),
+    email: empresa.email.trim()
+      || (contatoRepresentanteEhEmail ? contatoRepresentante : ""),
+  };
 };
 
 export const negocioToDraft = (negocio: PipelineNegocio): PipelineNegocioDraft => ({

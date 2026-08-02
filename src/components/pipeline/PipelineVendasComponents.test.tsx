@@ -16,6 +16,7 @@ import {
   negocioToDraft,
 } from "./pipelineNegocioForm";
 import type { PipelineNegocio } from "@/services/usePipelineVendas";
+import { normalizeEmpresa } from "@/services/useEmpresas";
 
 const negocio: PipelineNegocio = {
   id: 1,
@@ -47,6 +48,21 @@ describe("Pipeline de Vendas", () => {
     expect(screen.getByText(/150.000/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button"));
     expect(onOpen).toHaveBeenCalledOnce();
+  });
+
+  it("informa que o negócio está sendo salvo após a movimentação", () => {
+    render(
+      <PipelineNegocioCard
+        negocio={negocio}
+        canMove={false}
+        isMoving
+        onOpen={vi.fn()}
+        onDragStart={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Salvando...")).toBeInTheDocument();
+    expect(screen.getByRole("button")).toHaveAttribute("aria-busy", "true");
   });
 
   it("exige os campos comerciais essenciais", () => {
@@ -113,6 +129,41 @@ describe("Pipeline de Vendas", () => {
     estrategiaComercialOptions.forEach((option) =>
       expect(screen.getByRole("option", { name: option })).toBeInTheDocument(),
     );
+  });
+
+  it("preenche os dados de contato ao selecionar uma empresa cadastrada", () => {
+    const setDraft = vi.fn();
+    const empresa = normalizeEmpresa({
+      id: 7,
+      nomeFantasia: "Jota",
+      representanteNome: "Gustavo Machado Trindade",
+      telefone: "79996701239",
+      email: "gustavo.trindade@jotanunes.com",
+    });
+
+    render(
+      <PipelineNegocioFormFields
+        draft={emptyPipelineNegocioDraft}
+        setDraft={setDraft}
+        empresas={[empresa]}
+        usuarios={[]}
+        etapas={[]}
+        disabled={false}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Empresa cadastrada"), {
+      target: { value: "7" },
+    });
+
+    const applyDraftUpdate = setDraft.mock.calls[0][0];
+    expect(applyDraftUpdate(emptyPipelineNegocioDraft)).toMatchObject({
+      empresaId: "7",
+      nomeEmpresa: "Jota",
+      nomeContato: "Gustavo Machado Trindade",
+      telefone: "79996701239",
+      email: "gustavo.trindade@jotanunes.com",
+    });
   });
 
   it("normaliza opções legadas e rejeita valores fora das listas", () => {

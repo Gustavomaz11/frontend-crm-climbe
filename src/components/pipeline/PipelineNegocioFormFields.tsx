@@ -3,7 +3,10 @@ import type { Empresa } from "@/services/useEmpresas";
 import type { PipelineEtapa } from "@/services/usePipelineVendas";
 import type { Usuario } from "@/services/useUsuarios";
 import { UserSelect } from "@/components/users/UserSelect";
-import type { PipelineNegocioDraft } from "./pipelineNegocioForm";
+import {
+  empresaToNegocioContactFields,
+  type PipelineNegocioDraft,
+} from "./pipelineNegocioForm";
 import {
   estrategiaComercialOptions,
   origemNegocioOptions,
@@ -36,10 +39,16 @@ export const PipelineNegocioFormFields = ({
 
   const selectEmpresa = (empresaId: string) => {
     const empresa = empresas.find((item) => item.id === Number(empresaId));
+
+    if (!empresa) {
+      setDraft((current) => ({ ...current, empresaId }));
+      return;
+    }
+
     setDraft((current) => ({
       ...current,
       empresaId,
-      nomeEmpresa: empresa?.nome || current.nomeEmpresa,
+      ...empresaToNegocioContactFields(empresa),
     }));
   };
 
@@ -48,7 +57,7 @@ export const PipelineNegocioFormFields = ({
       <label><span className={labelClass}>Empresa cadastrada</span><select value={draft.empresaId} onChange={(event) => selectEmpresa(event.target.value)} disabled={disabled} className={fieldClass}><option value="">Potencial cliente sem cadastro</option>{empresas.map((empresa) => <option key={empresa.id} value={empresa.id}>{empresa.nome}</option>)}</select></label>
       <label><span className={labelClass}>Nome da empresa *</span><input value={draft.nomeEmpresa} onChange={(event) => update("nomeEmpresa", event.target.value)} disabled={disabled} className={fieldClass} placeholder="Ex.: Apex Ventures" /></label>
       <label><span className={labelClass}>Nome do contato *</span><input value={draft.nomeContato} onChange={(event) => update("nomeContato", event.target.value)} disabled={disabled} className={fieldClass} /></label>
-      <div><span className={labelClass}>Responsável *</span><UserSelect users={usuarios.filter((usuario) => !usuario.situacao || usuario.situacao === "ATIVO")} value={draft.responsavelId} onValueChange={(next) => update("responsavelId", next)} disabled={disabled} placeholder="Selecione" emptyLabel="Selecione" ariaLabel="Responsável *" /></div>
+      <div><span className={labelClass}>Responsável *</span><UserSelect users={usuarios.filter((usuario) => !usuario.situacao || usuario.situacao === "ATIVO")} value={draft.responsavelId} onValueChange={(next) => update("responsavelId", next)} disabled={disabled} placeholder="Selecione" emptyLabel="Selecione" ariaLabel="Responsável *" className="h-10 rounded-lg bg-background/70 px-3 py-0" /></div>
       <label><span className={labelClass}>Telefone *</span><input value={draft.telefone} onChange={(event) => update("telefone", event.target.value)} disabled={disabled} className={fieldClass} /></label>
       <label><span className={labelClass}>E-mail *</span><input type="email" value={draft.email} onChange={(event) => update("email", event.target.value)} disabled={disabled} className={fieldClass} /></label>
       <label><span className={labelClass}>Etapa atual</span><select value={draft.etapaId} onChange={(event) => update("etapaId", event.target.value)} disabled={disabled} className={fieldClass}><option value="">Primeira etapa do funil</option>{etapas.map((etapa) => <option key={etapa.id} value={etapa.id}>{etapa.nome}</option>)}</select></label>

@@ -76,6 +76,43 @@ export interface PipelineNegocioInput {
   observacoes?: string | null;
 }
 
+export const movePipelineNegocioInBoard = (
+  board: PipelineBoard,
+  negocioId: number,
+  etapaId: number,
+): PipelineBoard => {
+  const destination = board.etapas.find((stage) => stage.id === etapaId);
+  const business = board.etapas
+    .flatMap((stage) => stage.negocios)
+    .find((item) => item.id === negocioId);
+
+  if (!destination || !business || business.etapaId === etapaId) return board;
+
+  const movedBusiness: PipelineNegocio = {
+    ...business,
+    etapaId: destination.id,
+    etapaCodigo: destination.codigo,
+    etapaNome: destination.nome,
+    resultado: destination.resultado,
+    ...(destination.resultado === "ABERTO" ? {
+      motivoPerdaId: null,
+      motivoPerdaNome: null,
+      observacaoPerda: null,
+      encerradoEm: null,
+    } : {}),
+  };
+
+  return {
+    ...board,
+    etapas: board.etapas.map((stage) => ({
+      ...stage,
+      negocios: stage.id === etapaId
+        ? [...stage.negocios.filter((item) => item.id !== negocioId), movedBusiness]
+        : stage.negocios.filter((item) => item.id !== negocioId),
+    })),
+  };
+};
+
 const getErrorMessage = (error: unknown) => {
   if (isAxiosError<ApiResponse<unknown>>(error)) {
     return error.response?.data?.message || error.message;
@@ -129,6 +166,7 @@ export const useUpdatePipelineNegocio = () => {
 };
 
 export const useMovePipelineNegocio = () => {
+  const queryClient = useQueryClient();
   const invalidate = useInvalidatePipeline();
   return useMutation({
     mutationFn: async ({ id, etapaId, motivoPerdaId, observacaoPerda }: {
@@ -143,7 +181,23 @@ export const useMovePipelineNegocio = () => {
         throw new Error(getErrorMessage(error));
       }
     },
-    onSuccess: invalidate,
+    onMutate: async ({ id, etapaId }) => {
+      await queryClient.cancelQueries({ queryKey: ["pipeline-vendas"] });
+      const previousBoards = queryClient.getQueriesData<PipelineBoard>({
+        queryKey: ["pipeline-vendas"],
+      });
+      queryClient.setQueriesData<PipelineBoard>(
+        { queryKey: ["pipeline-vendas"] },
+        (current) => current ? movePipelineNegocioInBoard(current, id, etapaId) : current,
+      );
+      return { previousBoards };
+    },
+    onError: (_error, _variables, context) => {
+      context?.previousBoards.forEach(([queryKey, previousBoard]) => {
+        queryClient.setQueryData(queryKey, previousBoard);
+      });
+    },
+    onSettled: invalidate,
   });
 };
 
