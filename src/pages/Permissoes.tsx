@@ -6,13 +6,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Home, FileText, Calendar as CalendarIcon, Shield, Building2, Settings,
   LogOut, Sun, Moon, ChevronLeft, ChevronRight, Search, FileCheck, UserCheck,
-  ScrollText, Check, AlertCircle, LockKeyhole, UserRound,
+  ScrollText, Check, AlertCircle, LockKeyhole,
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import ClimbLogo from "@/components/login/ClimbLogo";
 import { UserAvatar } from "@/components/UserAvatar";
 import { AppSidebarNav } from "@/components/layout/AppSidebarNav";
 import { PermissionGroupsPanel } from "@/components/permissions/PermissionGroupsPanel";
+import { UserIdentity } from "@/components/users/UserSelect";
 import { useAuthStore } from "@/store/useAuthStore";
 import {
   useCreateUsuarioPermissao,
@@ -323,14 +324,11 @@ const Permissoes = () => {
                           transition={{ delay: index * 0.025 }}
                         >
                           <div className="flex items-center gap-3">
-                            <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${selected ? "bg-accent/15 text-accent" : "bg-muted/20 text-muted-foreground"}`}>
-                              <UserRound className="h-4 w-4" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className={`truncate text-[12px] font-medium ${selected ? "text-accent" : "text-foreground/80"}`}>{usuario.nomeCompleto}</p>
-                              <p className="truncate text-[10px] text-muted-foreground/45">{usuario.email}</p>
-                              <p className="mt-0.5 truncate text-[9px] uppercase tracking-[0.06em] text-muted-foreground/30">{usuario.cargo}</p>
-                            </div>
+                            <UserIdentity
+                              user={usuario}
+                              className="min-w-0 flex-1"
+                              avatarClassName={selected ? "border-accent/35 bg-accent/20" : undefined}
+                            />
                           </div>
                         </motion.button>
                       );

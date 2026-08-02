@@ -8,6 +8,7 @@ import type {
 } from "@/services";
 import type { KanbanTaskDraft } from "./KanbanTaskDialog";
 import { kanbanPriorityOptions } from "./kanbanPriority";
+import { UserSelect } from "@/components/users/UserSelect";
 
 interface KanbanTaskEditDialogProps {
   task: ContratoKanbanTask;
@@ -120,13 +121,17 @@ export const KanbanTaskEditDialog = ({
                   {kanbanPriorityOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                 </select>
               </label>
-              <label>
+              <div>
                 <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground/40">Responsável</span>
-                <select value={draft.responsavelId} onChange={(event) => setDraft({ ...draft, responsavelId: event.target.value })} className="h-9 w-full rounded-lg border border-border/25 bg-background/60 px-3 text-[12px] text-foreground outline-none transition-colors focus:border-accent/40">
-                  <option value="">Sem responsável</option>
-                  {usuarios.map((usuario) => <option key={usuario.id} value={usuario.id}>{usuario.nomeCompleto}</option>)}
-                </select>
-              </label>
+                <UserSelect
+                  users={usuarios}
+                  value={draft.responsavelId}
+                  onValueChange={(responsavelId) => setDraft({ ...draft, responsavelId })}
+                  placeholder="Sem responsável"
+                  emptyLabel="Sem responsável"
+                  ariaLabel="Responsável"
+                />
+              </div>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">

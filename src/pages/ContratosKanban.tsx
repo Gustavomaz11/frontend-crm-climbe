@@ -28,6 +28,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 import {
   useContratoKanban,
   useContratos,
+  useUsuarios,
   useCreateKanbanSubtarefa,
   useCreateKanbanRaia,
   useCreateKanbanTask,
@@ -93,10 +94,23 @@ const ContratosKanban = () => {
       : contratosAprovados[0]?.id;
   const selectedContrato = contratosAprovados.find((contrato) => contrato.id === selectedContratoId);
   const { data: board, isLoading: boardLoading, error: boardError } = useContratoKanban(selectedContratoId);
+  const { data: usuariosComPerfil = [] } = useUsuarios();
   const editingTask = useMemo(
     () => board?.raias.flatMap((raia) => raia.tasks).find((task) => task.id === editingTaskId),
     [board, editingTaskId],
   );
+  const usuariosKanban = useMemo(() => {
+    const usuariosDisponiveis = board?.usuariosDisponiveis || board?.participantes || [];
+    return usuariosDisponiveis.map((usuario) => {
+      const perfil = usuariosComPerfil.find((item) => item.id === usuario.id);
+      return {
+        ...usuario,
+        cargo: perfil?.cargo || usuario.cargo,
+        cargoNome: perfil?.cargoNome || usuario.cargoNome,
+        fotoPerfil: perfil?.fotoPerfil || usuario.fotoPerfil,
+      };
+    });
+  }, [board?.participantes, board?.usuariosDisponiveis, usuariosComPerfil]);
 
   const createRaia = useCreateKanbanRaia();
   const updateRaia = useUpdateKanbanRaia();
@@ -624,7 +638,7 @@ const ContratosKanban = () => {
         <KanbanTaskDialog
           raiaTitulo={board.raias.find((raia) => raia.id === taskModalRaiaId)?.titulo || "Raia selecionada"}
           draft={taskDraft}
-          usuarios={board.usuariosDisponiveis || board.participantes}
+          usuarios={usuariosKanban}
           isSaving={createTask.isPending}
           onChange={setTaskDraft}
           onClose={() => { setTaskModalRaiaId(null); setTaskDraft(emptyDraft); }}
@@ -636,7 +650,7 @@ const ContratosKanban = () => {
         <KanbanTaskEditDialog
           key={editingTask.id}
           task={editingTask}
-          usuarios={board.usuariosDisponiveis || board.participantes}
+          usuarios={usuariosKanban}
           isSaving={updateTask.isPending}
           subtaskPending={createSubtask.isPending || updateSubtask.isPending || toggleSubtask.isPending || deleteSubtask.isPending}
           onClose={() => setEditingTaskId(null)}

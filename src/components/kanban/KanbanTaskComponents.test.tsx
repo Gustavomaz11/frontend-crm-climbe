@@ -22,7 +22,7 @@ describe("componentes de tarefa do Kanban", () => {
       <KanbanTaskDialog
         raiaTitulo="A fazer"
         draft={draft}
-        usuarios={[{ id: 7, nomeCompleto: "Ana Souza", email: "ana@climbe.com" }]}
+        usuarios={[{ id: 7, nomeCompleto: "Ana Souza", email: "ana@climbe.com", cargo: "Analista Sênior" }]}
         isSaving={false}
         onChange={onChange}
         onClose={vi.fn()}
@@ -31,7 +31,7 @@ describe("componentes de tarefa do Kanban", () => {
     );
 
     expect(screen.getByDisplayValue("Validar os documentos")).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "Ana Souza" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Responsável" })).toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("Prioridade"), { target: { value: "ALTA" } });
     expect(onChange).toHaveBeenCalledWith({ ...draft, prioridade: "ALTA" });

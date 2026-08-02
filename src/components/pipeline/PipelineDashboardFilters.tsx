@@ -3,6 +3,7 @@ import type { Empresa } from "@/services/useEmpresas";
 import type { PipelineFunilResumo } from "@/services/usePipelineFunis";
 import type { PipelineDashboard, PipelineDashboardFilters } from "@/services/usePipelineDashboard";
 import type { Usuario } from "@/services/useUsuarios";
+import { UserSelect } from "@/components/users/UserSelect";
 
 interface Props {
   value: PipelineDashboardFilters;
@@ -22,7 +23,7 @@ export const PipelineDashboardFilterBar = ({ value, options, users, funnels, com
   return <div className="mb-5 grid gap-2 rounded-xl border border-border/25 bg-card/40 p-3 sm:grid-cols-2 lg:grid-cols-5">
     <input type="date" aria-label="Data inicial" value={value.dataInicio || ""} onChange={(event) => field("dataInicio", event.target.value)} className={selectClass} />
     <input type="date" aria-label="Data final" value={value.dataFim || ""} onChange={(event) => field("dataFim", event.target.value)} className={selectClass} />
-    <select value={value.responsavelId || ""} onChange={(event) => field("responsavelId", event.target.value)} className={selectClass}><option value="">Todos responsáveis</option>{users.map((user) => <option key={user.id} value={user.id}>{user.nomeCompleto}</option>)}</select>
+    <UserSelect users={users} value={value.responsavelId || ""} onValueChange={(next) => field("responsavelId", next)} placeholder="Todos responsáveis" emptyLabel="Todos responsáveis" ariaLabel="Filtrar por responsável" className="h-10" />
     <select value={value.funilId || ""} onChange={(event) => field("funilId", event.target.value)} className={selectClass}><option value="">Todos os funis</option>{funnels.map((funil) => <option key={funil.id} value={funil.id}>{funil.nome}</option>)}</select>
     <select value={value.estrategia || ""} onChange={(event) => field("estrategia", event.target.value)} className={selectClass}><option value="">Todas estratégias</option>{options?.estrategias.map((item) => <option key={item}>{item}</option>)}</select>
     <select value={value.servico || ""} onChange={(event) => field("servico", event.target.value)} className={selectClass}><option value="">Todos os serviços</option>{options?.servicos.map((item) => <option key={item}>{item}</option>)}</select>

@@ -14,6 +14,9 @@ export interface UsuarioResumo {
   id: number;
   nomeCompleto: string;
   email?: string;
+  cargo?: string | null;
+  cargoNome?: string | null;
+  fotoPerfil?: string | null;
 }
 
 export type KanbanTaskPrioridade = "BAIXA" | "MEDIA" | "ALTA";

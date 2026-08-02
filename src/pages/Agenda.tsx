@@ -11,6 +11,7 @@ import { Link, useNavigate } from "react-router-dom";
 import ClimbLogo from "@/components/login/ClimbLogo";
 import { UserAvatar } from "@/components/UserAvatar";
 import { AppSidebarNav } from "@/components/layout/AppSidebarNav";
+import { UserIdentity } from "@/components/users/UserSelect";
 import {
   useCreateReuniao,
   useDeleteReuniao,
@@ -990,7 +991,7 @@ const Agenda = () => {
                             }}
                             className="h-3.5 w-3.5 rounded border-border/40 accent-[hsl(var(--accent))]"
                           />
-                          <span className="min-w-0 truncate">{usuario.nomeCompleto || usuario.email}</span>
+                          <UserIdentity user={usuario} className="min-w-0 flex-1" />
                         </label>
                       );
                     }) : (

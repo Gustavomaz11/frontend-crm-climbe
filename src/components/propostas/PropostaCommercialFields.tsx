@@ -6,6 +6,7 @@ import {
   type PropostaCommercialConfig,
 } from "@/services";
 import type { Usuario } from "@/services/useUsuarios";
+import { UserIdentity } from "@/components/users/UserSelect";
 
 type Props = {
   value: PropostaCommercialConfig;
@@ -63,7 +64,7 @@ export const PropostaCommercialFields = ({ value, usuarios, onChange }: Props) =
       </div>
 
       <div className="grid gap-3 md:grid-cols-2">
-        {(["equipeTecnicaIds", "equipeComercialIds"] as const).map((field) => <div key={field}><span className={labelClass}>{field === "equipeTecnicaIds" ? "Equipe técnica padrão" : "Equipe comercial padrão"}</span><div className="max-h-28 overflow-y-auto rounded-lg border border-border/20 bg-background/35 p-2 space-y-1">{usuarios.map((usuario) => <label key={usuario.id} className="flex items-center gap-2 text-[11px] text-foreground/70"><input type="checkbox" checked={value[field].includes(usuario.id)} onChange={() => toggleUser(field, usuario.id)} />{usuario.nomeCompleto}</label>)}</div></div>)}
+        {(["equipeTecnicaIds", "equipeComercialIds"] as const).map((field) => <div key={field}><span className={labelClass}>{field === "equipeTecnicaIds" ? "Equipe técnica padrão" : "Equipe comercial padrão"}</span><div className="max-h-40 overflow-y-auto rounded-lg border border-border/20 bg-background/35 p-2 space-y-1">{usuarios.map((usuario) => <label key={usuario.id} className="flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 text-foreground/70 hover:bg-muted/20"><input type="checkbox" checked={value[field].includes(usuario.id)} onChange={() => toggleUser(field, usuario.id)} /><UserIdentity user={usuario} className="min-w-0 flex-1" /></label>)}</div></div>)}
       </div>
       <label><span className={labelClass}>Observações</span><textarea className="w-full min-h-20 px-3 py-2 rounded-lg border border-border/25 bg-background/50 text-[12px] outline-none focus:border-accent/40" value={value.observacoes || ""} onChange={(event) => update("observacoes", event.target.value)} /></label>
     </div>

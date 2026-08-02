@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Check, Plus, Save, Trash2, X } from "lucide-react";
 import type { PipelineTarefa, PipelineTarefaInput } from "@/services/usePipelineAtividades";
 import type { Usuario } from "@/services/useUsuarios";
+import { UserSelect } from "@/components/users/UserSelect";
 
 interface PipelineTarefaDialogProps {
   tarefa?: PipelineTarefa | null;
@@ -64,7 +65,7 @@ export const PipelineTarefaDialog = ({
           <label className="block text-[10px] font-medium">Descrição<textarea className={`${textAreaClass} mt-1 min-h-20`} value={draft.descricao || ""} onChange={(event) => setDraft({ ...draft, descricao: event.target.value })} /></label>
 
           <div className="grid gap-3 sm:grid-cols-2">
-            <label className="text-[10px] font-medium">Responsável *<select className={`${inputClass} mt-1`} value={draft.responsavelId || ""} onChange={(event) => setDraft({ ...draft, responsavelId: Number(event.target.value) })}><option value="">Selecione</option>{usuarios.filter((usuario) => !usuario.situacao || usuario.situacao === "ATIVO").map((usuario) => <option key={usuario.id} value={usuario.id}>{usuario.nomeCompleto}</option>)}</select></label>
+            <div className="text-[10px] font-medium">Responsável *<UserSelect className="mt-1" users={usuarios.filter((usuario) => !usuario.situacao || usuario.situacao === "ATIVO")} value={draft.responsavelId || ""} onValueChange={(next) => setDraft({ ...draft, responsavelId: Number(next) || 0 })} placeholder="Selecione" emptyLabel="Selecione" ariaLabel="Responsável *" /></div>
             <label className="text-[10px] font-medium">Tipo *<input className={`${inputClass} mt-1`} list="pipeline-task-types" value={draft.tipo} onChange={(event) => setDraft({ ...draft, tipo: event.target.value })} /><datalist id="pipeline-task-types"><option value="Follow-up" /><option value="Ligação" /><option value="Reunião" /><option value="E-mail" /><option value="Proposta" /><option value="Documentação" /></datalist></label>
             <label className="text-[10px] font-medium">Data de início<input type="date" className={`${inputClass} mt-1`} value={draft.dataInicio || ""} onChange={(event) => setDraft({ ...draft, dataInicio: event.target.value })} /></label>
             <label className="text-[10px] font-medium">Prazo<input type="date" className={`${inputClass} mt-1`} value={draft.prazo || ""} onChange={(event) => setDraft({ ...draft, prazo: event.target.value })} /></label>

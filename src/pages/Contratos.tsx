@@ -13,6 +13,7 @@ import ClimbLogo from "@/components/login/ClimbLogo";
 import { UserAvatar } from "@/components/UserAvatar";
 import { AppSidebarNav } from "@/components/layout/AppSidebarNav";
 import { RevisaoDocumentoDialog } from "@/components/revisoes/RevisaoDocumentoDialog";
+import { UserIdentity, UserSelect } from "@/components/users/UserSelect";
 import {
   getContratoDownloadUrl,
   getContratoHistorico,
@@ -534,11 +535,12 @@ const Contratos = () => {
                       </div>
                       <div>
                         <label className="text-[9px] text-muted-foreground/40 font-medium uppercase tracking-wider mb-1 block">Responsável</label>
-                        <select
+                        <UserSelect
+                          users={usuariosAtivos}
                           value={selectedResponsavelId}
-                          onChange={(e) => {
-                            const nextResponsavelId = Number(e.target.value);
-                            setSelectedResponsavelId(e.target.value);
+                          onValueChange={(nextValue) => {
+                            const nextResponsavelId = Number(nextValue);
+                            setSelectedResponsavelId(nextValue);
                             if (Number.isFinite(nextResponsavelId) && nextResponsavelId > 0) {
                               setSelectedParticipanteIds((current) =>
                                 current.includes(nextResponsavelId) ? current : [...current, nextResponsavelId],
@@ -546,13 +548,10 @@ const Contratos = () => {
                             }
                             setUploadError("");
                           }}
-                          className="w-full h-9 px-2.5 rounded-lg border border-border/25 bg-background/50 text-[12px] outline-none focus:border-accent/40 transition-colors text-foreground"
-                        >
-                          <option value="">Selecione o responsável</option>
-                          {usuariosAtivos.map((usuario) => (
-                            <option key={usuario.id} value={usuario.id}>{usuario.nomeCompleto}</option>
-                          ))}
-                        </select>
+                          placeholder="Selecione o responsável"
+                          emptyLabel="Selecione o responsável"
+                          ariaLabel="Responsável pelo contrato"
+                        />
                       </div>
                       <div>
                         <label className="text-[9px] text-muted-foreground/40 font-medium uppercase tracking-wider mb-1 block">Atores</label>
@@ -574,7 +573,7 @@ const Contratos = () => {
                                   }}
                                   className="h-3.5 w-3.5 rounded border-border/40 accent-[hsl(var(--accent))]"
                                 />
-                                <span className="truncate">{usuario.nomeCompleto}</span>
+                                <UserIdentity user={usuario} className="min-w-0 flex-1" />
                               </label>
                             );
                           })}
@@ -776,11 +775,12 @@ const Contratos = () => {
                     <div className="space-y-3">
                       <div>
                         <label className="mb-1 block text-[10px] text-muted-foreground/40">Responsável</label>
-                        <select
+                        <UserSelect
+                          users={usuariosAtivos}
                           value={editResponsavelId}
-                          onChange={(e) => {
-                            const nextResponsavelId = Number(e.target.value);
-                            setEditResponsavelId(e.target.value);
+                          onValueChange={(nextValue) => {
+                            const nextResponsavelId = Number(nextValue);
+                            setEditResponsavelId(nextValue);
                             if (Number.isFinite(nextResponsavelId) && nextResponsavelId > 0) {
                               setEditParticipanteIds((current) =>
                                 current.includes(nextResponsavelId) ? current : [...current, nextResponsavelId],
@@ -788,13 +788,10 @@ const Contratos = () => {
                             }
                             setModalError("");
                           }}
-                          className="h-9 w-full rounded-lg border border-border/25 bg-background/50 px-2.5 text-[12px] text-foreground outline-none transition-colors focus:border-accent/40"
-                        >
-                          <option value="">Selecione o responsável</option>
-                          {usuariosAtivos.map((usuario) => (
-                            <option key={usuario.id} value={usuario.id}>{usuario.nomeCompleto}</option>
-                          ))}
-                        </select>
+                          placeholder="Selecione o responsável"
+                          emptyLabel="Selecione o responsável"
+                          ariaLabel="Editar responsável pelo contrato"
+                        />
                       </div>
                       <div>
                         <p className="mb-1 text-[10px] text-muted-foreground/40">Atores</p>
@@ -816,7 +813,7 @@ const Contratos = () => {
                                   }}
                                   className="h-3.5 w-3.5 rounded border-border/40 accent-[hsl(var(--accent))]"
                                 />
-                                <span className="truncate">{usuario.nomeCompleto}</span>
+                                <UserIdentity user={usuario} className="min-w-0 flex-1" />
                               </label>
                             );
                           })}
