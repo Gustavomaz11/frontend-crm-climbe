@@ -20,6 +20,14 @@ export interface Cargo {
   id: number;
   nome: string;
   ativo?: boolean;
+  cargoSuperiorId?: number | null;
+  ordemHierarquia?: number;
+}
+
+export interface CargoHierarquiaItem {
+  cargoId: number;
+  cargoSuperiorId: number | null;
+  ordem: number;
 }
 
 export interface AtualizarMeuPerfilDTO {
@@ -201,6 +209,19 @@ export function useDeleteCargo() {
   return useMutation({
     mutationFn: async (id: number) => api.delete(`/cargos/${id}`),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cargos"] }),
+  });
+}
+
+export function useUpdateCargoHierarchy() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (cargos: CargoHierarquiaItem[]) => {
+      const response = await api.put<Cargo[]>("/cargos/hierarquia", { cargos });
+      return response.data;
+    },
+    onSuccess: (cargos) => {
+      queryClient.setQueryData(["cargos"], cargos);
+    },
   });
 }
 

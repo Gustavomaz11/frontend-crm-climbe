@@ -45,6 +45,7 @@ import {
   type ContratoKanbanTask,
   type KanbanTaskDTO,
 } from "@/services";
+import { getServiceLabel } from "@/services/commercialProposal";
 
 interface PendingRaiaRemoval {
   id: number;
@@ -62,7 +63,7 @@ const emptyDraft: KanbanTaskDraft = {
 };
 
 function getContratoLabel(contrato: Contrato) {
-  return `CT-${contrato.id} · ${contrato.empresaNome}`;
+  return `${contrato.empresaNome} - ${getServiceLabel(contrato.servico)}`;
 }
 
 const ContratosKanban = () => {
@@ -144,7 +145,7 @@ const ContratosKanban = () => {
     const query = searchQuery.trim().toLowerCase();
     if (!query) return contratosAprovados;
     return contratosAprovados.filter((contrato) =>
-      `${contrato.id} ${contrato.empresaNome} ${contrato.titulo}`.toLowerCase().includes(query),
+      `${contrato.id} ${contrato.empresaNome} ${getServiceLabel(contrato.servico)} ${contrato.titulo}`.toLowerCase().includes(query),
     );
   }, [contratosAprovados, searchQuery]);
 
@@ -468,7 +469,7 @@ const ContratosKanban = () => {
                       className={`w-full rounded-lg border px-3 py-2 text-left transition-colors ${contrato.id === selectedContratoId ? "border-accent/35 bg-accent/10 text-accent" : "border-border/20 bg-background/35 text-foreground/70 hover:border-accent/25 hover:bg-muted/15"}`}
                     >
                       <p className="truncate text-[12px] font-semibold">{getContratoLabel(contrato)}</p>
-                      <p className="mt-0.5 truncate text-[10px] text-muted-foreground/45">{contrato.titulo}</p>
+                      <p className="mt-0.5 truncate text-[10px] text-muted-foreground/45">CT-{contrato.id} · {contrato.titulo}</p>
                     </button>
                   ))
                 )}

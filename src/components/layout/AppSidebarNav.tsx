@@ -23,12 +23,13 @@ const commercialPaths = new Set([
   "/pipeline-vendas/funis",
 ]);
 
-const settingsPaths = new Set(["/permissoes", "/cargos"]);
+const settingsPaths = new Set(["/permissoes", "/cargos", "/cargos/hierarquia"]);
 
 function routeIsActive(currentPath: string, itemPath: string) {
   if (itemPath === "/dashboard") return currentPath === itemPath;
   if (itemPath === "/contratos") return currentPath === itemPath;
   if (itemPath === "/pipeline-vendas") return currentPath === itemPath;
+  if (itemPath === "/cargos") return currentPath === itemPath;
   return currentPath === itemPath || currentPath.startsWith(`${itemPath}/`);
 }
 

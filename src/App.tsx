@@ -15,6 +15,7 @@ import {
   AprovarAcesso,
   CadastroEmpresa,
   Cargos,
+  CargosHierarquia,
   Contratos,
   ContratosKanban,
   Dashboard,
@@ -139,6 +140,14 @@ const App = () => (
               element={
                 <PrivateRoute>
                   <Cargos />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/cargos/hierarquia"
+              element={
+                <PrivateRoute>
+                  <CargosHierarquia />
                 </PrivateRoute>
               }
             />
