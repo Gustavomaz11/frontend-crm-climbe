@@ -290,7 +290,7 @@ const Agenda = () => {
   const agendaEvents = useMemo<AgendaEvent[]>(() => {
     return reunioes
       .filter(shouldShowAgendaReuniao)
-      .map((reuniao) => {
+      .map<AgendaEvent | null>((reuniao) => {
         const date = new Date(reuniao.dataHora);
         if (Number.isNaN(date.getTime())) return null;
 

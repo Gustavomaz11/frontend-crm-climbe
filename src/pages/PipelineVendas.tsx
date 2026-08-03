@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import { AlertCircle, CalendarCheck2, CircleDollarSign, Columns3, Plus, TrendingUp, Trophy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -56,6 +56,7 @@ const PipelineVendas = () => {
   const [selectedBusiness, setSelectedBusiness] = useState<PipelineNegocio | null>(null);
   const [createStageId, setCreateStageId] = useState<number | null>(null);
   const [pendingLoss, setPendingLoss] = useState<{ business: PipelineNegocio; stageId: number } | null>(null);
+  const deferredSearch = useDeferredValue(search);
   const basicUserData = useAuthStore((state) => state.basicUserData);
   const userData = useAuthStore((state) => state.userData);
   const userId = basicUserData?.id ?? userData?.id;
@@ -66,9 +67,12 @@ const PipelineVendas = () => {
   const { data: funnels = [], isLoading: funnelsLoading } = usePipelineFunisAtivos();
   const effectiveFunnelId = selectedFunnelId ?? funnels[0]?.id;
   const { data: board, isLoading, error } = usePipelineVendas(effectiveFunnelId);
-  const { data: lossReasons = [] } = usePipelineMotivosPerdaAtivos();
-  const { data: users = [] } = useUsuarios();
-  const { data: companies = [] } = useEmpresas();
+  const businessDialogOpen = selectedBusiness !== null || createStageId !== null;
+  const { data: lossReasons = [] } = usePipelineMotivosPerdaAtivos(
+    businessDialogOpen || pendingLoss !== null,
+  );
+  const { data: users = [] } = useUsuarios(businessDialogOpen || view === "tarefas");
+  const { data: companies = [] } = useEmpresas(businessDialogOpen);
   const createBusiness = useCreatePipelineNegocio();
   const updateBusiness = useUpdatePipelineNegocio();
   const moveBusiness = useMovePipelineNegocio();
@@ -79,12 +83,29 @@ const PipelineVendas = () => {
     .some((mutation) => mutation.isPending);
 
   const allBusinesses = useMemo(() => (board?.etapas || []).flatMap((stage) => stage.negocios), [board?.etapas]);
-  const filteredStages = useMemo(() => (board?.etapas || []).map((stage) => ({
-    ...stage,
-    negocios: stage.negocios.filter((business) => `${business.nomeEmpresa} ${business.nomeContato} ${business.responsavelNome} ${business.servicoInteresse}`.toLowerCase().includes(search.trim().toLowerCase())),
-  })), [board?.etapas, search]);
-  const openBusinesses = allBusinesses.filter((item) => item.resultado === "ABERTO");
-  const pipelineValue = openBusinesses.reduce((total, item) => total + (item.valorEstimadoProposta || 0), 0);
+  const filteredStages = useMemo(() => {
+    const normalizedSearch = deferredSearch.trim().toLowerCase();
+    if (!normalizedSearch) return board?.etapas || [];
+    return (board?.etapas || []).map((stage) => ({
+      ...stage,
+      negocios: stage.negocios.filter((business) =>
+        `${business.nomeEmpresa} ${business.nomeContato} ${business.responsavelNome} ${business.servicoInteresse}`
+          .toLowerCase()
+          .includes(normalizedSearch)),
+    }));
+  }, [board?.etapas, deferredSearch]);
+  const pipelineMetrics = useMemo(() => allBusinesses.reduce(
+    (metrics, business) => {
+      if (business.resultado === "ABERTO") {
+        metrics.openBusinesses += 1;
+        metrics.pipelineValue += business.valorEstimadoProposta || 0;
+      } else if (business.resultado === "GANHO") {
+        metrics.won += 1;
+      }
+      return metrics;
+    },
+    { openBusinesses: 0, pipelineValue: 0, won: 0 },
+  ), [allBusinesses]);
 
   const closeDialog = () => {
     setSelectedBusiness(null);
@@ -184,7 +205,7 @@ const PipelineVendas = () => {
           {board && <span className="text-[10px] text-muted-foreground/50">{board.etapas.length} etapas configuradas</span>}
         </div>
 
-        {view === "pipeline" && <><div className="mb-5 grid gap-3 sm:grid-cols-3"><div className="rounded-xl border border-border/25 bg-card/45 p-4"><p className="text-[10px] uppercase tracking-wider text-muted-foreground/50">Negócios ativos</p><p className="mt-1 text-xl font-bold">{openBusinesses.length}</p></div><div className="rounded-xl border border-border/25 bg-card/45 p-4"><p className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground/50"><CircleDollarSign className="h-3 w-3" />Pipeline estimado</p><p className="mt-1 text-xl font-bold">{formatCurrency(pipelineValue)}</p></div><div className="rounded-xl border border-border/25 bg-card/45 p-4"><p className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground/50"><Trophy className="h-3 w-3" />Ganhos</p><p className="mt-1 text-xl font-bold text-emerald-500">{allBusinesses.filter((item) => item.resultado === "GANHO").length}</p></div></div>{isLoading ? <div className="py-20 text-center text-sm text-muted-foreground">Carregando pipeline...</div> : error ? <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive">Não foi possível carregar o Pipeline de Vendas.</div> : <PipelineKanbanBoard etapas={filteredStages} canMove={can(commercialPermissions.move) && !moveBusiness.isPending} canCreate={can(commercialPermissions.create)} movingBusinessId={moveBusiness.isPending ? moveBusiness.variables?.id : undefined} onOpen={setSelectedBusiness} onAdd={setCreateStageId} onMove={move} />}</>}
+        {view === "pipeline" && <><div className="mb-5 grid gap-3 sm:grid-cols-3"><div className="rounded-xl border border-border/25 bg-card/45 p-4"><p className="text-[10px] uppercase tracking-wider text-muted-foreground/50">Negócios ativos</p><p className="mt-1 text-xl font-bold">{pipelineMetrics.openBusinesses}</p></div><div className="rounded-xl border border-border/25 bg-card/45 p-4"><p className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground/50"><CircleDollarSign className="h-3 w-3" />Pipeline estimado</p><p className="mt-1 text-xl font-bold">{formatCurrency(pipelineMetrics.pipelineValue)}</p></div><div className="rounded-xl border border-border/25 bg-card/45 p-4"><p className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground/50"><Trophy className="h-3 w-3" />Ganhos</p><p className="mt-1 text-xl font-bold text-emerald-500">{pipelineMetrics.won}</p></div></div>{isLoading ? <div className="py-20 text-center text-sm text-muted-foreground">Carregando pipeline...</div> : error ? <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive">Não foi possível carregar o Pipeline de Vendas.</div> : <PipelineKanbanBoard etapas={filteredStages} canMove={can(commercialPermissions.move) && !moveBusiness.isPending} canCreate={can(commercialPermissions.create)} movingBusinessId={moveBusiness.isPending ? moveBusiness.variables?.id : undefined} onOpen={setSelectedBusiness} onAdd={setCreateStageId} onMove={move} />}</>}
 
         {view === "tarefas" && <PipelineTarefasVisao funilId={effectiveFunnelId} negocios={allBusinesses} usuarios={users} canView={can(commercialPermissions.taskView)} canConclude={can(commercialPermissions.taskConclude)} onOpenNegocio={setSelectedBusiness} />}
       </section>

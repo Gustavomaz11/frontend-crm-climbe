@@ -1,4 +1,4 @@
-import { useMemo, useContext, useState } from "react";
+import { useDeferredValue, useMemo, useContext, useState } from "react";
 import { useTheme } from "@/hooks/use-theme";
 import { useSidebarState } from "@/hooks/useSidebarState";
 import { useNavigate, Link, useLocation } from "react-router-dom";
@@ -52,8 +52,6 @@ import {
   useReunioes,
   useDocumentos,
   usePropostas,
-  useUsuarios,
-  usePermissoes,
 } from "@/services";
 
 import { useAuthStore } from "@/store/useAuthStore";
@@ -135,6 +133,19 @@ const badgeStyles: Record<PipelineRow["badge"], string> = {
   analysis: "bg-primary/15 text-primary border-primary/20",
   proposal: "bg-destructive/15 text-destructive border-destructive/20",
   direct: "bg-muted text-muted-foreground border-border/30",
+};
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.06, delayChildren: 0.1 },
+  },
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 16 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
 };
 
 const initialDashboardMeetingForm = (date = new Date()): DashboardMeetingForm => ({
@@ -381,12 +392,14 @@ const Dashboard = () => {
   const [maxCalendar, setMaxCalendar] = useState(false);
 
   const [pipelineSearch, setPipelineSearch] = useState("");
+  const deferredPipelineSearch = useDeferredValue(pipelineSearch);
   const [pipelineFilter, setPipelineFilter] = useState("Todos");
   const [selectedCompany, setSelectedCompany] = useState<PipelineRow | null>(
     null,
   );
 
   const [empresaSearch, setEmpresaSearch] = useState("");
+  const deferredEmpresaSearch = useDeferredValue(empresaSearch);
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
   const [showAddMeeting, setShowAddMeeting] = useState(false);
   const [calendarDate, setCalendarDate] = useState(
@@ -433,35 +446,28 @@ const Dashboard = () => {
     isError: errorPropostas,
   } = usePropostas();
 
-  const {
-    data: usuarios = [],
-    isLoading: loadingUsuarios,
-    isError: errorUsuarios,
-  } = useUsuarios();
-
-  const {
-    data: permissoes = [],
-    isLoading: loadingPermissoes,
-    isError: errorPermissoes,
-  } = usePermissoes();
-
+  // A página deixa o estado de carregamento assim que a primeira fonte
+  // responde e completa as demais seções progressivamente.
   const isLoading =
-    loadingContratos ||
-    loadingEmpresas ||
-    loadingReunioes ||
-    loadingDocumentos ||
-    loadingPropostas ||
-    loadingUsuarios ||
-    loadingPermissoes;
+    loadingContratos &&
+    loadingEmpresas &&
+    loadingReunioes &&
+    loadingDocumentos &&
+    loadingPropostas;
 
-  const hasError =
+  const hasPartialError =
     errorContratos ||
     errorEmpresas ||
     errorReunioes ||
     errorDocumentos ||
-    errorPropostas ||
-    errorUsuarios ||
-    errorPermissoes;
+    errorPropostas;
+
+  const hasError =
+    errorContratos &&
+    errorEmpresas &&
+    errorReunioes &&
+    errorDocumentos &&
+    errorPropostas;
 
   const userName =
     basicUserData?.nomeCompleto ||
@@ -475,26 +481,13 @@ const Dashboard = () => {
     null;
 
 
-  const today = new Date();
+  const today = useMemo(() => new Date(), []);
   const currentMonth = calendarDate.getMonth();
   const currentYear = calendarDate.getFullYear();
   const calendarMonthLabel = calendarDate.toLocaleDateString("pt-BR", {
     month: "long",
     year: "numeric",
   });
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: { staggerChildren: 0.06, delayChildren: 0.1 },
-    },
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 16 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-  };
 
   const contratosAtivos = useMemo(
     () =>
@@ -548,7 +541,7 @@ const Dashboard = () => {
       {
         label: "Reuniões",
         value: String(reunioes.length),
-        change: `${usuarios.length} usuários no sistema`,
+        change: `${reunioes.length} reuniões cadastradas`,
         trend: "up" as const,
         icon: Users,
         color: "accent",
@@ -562,7 +555,6 @@ const Dashboard = () => {
       documentosPendentes,
       documentos.length,
       reunioes.length,
-      usuarios.length,
     ],
   );
 
@@ -580,8 +572,9 @@ const Dashboard = () => {
     const map = new Map<number, typeof documentos>();
 
     documentos.forEach((documento) => {
-      const current = map.get(documento.empresaId) ?? [];
-      map.set(documento.empresaId, [...current, documento]);
+      const current = map.get(documento.empresaId);
+      if (current) current.push(documento);
+      else map.set(documento.empresaId, [documento]);
     });
 
     return map;
@@ -591,8 +584,9 @@ const Dashboard = () => {
     const map = new Map<number, typeof contratos>();
 
     contratos.forEach((contrato) => {
-      const current = map.get(contrato.empresaId) ?? [];
-      map.set(contrato.empresaId, [...current, contrato]);
+      const current = map.get(contrato.empresaId);
+      if (current) current.push(contrato);
+      else map.set(contrato.empresaId, [contrato]);
     });
 
     return map;
@@ -602,8 +596,10 @@ const Dashboard = () => {
     const map = new Map<number, typeof propostas>();
 
     propostas.forEach((proposta) => {
-      const current = map.get(Number(proposta.empresaId)) ?? [];
-      map.set(Number(proposta.empresaId), [...current, proposta]);
+      const empresaId = Number(proposta.empresaId);
+      const current = map.get(empresaId);
+      if (current) current.push(proposta);
+      else map.set(empresaId, [proposta]);
     });
 
     return map;
@@ -928,10 +924,10 @@ const Dashboard = () => {
   }, [contratos]);
 
   const filteredPipeline = useMemo(() => {
+    const normalizedSearch = deferredPipelineSearch.trim().toLowerCase();
+
     return pipelineData.filter((row) => {
-      const matchSearch = row.empresa
-        .toLowerCase()
-        .includes(pipelineSearch.toLowerCase());
+      const matchSearch = row.empresa.toLowerCase().includes(normalizedSearch);
 
       const matchFilter =
         pipelineFilter === "Todos" ||
@@ -940,13 +936,15 @@ const Dashboard = () => {
 
       return matchSearch && matchFilter;
     });
-  }, [pipelineData, pipelineSearch, pipelineFilter]);
+  }, [deferredPipelineSearch, pipelineData, pipelineFilter]);
 
   const filteredEmpresas = useMemo(() => {
+    const normalizedSearch = deferredEmpresaSearch.trim().toLowerCase();
+
     return empresasData.filter((row) =>
-      row.empresa.toLowerCase().includes(empresaSearch.toLowerCase()),
+      row.empresa.toLowerCase().includes(normalizedSearch),
     );
-  }, [empresasData, empresaSearch]);
+  }, [deferredEmpresaSearch, empresasData]);
 
   const handleCompanyClick = (row: PipelineRow) => {
     setSelectedCompany(row);
@@ -1801,6 +1799,15 @@ const Dashboard = () => {
             initial="hidden"
             animate="visible"
           >
+            {hasPartialError && (
+              <div
+                role="status"
+                className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-2 text-xs text-destructive"
+              >
+                Alguns dados não puderam ser atualizados. As demais seções continuam disponíveis.
+              </div>
+            )}
+
             <motion.div
               className="flex items-center justify-between"
               variants={itemVariants}

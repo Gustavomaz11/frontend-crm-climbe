@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Analytics } from "@vercel/analytics/react";
@@ -8,33 +9,36 @@ import { QueryProvider } from "@/context/QueryProvider";
 import { AuthProvider } from "@/context";
 import { PrivateRoute } from "@/guards/PrivateRoute";
 import { PublicRoute } from "@/guards/PublicRoute";
-import Index from "./pages/Index.tsx";
-import Dashboard from "./pages/Dashboard.tsx";
-import RecuperarSenha from "./pages/RecuperarSenha.tsx";
-import SolicitarAcesso from "./pages/SolicitarAcesso.tsx";
-import PendingApproval from "./pages/PendingApproval.tsx";
-import FirstAccess from "./pages/FirstAccess.tsx";
-import Agenda from "./pages/Agenda.tsx";
-import Permissoes from "./pages/Permissoes.tsx";
-import Empresas from "./pages/Empresas.tsx";
-import Documentos from "./pages/Documentos.tsx";
-import EnviarDocumento from "./pages/EnviarDocumento.tsx";
-import EnviarDocumentosLote from "./pages/EnviarDocumentosLote.tsx";
-import Contratos from "./pages/Contratos.tsx";
-import ContratosKanban from "./pages/ContratosKanban.tsx";
-import Propostas from "./pages/Propostas.tsx";
-import NotFound from "./pages/NotFound.tsx";
-import AprovarAcesso from "./pages/AprovarAcesso.tsx";
-import CadastroEmpresa from "./pages/CadastroEmpresa.tsx";
-import PipelineVendas from "./pages/PipelineVendas.tsx";
-import PipelineFunisAdmin from "./pages/PipelineFunisAdmin.tsx";
-import PipelineDashboard from "./pages/PipelineDashboard.tsx";
-import PipelineMotivosPerdaAdmin from "./pages/PipelineMotivosPerdaAdmin.tsx";
-import PipelineCampanhas from "./pages/PipelineCampanhas.tsx";
-import PipelineScripts from "./pages/PipelineScripts.tsx";
-import RevisaoDocumentoPublica from "./pages/RevisaoDocumentoPublica.tsx";
-import Perfil from "./pages/Perfil.tsx";
-import Cargos from "./pages/Cargos.tsx";
+import { RouteLoading } from "@/components/layout/RouteLoading";
+import {
+  Agenda,
+  AprovarAcesso,
+  CadastroEmpresa,
+  Cargos,
+  Contratos,
+  ContratosKanban,
+  Dashboard,
+  Documentos,
+  Empresas,
+  EnviarDocumento,
+  EnviarDocumentosLote,
+  FirstAccess,
+  Index,
+  NotFound,
+  PendingApproval,
+  Perfil,
+  Permissoes,
+  PipelineCampanhas,
+  PipelineDashboard,
+  PipelineFunisAdmin,
+  PipelineMotivosPerdaAdmin,
+  PipelineScripts,
+  PipelineVendas,
+  Propostas,
+  RecuperarSenha,
+  RevisaoDocumentoPublica,
+  SolicitarAcesso,
+} from "@/routes/lazyPages";
 
 const App = () => (
   <QueryProvider>
@@ -45,7 +49,8 @@ const App = () => (
           <Sonner />
           <SpeedInsights />
           <Analytics />
-          <Routes>
+          <Suspense fallback={<RouteLoading />}>
+            <Routes>
             {/* Rotas Públicas */}
             <Route
               path="/"
@@ -262,7 +267,8 @@ const App = () => (
 
             {/* Rota 404 */}
             <Route path="*" element={<NotFound />} />
-          </Routes>
+            </Routes>
+          </Suspense>
         </AuthProvider>
       </TooltipProvider>
     </BrowserRouter>

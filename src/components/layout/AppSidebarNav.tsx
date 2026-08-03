@@ -4,6 +4,7 @@ import { BriefcaseBusiness, ChevronDown, Settings } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { cn } from "@/lib/utils";
+import { preloadRoute } from "@/routes/lazyPages";
 import {
   type MainNavItem,
   useVisibleMainNavItems,
@@ -59,6 +60,8 @@ export function AppSidebarNav({ collapsed }: AppSidebarNavProps) {
       <motion.button
         key={item.path}
         type="button"
+        onMouseEnter={() => preloadRoute(item.path)}
+        onFocus={() => preloadRoute(item.path)}
         onClick={() => navigate(item.path)}
         title={collapsed ? item.label : undefined}
         className={cn(

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import { api } from "@/api";
+import type { CommercialService } from "./commercialProposal";
 
 export interface Empresa {
   id: number;
@@ -36,7 +37,7 @@ export interface EmpresaParcela {
 
 export interface EmpresaServicoContratado {
   contratoId: number;
-  servico: string;
+  servico: CommercialService;
   situacao: string;
   valorTotal: number;
   proximoRecebimentoValor?: number | null;
@@ -75,6 +76,7 @@ export function normalizeEmpresa(empresa: EmpresaApi): Empresa {
     logradouro: empresa.logradouro ?? empresa.endereco ?? "",
     numero: empresa.numero ?? "",
     bairro: empresa.bairro ?? "",
+    cidade: empresa.cidade ?? "",
     estado: empresa.estado ?? empresa.uf ?? "",
     uf: empresa.uf ?? empresa.estado ?? "",
     cep: empresa.cep ?? "",
@@ -177,13 +179,14 @@ function getApiErrorMessage(error: unknown) {
   return "Erro na API";
 }
 
-export function useEmpresas() {
+export function useEmpresas(enabled = true) {
   return useQuery<Empresa[]>({
     queryKey: ["empresas"],
     queryFn: async () => {
       const response = await api.get<Empresa[]>("/empresas");
       return response.data.map(normalizeEmpresa);
     },
+    enabled,
   });
 }
 

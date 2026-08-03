@@ -90,6 +90,29 @@ export interface KanbanSubtarefaDTO {
   posicao?: number;
 }
 
+export function moveTaskInBoard(
+  board: ContratoKanbanBoard,
+  taskId: number,
+  destinationRaiaId: number,
+): ContratoKanbanBoard {
+  const task = board.raias
+    .flatMap((raia) => raia.tasks)
+    .find((item) => item.id === taskId);
+
+  if (!task || task.raiaId === destinationRaiaId) return board;
+
+  return {
+    ...board,
+    raias: board.raias.map((raia) => ({
+      ...raia,
+      tasks:
+        raia.id === destinationRaiaId
+          ? [...raia.tasks, { ...task, raiaId: destinationRaiaId }]
+          : raia.tasks.filter((item) => item.id !== taskId),
+    })),
+  };
+}
+
 function unwrap<T>(response: T | ApiEnvelope<T>): T {
   if (
     response &&
@@ -230,8 +253,28 @@ export function useMoveKanbanTask() {
         throw new Error(getApiErrorMessage(error));
       }
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["contratos", variables.contratoId, "kanban"] });
+    onMutate: async (variables) => {
+      const queryKey = ["contratos", variables.contratoId, "kanban"] as const;
+      await queryClient.cancelQueries({ queryKey });
+      const previousBoard = queryClient.getQueryData<ContratoKanbanBoard>(queryKey);
+
+      queryClient.setQueryData<ContratoKanbanBoard>(queryKey, (current) =>
+        current
+          ? moveTaskInBoard(current, variables.taskId, variables.data.raiaId)
+          : current,
+      );
+
+      return { previousBoard, queryKey };
+    },
+    onError: (_error, _variables, context) => {
+      if (context?.previousBoard) {
+        queryClient.setQueryData(context.queryKey, context.previousBoard);
+      }
+    },
+    onSettled: (_data, _error, variables) => {
+      queryClient.invalidateQueries({
+        queryKey: ["contratos", variables.contratoId, "kanban"],
+      });
     },
   });
 }

@@ -24,9 +24,11 @@ interface KanbanTaskCardProps {
   onToggleSubtask: (taskId: number, subtarefa: ContratoKanbanSubtarefa) => void;
 }
 
+const dateFormatter = new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" });
+
 const formatDate = (value?: string | null) => {
   if (!value) return "-";
-  return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short" }).format(new Date(`${value}T00:00:00`));
+  return dateFormatter.format(new Date(`${value}T00:00:00`));
 };
 
 export const KanbanTaskCard = ({

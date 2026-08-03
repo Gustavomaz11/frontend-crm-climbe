@@ -18,6 +18,7 @@ import { syncGoogleAccessToken } from "@/lib/googleAccessToken";
 import { saveAccessToken, saveRefreshToken } from "@/lib/authCookies";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useUserRoleStore } from "@/store/useUserRoleStore";
+import { preloadRoute } from "@/routes/lazyPages";
 
 const Index = () => {
   const { isDark, setIsDark } = useTheme();
@@ -38,6 +39,11 @@ const Index = () => {
   const [password, setPassword] = useState("");
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
+
+  useEffect(() => {
+    const preloadTimer = window.setTimeout(() => preloadRoute("/dashboard"), 800);
+    return () => window.clearTimeout(preloadTimer);
+  }, []);
 
   const handleGoogleCallback = useCallback(
     async (code: string) => {

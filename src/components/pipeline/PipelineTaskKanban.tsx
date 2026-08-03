@@ -1,4 +1,4 @@
-import { useState, type DragEvent } from "react";
+import { useMemo, useState, type DragEvent } from "react";
 import {
   Ban,
   CheckCircle2,
@@ -45,6 +45,13 @@ export const PipelineTaskKanban = ({
 }: PipelineTaskKanbanProps) => {
   const [draggedTaskId, setDraggedTaskId] = useState<number | null>(null);
   const [dragOverStatus, setDragOverStatus] = useState<PipelineTarefaStatus | null>(null);
+  const tasksById = useMemo(() => new Map(tasks.map((task) => [task.id, task])), [tasks]);
+  const tasksByStatus = useMemo(() => {
+    const grouped = new Map<PipelineTarefaStatus, PipelineTarefa[]>();
+    kanbanColumns.forEach((column) => grouped.set(column.status, []));
+    tasks.forEach((task) => grouped.get(task.status)?.push(task));
+    return grouped;
+  }, [tasks]);
 
   const handleDragStart = (event: DragEvent<HTMLDivElement>, taskId: number) => {
     if (!canMove) return;
@@ -57,7 +64,7 @@ export const PipelineTaskKanban = ({
     event.preventDefault();
     const transferredId = Number(event.dataTransfer.getData("text/pipeline-task-id"));
     const taskId = transferredId || draggedTaskId;
-    const task = tasks.find((item) => item.id === taskId);
+    const task = tasksById.get(taskId);
 
     setDraggedTaskId(null);
     setDragOverStatus(null);
@@ -70,7 +77,7 @@ export const PipelineTaskKanban = ({
       <div className="grid min-w-[920px] grid-cols-4 gap-3">
         {kanbanColumns.map((column) => {
           const Icon = column.icon;
-          const columnTasks = tasks.filter((task) => task.status === column.status);
+          const columnTasks = tasksByStatus.get(column.status) ?? [];
           const isDragTarget = dragOverStatus === column.status;
 
           return (
@@ -82,7 +89,7 @@ export const PipelineTaskKanban = ({
                 if (!canMove) return;
                 event.preventDefault();
                 event.dataTransfer.dropEffect = "move";
-                setDragOverStatus(column.status);
+                setDragOverStatus((current) => current === column.status ? current : column.status);
               }}
               onDragLeave={(event) => {
                 const nextTarget = event.relatedTarget;

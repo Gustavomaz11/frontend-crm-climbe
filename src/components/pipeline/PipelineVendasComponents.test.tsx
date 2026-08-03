@@ -20,6 +20,8 @@ import { normalizeEmpresa } from "@/services/useEmpresas";
 
 const negocio: PipelineNegocio = {
   id: 1,
+  funilId: 1,
+  funilNome: "Funil comercial",
   nomeEmpresa: "Apex Ventures",
   nomeContato: "Maria Silva",
   telefone: "11999999999",

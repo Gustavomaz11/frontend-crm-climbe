@@ -101,8 +101,10 @@ const ContratosKanban = () => {
   );
   const usuariosKanban = useMemo(() => {
     const usuariosDisponiveis = board?.usuariosDisponiveis || board?.participantes || [];
+    const profilesById = new Map(usuariosComPerfil.map((usuario) => [usuario.id, usuario]));
+
     return usuariosDisponiveis.map((usuario) => {
-      const perfil = usuariosComPerfil.find((item) => item.id === usuario.id);
+      const perfil = profilesById.get(usuario.id);
       return {
         ...usuario,
         cargo: perfil?.cargo || usuario.cargo,
@@ -326,7 +328,7 @@ const ContratosKanban = () => {
     if (!draggedTask) return;
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
-    setDragOverRaiaId(raiaId);
+    setDragOverRaiaId((current) => (current === raiaId ? current : raiaId));
   }
 
   async function handleRaiaDrop(raiaId: number) {

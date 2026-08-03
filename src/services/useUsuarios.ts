@@ -143,13 +143,14 @@ function normalizeSolicitacaoAcesso(solicitacao: SolicitacaoAcessoApi): Solicita
   };
 }
 
-export function useUsuarios() {
+export function useUsuarios(enabled = true) {
   return useQuery<Usuario[]>({
     queryKey: ["usuarios"],
     queryFn: async () => {
       const response = await api.get<UsuarioApi[]>("/usuarios");
       return response.data.map(normalizeUsuario);
     },
+    enabled,
   });
 }
 

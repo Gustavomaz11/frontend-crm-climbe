@@ -140,6 +140,6 @@ const throwAuthenticationError = (
 
 const createToken = (payload: Record<string, unknown>) => {
   const encode = (value: object) =>
-    window.btoa(JSON.stringify(value)).replaceAll("=", "");
+    window.btoa(JSON.stringify(value)).replace(/=/g, "");
   return `${encode({ alg: "none", typ: "JWT" })}.${encode(payload)}.`;
 };

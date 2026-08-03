@@ -90,7 +90,19 @@ export function PermissionGroupsPanel({ permissoes }: PermissionGroupsPanelProps
           <div className="mt-3 grid max-h-52 gap-2 overflow-y-auto sm:grid-cols-2">
             {permissoes.map((permissao) => (
               <label key={permissao.id} className="flex cursor-pointer items-start gap-2 rounded-lg border border-border/15 p-2.5 text-[11px] hover:bg-muted/20">
-                <input type="checkbox" checked={selecionadas.has(permissao.id)} onChange={() => setSelecionadas((current) => { const next = new Set(current); next.has(permissao.id) ? next.delete(permissao.id) : next.add(permissao.id); return next; })} className="mt-0.5 accent-[hsl(var(--accent))]" />
+                <input
+                  type="checkbox"
+                  checked={selecionadas.has(permissao.id)}
+                  onChange={() =>
+                    setSelecionadas((current) => {
+                      const next = new Set(current);
+                      if (next.has(permissao.id)) next.delete(permissao.id);
+                      else next.add(permissao.id);
+                      return next;
+                    })
+                  }
+                  className="mt-0.5 accent-[hsl(var(--accent))]"
+                />
                 <span><strong className="block font-medium">{permissao.nome}</strong><small className="text-muted-foreground/45">{permissao.codigo}</small></span>
               </label>
             ))}

@@ -1,32 +1,41 @@
 import { Building2, CalendarDays, CircleDollarSign, LoaderCircle, UserRound } from "lucide-react";
-import type { DragEvent } from "react";
+import { memo, type DragEvent } from "react";
 import type { PipelineNegocio } from "@/services/usePipelineVendas";
 
 interface PipelineNegocioCardProps {
   negocio: PipelineNegocio;
   canMove: boolean;
   isMoving?: boolean;
-  onOpen: () => void;
-  onDragStart: (event: DragEvent<HTMLButtonElement>) => void;
+  onOpen: (negocio: PipelineNegocio) => void;
+  onDragStart: (event: DragEvent<HTMLButtonElement>, negocioId: number) => void;
 }
+
+const currencyFormatter = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL",
+});
+const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
+  dateStyle: "short",
+  timeStyle: "short",
+});
 
 const formatCurrency = (value?: number | null) => {
   if (!value) return "Valor não informado";
-  return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value);
+  return currencyFormatter.format(value);
 };
 
 const formatDate = (value?: string | null) => {
   if (!value) return "Reunião não definida";
-  return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(value));
+  return dateFormatter.format(new Date(value));
 };
 
-export const PipelineNegocioCard = ({ negocio, canMove, isMoving, onOpen, onDragStart }: PipelineNegocioCardProps) => (
+export const PipelineNegocioCard = memo(({ negocio, canMove, isMoving, onOpen, onDragStart }: PipelineNegocioCardProps) => (
   <button
     type="button"
     draggable={canMove}
     aria-busy={isMoving}
-    onDragStart={onDragStart}
-    onClick={onOpen}
+    onDragStart={(event) => onDragStart(event, negocio.id)}
+    onClick={() => onOpen(negocio)}
     className="w-full cursor-pointer rounded-xl border border-border/25 bg-background/70 p-3 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-accent/35 hover:shadow-md active:translate-y-0"
   >
     <div className="flex items-start justify-between gap-2">
@@ -53,4 +62,6 @@ export const PipelineNegocioCard = ({ negocio, canMove, isMoving, onOpen, onDrag
       <div className="flex items-center gap-1.5"><Building2 className="h-3 w-3" /><span className="truncate">{negocio.responsavelNome}</span></div>
     </div>
   </button>
-);
+));
+
+PipelineNegocioCard.displayName = "PipelineNegocioCard";

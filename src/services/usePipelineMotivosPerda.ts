@@ -24,11 +24,12 @@ const unwrap = <T,>(response: ApiResponse<T>) => {
   return response.data;
 };
 
-export const usePipelineMotivosPerdaAtivos = () => useQuery({
+export const usePipelineMotivosPerdaAtivos = (enabled = true) => useQuery({
   queryKey: ["pipeline-motivos-perda", "ativos"],
   queryFn: async () => unwrap((await api.get<ApiResponse<PipelineMotivoPerda[]>>(
     "/pipeline-vendas/motivos-perda/ativos",
   )).data),
+  enabled,
 });
 
 export const usePipelineMotivosPerdaAdmin = () => useQuery({
