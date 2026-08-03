@@ -26,4 +26,13 @@ describe("cargoHierarchyModel", () => {
   it("impede mover um cargo para baixo de seu próprio descendente", () => {
     expect(reparentCargo(cargos, 1, 3)).toBe(cargos);
   });
+
+  it("move um cargo para outro segmento e preserva os demais ramos", () => {
+    const moved = reparentCargo(cargos, 3, 4);
+    const tree = buildCargoHierarchy(moved);
+
+    expect(moved.find((cargo) => cargo.id === 3)?.cargoSuperiorId).toBe(4);
+    expect(tree.find((cargo) => cargo.id === 1)?.children.map((cargo) => cargo.id)).toEqual([2]);
+    expect(tree.find((cargo) => cargo.id === 4)?.children.map((cargo) => cargo.id)).toEqual([3]);
+  });
 });

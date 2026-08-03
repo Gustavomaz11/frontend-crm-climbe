@@ -1,6 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
-import { ArrowLeft, ArrowRight, Crown, Loader2, RotateCcw, Save, UsersRound } from "lucide-react";
+import {
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  TouchSensor,
+  pointerWithin,
+  rectIntersection,
+  useSensor,
+  useSensors,
+  type CollisionDetection,
+  type DragEndEvent,
+  type DragStartEvent,
+} from "@dnd-kit/core";
+import { ArrowLeft, ArrowRight, Loader2, RotateCcw, Save, UsersRound } from "lucide-react";
 
 import type { Cargo } from "@/services";
 import {
@@ -9,8 +22,8 @@ import {
   moveCargoAmongSiblings,
   reparentCargo,
   serializeCargoHierarchy,
-  type CargoHierarchyNode,
 } from "./cargoHierarchyModel";
+import { AdministratorDropTarget, CargoDragOverlay, HierarchyBranch } from "./CargoHierarchyDragNodes";
 
 interface CargoHierarchyTreeProps {
   cargos: Cargo[];
@@ -18,48 +31,30 @@ interface CargoHierarchyTreeProps {
   onSave: (cargos: ReturnType<typeof serializeCargoHierarchy>) => Promise<void>;
 }
 
-interface HierarchyBranchProps {
-  node: CargoHierarchyNode;
-  selectedId: number | null;
-  onSelect: (id: number) => void;
-}
-
-const HierarchyBranch = ({ node, selectedId, onSelect }: HierarchyBranchProps) => (
-  <div className="flex flex-col items-center">
-    <motion.button
-      layout
-      type="button"
-      onClick={() => onSelect(node.id)}
-      className={`group min-h-20 w-52 rounded-xl border px-4 py-3 text-left shadow-sm transition-colors ${selectedId === node.id ? "border-accent/60 bg-accent/12 ring-2 ring-accent/10" : "border-border/30 bg-card/90 hover:border-accent/35 hover:bg-card"}`}
-    >
-      <span className="mb-2 flex items-center gap-2 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/45">
-        <UsersRound className="h-3.5 w-3.5" />Cargo
-      </span>
-      <span className="block text-[12px] font-semibold leading-snug text-foreground">{node.nome}</span>
-      <span className="mt-1 block text-[9px] text-muted-foreground/45">{node.children.length} subordinado(s) direto(s)</span>
-    </motion.button>
-    {node.children.length > 0 && (
-      <>
-        <div className="h-6 border-l border-accent/35" />
-        <div className="flex border-t border-accent/35">
-          {node.children.map((child) => (
-            <div key={child.id} className="relative px-3 pt-6 before:absolute before:left-1/2 before:top-0 before:h-6 before:border-l before:border-accent/35">
-              <HierarchyBranch node={child} selectedId={selectedId} onSelect={onSelect} />
-            </div>
-          ))}
-        </div>
-      </>
-    )}
-  </div>
-);
+const hierarchyCollisionDetection: CollisionDetection = (args) => {
+  const pointerCollisions = pointerWithin(args);
+  if (pointerCollisions.length > 0) return pointerCollisions;
+  return rectIntersection(args);
+};
 
 export const CargoHierarchyTree = ({ cargos, isSaving, onSave }: CargoHierarchyTreeProps) => {
   const [draft, setDraft] = useState<Cargo[]>(cargos);
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [activeCargoId, setActiveCargoId] = useState<number | null>(null);
   const [dirty, setDirty] = useState(false);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 180, tolerance: 8 } }),
+    useSensor(KeyboardSensor),
+  );
   const roots = useMemo(() => buildCargoHierarchy(draft), [draft]);
   const selected = draft.find((cargo) => cargo.id === selectedId) ?? null;
   const invalidParentIds = selected ? getCargoDescendantIds(draft, selected.id) : new Set<number>();
+  const invalidDropIds = useMemo(() => {
+    if (activeCargoId === null) return new Set<number>();
+    return new Set([activeCargoId, ...getCargoDescendantIds(draft, activeCargoId)]);
+  }, [activeCargoId, draft]);
+  const activeCargo = draft.find((cargo) => cargo.id === activeCargoId) ?? null;
 
   useEffect(() => {
     if (dirty) return;
@@ -78,9 +73,31 @@ export const CargoHierarchyTree = ({ cargos, isSaving, onSave }: CargoHierarchyT
     setDirty(true);
   };
 
+  const startDrag = (event: DragStartEvent) => {
+    const cargoId = Number(event.active.data.current?.cargoId);
+    if (!Number.isFinite(cargoId)) return;
+    setActiveCargoId(cargoId);
+    setSelectedId(cargoId);
+  };
+
+  const finishDrag = (event: DragEndEvent) => {
+    const cargoId = Number(event.active.data.current?.cargoId);
+    const target = event.over?.data.current;
+    setActiveCargoId(null);
+    if (!Number.isFinite(cargoId) || !target) return;
+
+    const parentId = target.type === "administrator" ? null : Number(target.cargoId);
+    if (parentId !== null && !Number.isFinite(parentId)) return;
+    const next = reparentCargo(draft, cargoId, parentId);
+    if (next === draft) return;
+    setDraft(next);
+    setDirty(true);
+  };
+
   const reset = () => {
     setDraft(cargos);
     setSelectedId(null);
+    setActiveCargoId(null);
     setDirty(false);
   };
 
@@ -94,7 +111,7 @@ export const CargoHierarchyTree = ({ cargos, isSaving, onSave }: CargoHierarchyT
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/25 bg-card/45 p-4">
         <div>
           <h2 className="text-[14px] font-semibold">Estrutura organizacional</h2>
-          <p className="mt-1 text-[10px] text-muted-foreground/55">Selecione um cargo para definir o superior direto ou ajustar sua posição entre cargos do mesmo nível.</p>
+          <p className="mt-1 text-[10px] text-muted-foreground/55">Arraste um cargo sobre outro para torná-lo subordinado ou solte-o sobre o Administrador para movê-lo à raiz.</p>
         </div>
         <div className="flex gap-2">
           <button type="button" onClick={reset} disabled={!dirty || isSaving} className="inline-flex h-9 items-center gap-2 rounded-lg border border-border/30 px-3 text-[11px] text-muted-foreground disabled:opacity-40"><RotateCcw className="h-3.5 w-3.5" />Desfazer</button>
@@ -103,27 +120,34 @@ export const CargoHierarchyTree = ({ cargos, isSaving, onSave }: CargoHierarchyT
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_300px]">
-        <section className="min-h-[520px] overflow-auto rounded-2xl border border-border/25 bg-[radial-gradient(circle_at_top,hsl(var(--accent)/0.08),transparent_45%)] p-8">
-          <div className="flex min-w-max flex-col items-center">
-            <div className="flex min-h-24 w-60 flex-col justify-center rounded-2xl border border-accent/40 bg-accent/10 px-5 py-4 text-center shadow-lg shadow-accent/5">
-              <Crown className="mx-auto mb-2 h-5 w-5 text-accent" />
-              <p className="text-[14px] font-bold">Administrador</p>
-              <p className="mt-1 text-[9px] uppercase tracking-[0.12em] text-muted-foreground/50">Raiz fixa da organização</p>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={hierarchyCollisionDetection}
+          onDragStart={startDrag}
+          onDragCancel={() => setActiveCargoId(null)}
+          onDragEnd={finishDrag}
+        >
+          <section className="min-h-[520px] overflow-auto rounded-2xl border border-border/25 bg-[radial-gradient(circle_at_top,hsl(var(--accent)/0.08),transparent_45%)] p-8">
+            <div className="flex min-w-max flex-col items-center">
+              <AdministratorDropTarget />
+              {roots.length > 0 ? (
+                <>
+                  <div className="h-8 border-l border-accent/45" />
+                  <div className="flex border-t border-accent/45">
+                    {roots.map((root) => (
+                      <div key={root.id} className="relative px-3 pt-8 before:absolute before:left-1/2 before:top-0 before:h-8 before:border-l before:border-accent/45">
+                        <HierarchyBranch node={root} selectedId={selectedId} invalidDropIds={invalidDropIds} onSelect={setSelectedId} />
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : <p className="mt-10 text-[11px] text-muted-foreground/50">Cadastre cargos para começar a estrutura.</p>}
             </div>
-            {roots.length > 0 ? (
-              <>
-                <div className="h-8 border-l border-accent/45" />
-                <div className="flex border-t border-accent/45">
-                  {roots.map((root) => (
-                    <div key={root.id} className="relative px-3 pt-8 before:absolute before:left-1/2 before:top-0 before:h-8 before:border-l before:border-accent/45">
-                      <HierarchyBranch node={root} selectedId={selectedId} onSelect={setSelectedId} />
-                    </div>
-                  ))}
-                </div>
-              </>
-            ) : <p className="mt-10 text-[11px] text-muted-foreground/50">Cadastre cargos para começar a estrutura.</p>}
-          </div>
-        </section>
+          </section>
+          <DragOverlay dropAnimation={{ duration: 180, easing: "ease-out" }}>
+            {activeCargo && <CargoDragOverlay cargoName={activeCargo.nome} />}
+          </DragOverlay>
+        </DndContext>
 
         <aside className="h-fit rounded-xl border border-border/25 bg-card/55 p-4 xl:sticky xl:top-5">
           {selected ? (
