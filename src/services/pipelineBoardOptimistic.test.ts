@@ -19,6 +19,8 @@ const business: PipelineNegocio = {
   estrategiaComercial: "Ativa",
   servicoInteresse: "BPO",
   resultado: "ABERTO",
+  possuiProposta: false,
+  propostaAjustesPendentes: false,
   criadoEm: "2026-08-02T10:00:00",
   ultimaMovimentacaoEm: "2026-08-02T10:00:00",
 };

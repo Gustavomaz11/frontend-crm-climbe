@@ -30,6 +30,8 @@ const negocio: PipelineNegocio = {
   servicoInteresse: "",
   servicosInteresse: [],
   resultado: "ABERTO",
+  possuiProposta: true,
+  propostaAjustesPendentes: true,
   criadoEm: "2026-08-03T10:00:00",
   ultimaMovimentacaoEm: "2026-08-03T10:00:00",
 };
@@ -38,8 +40,8 @@ describe("PipelinePropostasPanel", () => {
   beforeEach(() => {
     usePropostasMock.mockReturnValue({
       data: [
-        { idProposta: 1, empresaId: 10, negocioId: 30, usuarioId: 1, url: "propostas/atual.pdf", valuation: 1000, status: "PENDENTE", dataCriacao: "2026-08-03", servico: "BPO" },
-        { idProposta: 2, empresaId: 10, negocioId: 20, usuarioId: 1, url: "propostas/anterior.pdf", valuation: 800, status: "APROVADA", dataCriacao: "2026-07-01", servico: "CFO" },
+        { idProposta: 1, empresaId: 10, negocioId: 30, usuarioId: 1, url: "propostas/atual.pdf", valuation: 1000, status: "PENDENTE", revisaoStatus: "AJUSTES_SOLICITADOS", dataCriacao: "2026-08-03", servico: "BPO" },
+        { idProposta: 2, empresaId: 10, negocioId: 20, usuarioId: 1, url: "propostas/anterior.pdf", valuation: 800, status: "APROVADA", revisaoStatus: "APROVADO", dataCriacao: "2026-07-01", servico: "CFO" },
       ],
       isLoading: false,
       error: null,
@@ -54,6 +56,9 @@ describe("PipelinePropostasPanel", () => {
     expect(screen.getByText("atual.pdf")).toBeInTheDocument();
     expect(screen.getByText("anterior.pdf")).toBeInTheDocument();
     expect(screen.getByText("Deste negócio")).toBeInTheDocument();
+    expect(screen.getByText("O cliente analisou a proposta e solicitou ajustes")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Ver ajustes/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Ver revisão/i })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /Nova proposta/i }));
     expect(onCreate).toHaveBeenCalledOnce();
   });

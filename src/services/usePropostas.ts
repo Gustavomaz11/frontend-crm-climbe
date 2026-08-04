@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import { api } from "@/api";
 import type { CommercialService } from "./commercialProposal";
+import type { RevisaoStatus } from "./useRevisoesDocumento";
 
 export interface PropostaReajuste {
   mesVigencia: number;
@@ -38,6 +39,7 @@ export interface PropostaApi {
   url: string;
   valuation: number | null;
   status: PropostaStatus;
+  revisaoStatus?: RevisaoStatus | null;
   dataCriacao?: string | null;
   servico?: CommercialService | null;
   mesInicio?: string | null;

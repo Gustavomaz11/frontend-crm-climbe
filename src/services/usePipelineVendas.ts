@@ -37,6 +37,8 @@ export interface PipelineNegocio {
   observacaoPerda?: string | null;
   encerradoEm?: string | null;
   contratoId?: number | null;
+  possuiProposta: boolean;
+  propostaAjustesPendentes: boolean;
   criadoEm: string;
   ultimaMovimentacaoEm: string;
 }
@@ -136,6 +138,7 @@ const useInvalidatePipeline = () => {
 
 export const usePipelineVendas = (funilId?: number | null) => useQuery<PipelineBoard>({
   queryKey: ["pipeline-vendas", funilId],
+  refetchInterval: 60_000,
   queryFn: async () => unwrap((await api.get<ApiResponse<PipelineBoard>>("/pipeline-vendas", {
     params: { funilId: funilId || undefined },
   })).data),

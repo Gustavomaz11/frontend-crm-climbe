@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Activity, CheckCircle2, FileCheck2, ListTodo, MessageSquareText, RefreshCw, Save, ScrollText, Trophy, X, XCircle } from "lucide-react";
+import { Activity, CheckCircle2, FileCheck2, ListTodo, MessageSquareText, MessageSquareWarning, RefreshCw, Save, ScrollText, Trophy, X, XCircle } from "lucide-react";
 import type { Empresa } from "@/services/useEmpresas";
 import type { PipelineEtapa, PipelineNegocio, PipelineNegocioInput } from "@/services/usePipelineVendas";
 import type { PipelineMotivoPerda } from "@/services/usePipelineMotivosPerda";
@@ -50,7 +50,7 @@ const tabs: { value: DialogTab; label: string; icon: typeof ListTodo }[] = [
   { value: "tarefas", label: "Tarefas", icon: ListTodo },
   { value: "comentarios", label: "Comentários", icon: MessageSquareText },
   { value: "historico", label: "Histórico", icon: Activity },
-  { value: "propostas", label: "Propostas", icon: ScrollText },
+  { value: "propostas", label: "Proposta", icon: ScrollText },
 ];
 
 export const PipelineNegocioDialog = ({
@@ -93,7 +93,11 @@ export const PipelineNegocioDialog = ({
     responsavelId: initialResponsavelId ? String(initialResponsavelId) : "",
   }, [initialEtapaId, initialResponsavelId, negocio]);
   const [draft, setDraft] = useState(initialDraft);
-  const proposalTabEnabled = Boolean(negocio?.etapaCodigo?.toUpperCase().startsWith("PROPOSTA_EM_ELABORACAO"));
+  const proposalNeedsReview = Boolean(negocio?.propostaAjustesPendentes);
+  const proposalTabEnabled = Boolean(
+    negocio?.possuiProposta
+    || negocio?.etapaCodigo?.toUpperCase().startsWith("PROPOSTA_EM_ELABORACAO"),
+  );
 
   useEffect(() => {
     setDraft(initialDraft);
@@ -116,7 +120,35 @@ export const PipelineNegocioDialog = ({
         <motion.section role="dialog" aria-modal="true" className={`pointer-events-auto flex max-h-[92vh] w-full flex-col overflow-hidden rounded-2xl border border-border/30 bg-card shadow-2xl ${activeTab === "tarefas" ? "max-w-7xl" : "max-w-5xl"}`} initial={{ opacity: 0, scale: 0.97, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.97, y: 10 }}>
           <header className="flex items-center justify-between border-b border-border/20 px-6 py-4"><div><h2 className="text-[16px] font-semibold text-foreground">{isCreating ? "Novo negócio" : negocio.nomeEmpresa}</h2><p className="mt-0.5 text-[11px] text-muted-foreground">{isCreating ? "Cadastre uma oportunidade no funil comercial" : `${negocio.etapaNome} · ${negocio.responsavelNome}`}</p></div><button type="button" onClick={onClose} disabled={isProcessing} className="rounded-lg p-2 text-muted-foreground hover:bg-muted/30 hover:text-foreground"><X className="h-4 w-4" /></button></header>
 
-          {!isCreating && <nav className="flex gap-1 overflow-x-auto border-b border-border/20 px-6 py-2">{tabs.map((tab) => { const Icon = tab.icon; const disabled = tab.value === "propostas" && !proposalTabEnabled; return <button key={tab.value} type="button" disabled={disabled} title={disabled ? "Disponível quando o negócio estiver em Proposta em elaboração" : undefined} onClick={() => setActiveTab(tab.value)} className={`flex h-8 items-center gap-2 rounded-lg px-3 text-[10px] font-medium disabled:cursor-not-allowed disabled:opacity-35 ${activeTab === tab.value ? "bg-accent/12 text-accent" : "text-muted-foreground hover:bg-muted/25 hover:text-foreground"}`}><Icon className="h-3.5 w-3.5" />{tab.label}</button>; })}</nav>}
+          {!isCreating && (
+            <nav className="flex gap-1 overflow-x-auto border-b border-border/20 px-6 py-2">
+              {tabs.map((tab) => {
+                const isProposalTab = tab.value === "propostas";
+                const Icon = isProposalTab && proposalNeedsReview ? MessageSquareWarning : tab.icon;
+                const disabled = isProposalTab && !proposalTabEnabled;
+                const attentionClass = isProposalTab && proposalNeedsReview
+                  ? "border border-amber-500/35 bg-amber-500/10 text-amber-500 hover:bg-amber-500/15"
+                  : "text-muted-foreground hover:bg-muted/25 hover:text-foreground";
+                const selectedClass = activeTab === tab.value
+                  ? proposalNeedsReview && isProposalTab ? "bg-amber-500/15 text-amber-500" : "bg-accent/12 text-accent"
+                  : attentionClass;
+                return (
+                  <button
+                    key={tab.value}
+                    type="button"
+                    disabled={disabled}
+                    title={disabled ? "Disponível quando o negócio estiver em Proposta em elaboração" : isProposalTab && proposalNeedsReview ? "O cliente solicitou ajustes nesta proposta" : undefined}
+                    onClick={() => setActiveTab(tab.value)}
+                    className={`relative flex h-8 items-center gap-2 rounded-lg px-3 text-[10px] font-medium disabled:cursor-not-allowed disabled:opacity-35 ${selectedClass}`}
+                  >
+                    <Icon className={`h-3.5 w-3.5 ${isProposalTab && proposalNeedsReview ? "animate-pulse" : ""}`} />
+                    {tab.label}
+                    {isProposalTab && proposalNeedsReview && <span className="h-1.5 w-1.5 rounded-full bg-amber-500" aria-label="Ajustes solicitados" />}
+                  </button>
+                );
+              })}
+            </nav>
+          )}
 
           <div className="overflow-y-auto p-6">
             {activeTab === "dados" && <><PipelineNegocioFormFields draft={draft} setDraft={setDraft} empresas={empresas} usuarios={usuarios} etapas={etapas.filter((etapa) => etapa.resultado === "ABERTO" || etapa.id === negocio?.etapaId)} disabled={isProcessing || (!isCreating && !canEdit)} />{negocio?.resultado === "PERDIDO" && negocio.motivoPerdaNome && <div className="mt-5 rounded-xl border border-red-500/20 bg-red-500/5 p-4"><p className="text-[10px] uppercase tracking-wide text-red-500/70">Motivo da perda</p><p className="mt-1 text-xs font-semibold text-red-500">{negocio.motivoPerdaNome}</p>{negocio.observacaoPerda && <p className="mt-2 text-[11px] text-muted-foreground">{negocio.observacaoPerda}</p>}</div>}{showConversion && <div className="mt-5 rounded-xl border border-accent/25 bg-accent/5 p-4"><p className="text-[12px] font-semibold text-foreground">Converter em contrato</p><p className="mt-1 text-[10px] text-muted-foreground">Selecione a empresa cadastrada que será vinculada ao contrato pendente.</p><div className="mt-3 flex gap-2"><select value={conversionEmpresaId} onChange={(event) => setConversionEmpresaId(event.target.value)} className="h-9 flex-1 rounded-lg border border-border/30 bg-background px-3 text-[11px] outline-none"><option value="">Selecione a empresa</option>{empresas.map((empresa) => <option key={empresa.id} value={empresa.id}>{empresa.nome}</option>)}</select><button type="button" disabled={!conversionEmpresaId || isProcessing} onClick={() => onConvert(Number(conversionEmpresaId))} className="rounded-lg bg-accent px-3 text-[11px] font-semibold text-accent-foreground disabled:opacity-50">Gerar contrato</button></div></div>}</>}

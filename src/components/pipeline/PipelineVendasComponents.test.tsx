@@ -37,6 +37,8 @@ const negocio: PipelineNegocio = {
   servicosInteresse: ["BPO", "CFO"],
   valorEstimadoProposta: 150000,
   resultado: "ABERTO",
+  possuiProposta: false,
+  propostaAjustesPendentes: false,
   criadoEm: "2026-07-28T10:00:00",
   ultimaMovimentacaoEm: "2026-07-28T10:00:00",
 };
@@ -66,6 +68,19 @@ describe("Pipeline de Vendas", () => {
 
     expect(screen.getByText("Salvando...")).toBeInTheDocument();
     expect(screen.getByRole("button")).toHaveAttribute("aria-busy", "true");
+  });
+
+  it("destaca o card quando o cliente solicita ajustes na proposta", () => {
+    render(
+      <PipelineNegocioCard
+        negocio={{ ...negocio, possuiProposta: true, propostaAjustesPendentes: true }}
+        canMove
+        onOpen={vi.fn()}
+        onDragStart={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Cliente solicitou ajustes")).toBeInTheDocument();
   });
 
   it("exige os campos comerciais essenciais", () => {

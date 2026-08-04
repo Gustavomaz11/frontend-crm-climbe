@@ -8,6 +8,13 @@ import {
 } from "lucide-react";
 import ClimbLogo from "@/components/login/ClimbLogo";
 import {
+  revealRelatedReviewAnnotation,
+  reviewAnnotationCommentId,
+  reviewAnnotationKey,
+  reviewAnnotationMarkId,
+  type ReviewAnnotationSource,
+} from "@/components/revisoes/reviewAnnotationNavigation";
+import {
   aprovarRevisaoPublica,
   enviarRevisaoPublica,
   getRevisaoPublicPageUrl,
@@ -91,15 +98,17 @@ function ReviewPage({ pagina, token, anotacoes, selecionada, disabled, cor, onSe
           onPointerCancel={() => { setInicio(null); setRascunho(null); }}
         >
           {anotacoes.map((item) => {
-            const id = item.localId || String(item.id);
+            const id = reviewAnnotationKey(item.id, item.localId);
             return (
               <button
                 type="button"
                 key={id}
+                id={reviewAnnotationMarkId(id)}
                 aria-label={`Marcação: ${item.comentario || "sem comentário"}`}
+                aria-pressed={selecionada === id}
                 onPointerDown={(event) => event.stopPropagation()}
                 onClick={(event) => { event.stopPropagation(); onSelecionar(id); }}
-                className={`absolute border-2 transition-all ${selecionada === id ? "border-accent shadow-[0_0_0_3px_hsl(var(--accent)/.22)]" : "border-transparent hover:border-foreground/30"}`}
+                className={`absolute z-10 border-2 transition-all duration-200 ${selecionada === id ? "scale-[1.02] border-accent shadow-[0_0_0_4px_hsl(var(--accent)/.35)]" : "border-transparent hover:border-foreground/30"}`}
                 style={{
                   left: `${item.x * 100}%`, top: `${item.y * 100}%`,
                   width: `${item.largura * 100}%`, height: `${item.altura * 100}%`,
@@ -139,6 +148,7 @@ const RevisaoDocumentoPublica = () => {
     [info],
   );
   const podeResponder = info?.status === "AGUARDANDO_CLIENTE";
+  const possuiMarcacoes = anotacoes.length > 0;
   const anotacaoSelecionada = anotacoes.find((item) => (item.localId || String(item.id)) === selecionada);
 
   useEffect(() => {
@@ -159,6 +169,11 @@ const RevisaoDocumentoPublica = () => {
     setAnotacoes((current) => [...current, item]);
     setSelecionada(item.localId);
     window.setTimeout(() => document.getElementById(`comentario-${item.localId}`)?.focus(), 50);
+  }
+
+  function selecionarAnotacao(id: string, source: ReviewAnnotationSource) {
+    setSelecionada(id);
+    revealRelatedReviewAnnotation(id, source);
   }
 
   function alterarComentario(valor: string) {
@@ -238,7 +253,7 @@ const RevisaoDocumentoPublica = () => {
           </div>
           <div className="mx-auto max-w-5xl space-y-7">
             {Array.from({ length: info.totalPaginas }, (_, index) => (
-              <ReviewPage key={index + 1} pagina={index + 1} token={token} anotacoes={anotacoes.filter((item) => item.pagina === index + 1)} selecionada={selecionada} disabled={!podeResponder} cor={cor} onSelecionar={setSelecionada} onCriar={adicionar} />
+              <ReviewPage key={index + 1} pagina={index + 1} token={token} anotacoes={anotacoes.filter((item) => item.pagina === index + 1)} selecionada={selecionada} disabled={!podeResponder} cor={cor} onSelecionar={(id) => selecionarAnotacao(id, "document")} onCriar={adicionar} />
             ))}
           </div>
         </div>
@@ -258,9 +273,9 @@ const RevisaoDocumentoPublica = () => {
             {!anotacoes.length ? <p className="rounded-lg border border-dashed border-border/30 p-5 text-center text-[11px] text-muted-foreground">{podeResponder ? "Arraste sobre um trecho do documento para adicionar uma marcação." : "Nenhuma marcação nesta versão."}</p> : (
               <div className="space-y-2">
                 {anotacoes.map((item, index) => {
-                  const id = item.localId || String(item.id);
+                  const id = reviewAnnotationKey(item.id, item.localId);
                   const active = selecionada === id;
-                  return <button key={id} type="button" onClick={() => setSelecionada(id)} className={`w-full rounded-lg border p-3 text-left transition-colors ${active ? "border-accent/50 bg-accent/5" : "border-border/20 bg-background/40 hover:border-border/40"}`}><div className="flex items-center gap-2"><span className="h-3 w-3 rounded-sm" style={{ backgroundColor: item.cor }} /><span className="text-[11px] font-semibold">Marcação {index + 1} · página {item.pagina}</span></div><p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">{item.comentario || "Comentário pendente"}</p></button>;
+                  return <button key={id} id={reviewAnnotationCommentId(id)} type="button" aria-pressed={active} onClick={() => selecionarAnotacao(id, "comment")} className={`w-full rounded-lg border p-3 text-left transition-all duration-200 ${active ? "scale-[1.01] border-accent bg-accent/10 shadow-[0_0_0_2px_hsl(var(--accent)/.2)]" : "border-border/20 bg-background/40 hover:border-border/40"}`}><div className="flex items-center gap-2"><span className="h-3 w-3 rounded-sm" style={{ backgroundColor: item.cor }} /><span className="text-[11px] font-semibold">Marcação {index + 1} · página {item.pagina}</span></div><p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">{item.comentario || "Comentário pendente"}</p></button>;
                 })}
               </div>
             )}
@@ -279,8 +294,9 @@ const RevisaoDocumentoPublica = () => {
               <div><label className="mb-1.5 block text-[11px] font-semibold">Comentário geral <span className="font-normal text-muted-foreground">(opcional)</span></label><textarea value={comentarioGeral} onChange={(event) => setComentarioGeral(event.target.value)} rows={3} className="w-full resize-none rounded-lg border border-border/30 bg-background px-3 py-2 text-[12px] outline-none focus:border-accent/60" placeholder="Observações sobre o documento..." /></div>
               {error && <p className="rounded-lg border border-destructive/20 bg-destructive/5 p-2.5 text-[11px] text-destructive">{error}</p>}
               <button onClick={enviarRevisao} disabled={sending} className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-primary text-[12px] font-semibold text-primary-foreground disabled:opacity-50"><Send className="h-4 w-4" />Enviar para revisão</button>
-              <div className="grid grid-cols-2 gap-2"><button onClick={() => window.confirm("Confirma a aprovação desta versão?") && executar(() => aprovarRevisaoPublica(token))} disabled={sending} className="flex h-10 items-center justify-center gap-1.5 rounded-lg bg-accent text-[12px] font-semibold text-accent-foreground disabled:opacity-50"><Check className="h-4 w-4" />Aprovar</button><button onClick={() => setReprovando((current) => !current)} disabled={sending} className="flex h-10 items-center justify-center gap-1.5 rounded-lg border border-destructive/30 text-[12px] font-semibold text-destructive disabled:opacity-50"><XCircle className="h-4 w-4" />Reprovar</button></div>
-              {reprovando && <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="space-y-2 overflow-hidden"><label className="block text-[11px] font-semibold text-destructive">Justificativa obrigatória</label><textarea value={justificativa} onChange={(event) => setJustificativa(event.target.value)} rows={4} className="w-full resize-none rounded-lg border border-destructive/30 bg-background px-3 py-2 text-[12px] outline-none focus:border-destructive" placeholder="Informe o motivo da reprovação..." /><button onClick={() => justificativa.trim() ? executar(() => reprovarRevisaoPublica(token, justificativa)) : setError("Informe a justificativa da reprovação.")} disabled={sending} className="h-9 w-full rounded-lg bg-destructive text-[11px] font-semibold text-destructive-foreground disabled:opacity-50">Confirmar reprovação</button></motion.div>}
+              {possuiMarcacoes && <p className="rounded-lg border border-amber-500/25 bg-amber-500/10 p-2.5 text-[10px] font-medium text-amber-600 dark:text-amber-400">Envie as marcações para revisão antes de aprovar ou reprovar esta versão.</p>}
+              <div className="grid grid-cols-2 gap-2"><button title={possuiMarcacoes ? "Envie as marcações para revisão antes de aprovar" : undefined} onClick={() => window.confirm("Confirma a aprovação desta versão?") && executar(() => aprovarRevisaoPublica(token))} disabled={sending || possuiMarcacoes} className="flex h-10 items-center justify-center gap-1.5 rounded-lg bg-accent text-[12px] font-semibold text-accent-foreground disabled:cursor-not-allowed disabled:opacity-40"><Check className="h-4 w-4" />Aprovar</button><button title={possuiMarcacoes ? "Envie as marcações para revisão antes de reprovar" : undefined} onClick={() => setReprovando((current) => !current)} disabled={sending || possuiMarcacoes} className="flex h-10 items-center justify-center gap-1.5 rounded-lg border border-destructive/30 text-[12px] font-semibold text-destructive disabled:cursor-not-allowed disabled:opacity-40"><XCircle className="h-4 w-4" />Reprovar</button></div>
+              {reprovando && <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="space-y-2 overflow-hidden"><label className="block text-[11px] font-semibold text-destructive">Justificativa obrigatória</label><textarea value={justificativa} onChange={(event) => setJustificativa(event.target.value)} rows={4} className="w-full resize-none rounded-lg border border-destructive/30 bg-background px-3 py-2 text-[12px] outline-none focus:border-destructive" placeholder="Informe o motivo da reprovação..." /><button onClick={() => justificativa.trim() ? executar(() => reprovarRevisaoPublica(token, justificativa)) : setError("Informe a justificativa da reprovação.")} disabled={sending || possuiMarcacoes} className="h-9 w-full rounded-lg bg-destructive text-[11px] font-semibold text-destructive-foreground disabled:opacity-50">Confirmar reprovação</button></motion.div>}
             </div>
           )}
           <p className="px-2 text-center text-[10px] leading-4 text-muted-foreground">Versão {versaoAtual?.numero} enviada em {formatDate(versaoAtual?.criadoEm)}. Suas ações ficam registradas no histórico.</p>
