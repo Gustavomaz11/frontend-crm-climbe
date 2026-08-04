@@ -38,11 +38,11 @@ export const PipelineCommentThread = ({
       <article className="rounded-xl border border-border/20 bg-background/30 p-3">
         <div className="flex items-center justify-between gap-3">
           <p className="text-[10px] font-semibold">{comment.autorNome}</p>
-          <time className="text-[8px] text-muted-foreground/45">
+          <time className="text-[8px] text-muted-foreground">
             {formatDateTime(comment.criadoEm)}
           </time>
         </div>
-        <p className="mt-2 whitespace-pre-wrap text-[11px] leading-relaxed text-muted-foreground/80">
+        <p className="mt-2 whitespace-pre-wrap text-[11px] leading-relaxed text-muted-foreground">
           {comment.conteudo}
         </p>
 

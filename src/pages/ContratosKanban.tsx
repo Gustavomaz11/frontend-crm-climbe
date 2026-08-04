@@ -433,7 +433,7 @@ const ContratosKanban = () => {
               <AnimatePresence mode="wait"><motion.div key={isDark ? "s" : "m"} initial={{ opacity: 0, rotate: -30 }} animate={{ opacity: 1, rotate: 0 }} exit={{ opacity: 0, rotate: 30 }}>{isDark ? <Sun className="h-[18px] w-[18px]" /> : <Moon className="h-[18px] w-[18px]" />}</motion.div></AnimatePresence>
               {!sidebarCollapsed && <span className="text-[13px] font-medium">{isDark ? "Modo claro" : "Modo escuro"}</span>}
             </motion.button>
-            <Link to="/"><motion.button className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground/50 transition-all hover:bg-destructive/5 hover:text-destructive ${sidebarCollapsed ? "justify-center" : ""}`} whileTap={{ scale: 0.98 }}><LogOut className="h-[18px] w-[18px]" />{!sidebarCollapsed && <span className="text-[13px] font-medium">Sair</span>}</motion.button></Link>
+            <Link to="/"><motion.button className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground transition-all hover:bg-destructive/5 hover:text-destructive ${sidebarCollapsed ? "justify-center" : ""}`} whileTap={{ scale: 0.98 }}><LogOut className="h-[18px] w-[18px]" />{!sidebarCollapsed && <span className="text-[13px] font-medium">Sair</span>}</motion.button></Link>
           </div>
           <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)} className="absolute -right-3 top-20 flex h-6 w-6 items-center justify-center rounded-full border border-border/40 bg-card text-muted-foreground shadow-sm transition-all hover:border-accent/40 hover:text-foreground">
             {sidebarCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
@@ -442,9 +442,9 @@ const ContratosKanban = () => {
 
         <main className={`flex-1 transition-all duration-300 ${sidebarCollapsed ? "ml-[72px]" : "ml-[220px]"}`}>
           <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border/20 bg-background/80 px-6 backdrop-blur-xl">
-            <div className="flex h-9 w-[280px] items-center gap-2 rounded-lg border border-border/25 bg-card/30 px-3 text-muted-foreground/50 backdrop-blur-sm">
+            <div className="flex h-9 w-[280px] items-center gap-2 rounded-lg border border-border/25 bg-card/30 px-3 text-muted-foreground backdrop-blur-sm">
               <Search className="h-3.5 w-3.5" />
-              <input type="text" placeholder="Buscar contratos..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="flex-1 bg-transparent text-[12px] text-foreground outline-none placeholder:text-muted-foreground/30" />
+              <input type="text" placeholder="Buscar contratos..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="flex-1 bg-transparent text-[12px] text-foreground outline-none placeholder:text-muted-foreground" />
             </div>
             <UserAvatar name={userName} photoUrl={userPhoto} />
           </header>
@@ -457,9 +457,9 @@ const ContratosKanban = () => {
               </div>
               <div className="space-y-2">
                 {contratosLoading ? (
-                  <div className="py-10 text-center text-[12px] text-muted-foreground/45">Carregando contratos...</div>
+                  <div className="py-10 text-center text-[12px] text-muted-foreground">Carregando contratos...</div>
                 ) : filteredContratos.length === 0 ? (
-                  <div className="py-10 text-center text-[12px] text-muted-foreground/35">Nenhum contrato aprovado encontrado</div>
+                  <div className="py-10 text-center text-[12px] text-muted-foreground">Nenhum contrato aprovado encontrado</div>
                 ) : (
                   filteredContratos.map((contrato) => (
                     <button
@@ -469,7 +469,7 @@ const ContratosKanban = () => {
                       className={`w-full rounded-lg border px-3 py-2 text-left transition-colors ${contrato.id === selectedContratoId ? "border-accent/35 bg-accent/10 text-accent" : "border-border/20 bg-background/35 text-foreground/70 hover:border-accent/25 hover:bg-muted/15"}`}
                     >
                       <p className="truncate text-[12px] font-semibold">{getContratoLabel(contrato)}</p>
-                      <p className="mt-0.5 truncate text-[10px] text-muted-foreground/45">CT-{contrato.id} · {contrato.titulo}</p>
+                      <p className="mt-0.5 truncate text-[10px] text-muted-foreground">CT-{contrato.id} · {contrato.titulo}</p>
                     </button>
                   ))
                 )}
@@ -482,7 +482,7 @@ const ContratosKanban = () => {
                   <h2 className="truncate text-[22px] font-bold tracking-tight text-foreground">
                     {selectedContrato ? getContratoLabel(selectedContrato) : "Selecione um contrato"}
                   </h2>
-                  <p className="mt-0.5 text-[12px] text-muted-foreground/50">
+                  <p className="mt-0.5 text-[12px] text-muted-foreground">
                     {board?.responsavel ? `Gestor: ${board.responsavel.nomeCompleto}` : "Gestor não definido"}
                     {board?.gestor ? " · Você pode editar este quadro" : ""}
                   </p>
@@ -513,14 +513,14 @@ const ContratosKanban = () => {
               </AnimatePresence>
 
               {boardLoading ? (
-                <div className="py-16 text-center text-[12px] text-muted-foreground/45">Carregando quadro...</div>
+                <div className="py-16 text-center text-[12px] text-muted-foreground">Carregando quadro...</div>
               ) : boardError ? (
                 <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-[12px] text-destructive">Erro ao carregar Kanban do contrato.</div>
               ) : !board ? (
-                <div className="py-16 text-center text-[12px] text-muted-foreground/45">Nenhum contrato selecionado.</div>
+                <div className="py-16 text-center text-[12px] text-muted-foreground">Nenhum contrato selecionado.</div>
               ) : board.raias.length === 0 ? (
                 <div className="flex min-h-[360px] flex-col items-center justify-center rounded-lg border border-dashed border-border/30 bg-card/25 text-center">
-                  <LayoutDashboard className="mb-3 h-8 w-8 text-muted-foreground/30" />
+                  <LayoutDashboard className="mb-3 h-8 w-8 text-muted-foreground" />
                   <p className="text-[13px] font-semibold text-foreground/70">Este contrato ainda não tem raias</p>
                   {board.gestor && (
                     <button type="button" onClick={handleCreateDefaultRaias} className="mt-4 rounded-lg bg-accent px-4 py-2 text-[12px] font-semibold text-accent-foreground">Criar quadro padrão</button>
@@ -560,7 +560,7 @@ const ContratosKanban = () => {
 
                       <div className="flex-1 space-y-2 p-3">
                         {raia.tasks.length === 0 ? (
-                          <div className={`rounded-lg border border-dashed py-8 text-center text-[12px] transition-colors ${dragOverRaiaId === raia.id ? "border-accent/40 bg-accent/5 text-accent" : "border-border/25 text-muted-foreground/35"}`}>
+                          <div className={`rounded-lg border border-dashed py-8 text-center text-[12px] transition-colors ${dragOverRaiaId === raia.id ? "border-accent/40 bg-accent/5 text-accent" : "border-border/25 text-muted-foreground"}`}>
                             {dragOverRaiaId === raia.id ? "Solte a tarefa aqui" : "Sem tarefas"}
                           </div>
                         ) : (
@@ -610,7 +610,7 @@ const ContratosKanban = () => {
                 </div>
                 <div className="min-w-0 flex-1">
                   <h2 className="text-[16px] font-semibold text-foreground">Remover raia com tarefas?</h2>
-                  <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground/60">
+                  <p className="mt-1 text-[12px] leading-relaxed text-muted-foreground">
                     A raia <span className="font-semibold text-foreground/80">{pendingRaiaRemoval.titulo}</span> possui {pendingRaiaRemoval.tarefas} {pendingRaiaRemoval.tarefas === 1 ? "tarefa vinculada" : "tarefas vinculadas"}.
                   </p>
                 </div>

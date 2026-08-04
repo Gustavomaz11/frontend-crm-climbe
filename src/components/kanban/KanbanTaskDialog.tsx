@@ -37,7 +37,7 @@ export const KanbanTaskDialog = ({
       <div className="flex items-center justify-between border-b border-border/20 p-5">
         <div>
           <h2 className="text-[16px] font-semibold text-foreground">Nova tarefa</h2>
-          <p className="mt-0.5 text-[11px] text-muted-foreground/50">{raiaTitulo}</p>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">{raiaTitulo}</p>
         </div>
         <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/20 hover:text-foreground">
           <X className="h-4 w-4" />
@@ -52,24 +52,24 @@ export const KanbanTaskDialog = ({
         }}
       >
         <label className="block">
-          <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground/40">Título</span>
+          <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground">Título</span>
           <input required value={draft.titulo} onChange={(event) => onChange({ ...draft, titulo: event.target.value })} placeholder="Nome da tarefa" className="h-9 w-full rounded-lg border border-border/25 bg-background/60 px-3 text-[12px] text-foreground outline-none transition-colors focus:border-accent/40" />
         </label>
 
         <label className="block">
-          <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground/40">Descrição</span>
+          <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground">Descrição</span>
           <textarea value={draft.descricao} onChange={(event) => onChange({ ...draft, descricao: event.target.value })} placeholder="Detalhes, contexto e resultado esperado" className="min-h-[88px] w-full rounded-lg border border-border/25 bg-background/60 px-3 py-2 text-[12px] text-foreground outline-none transition-colors focus:border-accent/40" />
         </label>
 
         <div className="grid grid-cols-2 gap-3">
           <label>
-            <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground/40">Prioridade</span>
+            <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground">Prioridade</span>
             <select value={draft.prioridade} onChange={(event) => onChange({ ...draft, prioridade: event.target.value as KanbanTaskPrioridade })} className="h-9 w-full rounded-lg border border-border/25 bg-background/60 px-3 text-[12px] text-foreground outline-none transition-colors focus:border-accent/40">
               {kanbanPriorityOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
             </select>
           </label>
           <div>
-            <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground/40">Responsável</span>
+            <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground">Responsável</span>
             <UserSelect
               users={usuarios}
               value={draft.responsavelId}
@@ -83,14 +83,14 @@ export const KanbanTaskDialog = ({
 
         <div className="grid grid-cols-2 gap-3">
           <label>
-            <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground/40">Início</span>
+            <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground">Início</span>
             <span className="relative block">
-              <CalendarDays className="pointer-events-none absolute left-2 top-2.5 h-3.5 w-3.5 text-muted-foreground/35" />
+              <CalendarDays className="pointer-events-none absolute left-2 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
               <input type="date" value={draft.dataInicio} onChange={(event) => onChange({ ...draft, dataInicio: event.target.value })} className="h-9 w-full rounded-lg border border-border/25 bg-background/60 pl-8 pr-2 text-[12px] text-foreground outline-none transition-colors focus:border-accent/40" />
             </span>
           </label>
           <label>
-            <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground/40">Fim</span>
+            <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground">Fim</span>
             <input type="date" value={draft.dataFim} onChange={(event) => onChange({ ...draft, dataFim: event.target.value })} className="h-9 w-full rounded-lg border border-border/25 bg-background/60 px-2 text-[12px] text-foreground outline-none transition-colors focus:border-accent/40" />
           </label>
         </div>

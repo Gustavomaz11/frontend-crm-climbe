@@ -56,7 +56,7 @@ export function AppPageShell({ children }: AppPageShellProps) {
               {!sidebarCollapsed && <span className="text-[13px] font-medium">{isDark ? "Modo claro" : "Modo escuro"}</span>}
             </motion.button>
             <Link to="/">
-              <motion.button className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground/50 hover:bg-destructive/5 hover:text-destructive ${sidebarCollapsed ? "justify-center" : ""}`} whileTap={{ scale: 0.98 }}>
+              <motion.button className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground hover:bg-destructive/5 hover:text-destructive ${sidebarCollapsed ? "justify-center" : ""}`} whileTap={{ scale: 0.98 }}>
                 <LogOut className="h-[18px] w-[18px]" />
                 {!sidebarCollapsed && <span className="text-[13px] font-medium">Sair</span>}
               </motion.button>
@@ -72,7 +72,7 @@ export function AppPageShell({ children }: AppPageShellProps) {
             <div className="flex items-center gap-3">
               <div className="hidden text-right sm:block">
                 <p className="text-[12px] font-semibold text-foreground">{userName}</p>
-                <p className="text-[10px] text-muted-foreground/55">{userRole}</p>
+                <p className="text-[10px] text-muted-foreground">{userRole}</p>
               </div>
               <UserAvatar name={userName} photoUrl={userPhoto} />
             </div>

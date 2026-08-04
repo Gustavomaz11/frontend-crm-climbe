@@ -15,6 +15,7 @@ interface PipelineTarefaDialogProps {
 
 const inputClass = "h-9 w-full rounded-lg border border-border/30 bg-background px-3 text-[11px] outline-none focus:border-accent/45";
 const textAreaClass = "w-full rounded-lg border border-border/30 bg-background px-3 py-2 text-[11px] outline-none focus:border-accent/45";
+const taskTypes = ["Follow-up", "Ligação", "Reunião", "E-mail", "Proposta", "Documentação"];
 
 export const PipelineTarefaDialog = ({
   tarefa,
@@ -49,14 +50,14 @@ export const PipelineTarefaDialog = ({
     setNewSubtask("");
   };
 
-  const valid = draft.titulo.trim() && draft.tipo.trim() && draft.responsavelId
-    && (!draft.dataInicio || !draft.prazo || draft.prazo >= draft.dataInicio);
+  const valid = draft.titulo.trim() && draft.tipo.trim() && draft.responsavelId && draft.prazo
+    && (!draft.dataInicio || draft.prazo >= draft.dataInicio);
 
   return (
     <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm">
       <section role="dialog" aria-modal="true" aria-label={tarefa ? "Editar tarefa" : "Nova tarefa"} className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border/30 bg-card shadow-2xl">
         <header className="flex items-center justify-between border-b border-border/20 px-5 py-4">
-          <div><h3 className="text-sm font-semibold">{tarefa ? "Editar tarefa" : "Nova tarefa"}</h3><p className="mt-0.5 text-[10px] text-muted-foreground/55">Organize a próxima ação desta negociação.</p></div>
+          <div><h3 className="text-sm font-semibold">{tarefa ? "Editar tarefa" : "Nova tarefa"}</h3><p className="mt-0.5 text-[10px] text-muted-foreground">Organize a próxima ação desta negociação.</p></div>
           <button type="button" onClick={onClose} disabled={isProcessing} className="rounded-lg p-2 hover:bg-muted/30"><X className="h-4 w-4" /></button>
         </header>
 
@@ -66,9 +67,9 @@ export const PipelineTarefaDialog = ({
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="text-[10px] font-medium">Responsável *<UserSelect className="mt-1" users={usuarios.filter((usuario) => !usuario.situacao || usuario.situacao === "ATIVO")} value={draft.responsavelId || ""} onValueChange={(next) => setDraft({ ...draft, responsavelId: Number(next) || 0 })} placeholder="Selecione" emptyLabel="Selecione" ariaLabel="Responsável *" /></div>
-            <label className="text-[10px] font-medium">Tipo *<input className={`${inputClass} mt-1`} list="pipeline-task-types" value={draft.tipo} onChange={(event) => setDraft({ ...draft, tipo: event.target.value })} /><datalist id="pipeline-task-types"><option value="Follow-up" /><option value="Ligação" /><option value="Reunião" /><option value="E-mail" /><option value="Proposta" /><option value="Documentação" /></datalist></label>
+            <label className="text-[10px] font-medium">Tipo *<select className={`${inputClass} mt-1`} value={draft.tipo} onChange={(event) => setDraft({ ...draft, tipo: event.target.value })}>{taskTypes.map((type) => <option key={type} value={type}>{type}</option>)}</select></label>
             <label className="text-[10px] font-medium">Data de início<input type="date" className={`${inputClass} mt-1`} value={draft.dataInicio || ""} onChange={(event) => setDraft({ ...draft, dataInicio: event.target.value })} /></label>
-            <label className="text-[10px] font-medium">Prazo<input type="date" className={`${inputClass} mt-1`} value={draft.prazo || ""} onChange={(event) => setDraft({ ...draft, prazo: event.target.value })} /></label>
+            <label className="text-[10px] font-medium">Prazo *<input type="date" required className={`${inputClass} mt-1`} value={draft.prazo || ""} onChange={(event) => setDraft({ ...draft, prazo: event.target.value })} /></label>
             <label className="text-[10px] font-medium">Prioridade *<select className={`${inputClass} mt-1`} value={draft.prioridade} onChange={(event) => setDraft({ ...draft, prioridade: event.target.value as PipelineTarefaInput["prioridade"] })}><option value="BAIXA">Baixa</option><option value="MEDIA">Média</option><option value="ALTA">Alta</option><option value="URGENTE">Urgente</option></select></label>
             <label className="text-[10px] font-medium">Status *<select className={`${inputClass} mt-1`} value={draft.status} onChange={(event) => setDraft({ ...draft, status: event.target.value as PipelineTarefaInput["status"] })}><option value="PENDENTE">Pendente</option><option value="EM_ANDAMENTO">Em andamento</option><option value="CONCLUIDA">Concluída</option><option value="CANCELADA">Cancelada</option></select></label>
           </div>

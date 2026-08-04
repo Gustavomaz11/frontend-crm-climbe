@@ -72,7 +72,7 @@ export const AprovacaoAcessoDialog = ({
               <h2 className="text-[15px] font-semibold text-foreground">
                 {isApproval ? "Aprovar e configurar acesso" : "Recusar acesso"}
               </h2>
-              <p className="text-[11px] text-muted-foreground/50">{nomeUsuario}</p>
+              <p className="text-[11px] text-muted-foreground">{nomeUsuario}</p>
             </div>
           </div>
 
@@ -117,15 +117,15 @@ export const AprovacaoAcessoDialog = ({
                   <label className="text-[11px] font-medium text-foreground/75">
                     Permissões <span className="text-red-500">*</span>
                   </label>
-                  <span className="text-[10px] text-muted-foreground/45">
+                  <span className="text-[10px] text-muted-foreground">
                     {permissaoIds.size} selecionada(s)
                   </span>
                 </div>
                 <div className="max-h-60 space-y-2 overflow-y-auto rounded-xl border border-border/25 bg-background/45 p-3">
                   {isLoadingOptions ? (
-                    <p className="py-6 text-center text-[11px] text-muted-foreground/45">Carregando opções...</p>
+                    <p className="py-6 text-center text-[11px] text-muted-foreground">Carregando opções...</p>
                   ) : permissoes.length === 0 ? (
-                    <p className="py-6 text-center text-[11px] text-muted-foreground/45">Nenhuma permissão disponível.</p>
+                    <p className="py-6 text-center text-[11px] text-muted-foreground">Nenhuma permissão disponível.</p>
                   ) : (
                     permissoes.map((permissao) => (
                       <label
@@ -141,13 +141,13 @@ export const AprovacaoAcessoDialog = ({
                         />
                         <span className="min-w-0">
                           <span className="block text-[11px] font-medium text-foreground">{permissao.nome}</span>
-                          <span className="block text-[10px] text-muted-foreground/45">{permissao.descricao || permissao.codigo}</span>
+                          <span className="block text-[10px] text-muted-foreground">{permissao.descricao || permissao.codigo}</span>
                         </span>
                       </label>
                     ))
                   )}
                 </div>
-                <p className="mt-1.5 text-[10px] text-muted-foreground/40">
+                <p className="mt-1.5 text-[10px] text-muted-foreground">
                   Selecione ao menos uma permissão para liberar o acesso.
                 </p>
               </div>

@@ -73,7 +73,7 @@ export function PermissionGroupsPanel({ permissoes }: PermissionGroupsPanelProps
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-accent/10 text-accent"><Layers3 className="h-4 w-4" /></div>
-          <div><h2 className="text-[14px] font-semibold">Grupos de permissões</h2><p className="text-[10px] text-muted-foreground/50">Modelos reutilizáveis para aprovar novos usuários.</p></div>
+          <div><h2 className="text-[14px] font-semibold">Grupos de permissões</h2><p className="text-[10px] text-muted-foreground">Modelos reutilizáveis para aprovar novos usuários.</p></div>
         </div>
         <button type="button" onClick={iniciarCriacao} className="inline-flex h-9 items-center gap-2 rounded-lg border border-accent/25 bg-accent/10 px-3 text-[11px] font-medium text-accent"><Plus className="h-4 w-4" />Novo grupo</button>
       </div>
@@ -103,7 +103,7 @@ export function PermissionGroupsPanel({ permissoes }: PermissionGroupsPanelProps
                   }
                   className="mt-0.5 accent-[hsl(var(--accent))]"
                 />
-                <span><strong className="block font-medium">{permissao.nome}</strong><small className="text-muted-foreground/45">{permissao.codigo}</small></span>
+                <span><strong className="block font-medium">{permissao.nome}</strong><small className="text-muted-foreground">{permissao.codigo}</small></span>
               </label>
             ))}
           </div>
@@ -118,11 +118,11 @@ export function PermissionGroupsPanel({ permissoes }: PermissionGroupsPanelProps
 
       <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {isLoading ? <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /> : grupos.length === 0 ? (
-          <p className="text-[11px] text-muted-foreground/45">Nenhum grupo criado.</p>
+          <p className="text-[11px] text-muted-foreground">Nenhum grupo criado.</p>
         ) : grupos.map((grupo) => (
           <article key={grupo.id} className="rounded-lg border border-border/20 bg-background/40 p-3">
             <div className="flex items-start justify-between gap-2">
-              <div><h3 className="text-[12px] font-semibold">{grupo.nome}</h3><p className="mt-0.5 text-[10px] text-muted-foreground/45">{grupo.descricao || `${grupo.permissoes.length} permissões`}</p></div>
+              <div><h3 className="text-[12px] font-semibold">{grupo.nome}</h3><p className="mt-0.5 text-[10px] text-muted-foreground">{grupo.descricao || `${grupo.permissoes.length} permissões`}</p></div>
               <div className="flex gap-1">
                 <button type="button" title="Editar grupo" onClick={() => iniciarEdicao(grupo.id)} className="rounded-md p-1.5 text-muted-foreground hover:bg-accent/10 hover:text-accent"><Pencil className="h-3.5 w-3.5" /></button>
                 <button type="button" title="Excluir grupo" onClick={() => window.confirm("Excluir este grupo?") && excluir.mutate(grupo.id)} className="rounded-md p-1.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button>

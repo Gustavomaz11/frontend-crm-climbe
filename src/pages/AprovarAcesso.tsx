@@ -319,7 +319,7 @@ const AprovarAcesso = () => {
 
             <Link to="/">
               <motion.button
-                className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground/50 hover:text-destructive hover:bg-destructive/5 transition-all ${
+                className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-all ${
                   sidebarCollapsed ? "justify-center" : ""
                 }`}
                 whileTap={{ scale: 0.98 }}
@@ -350,7 +350,7 @@ const AprovarAcesso = () => {
               <UserAvatar name={userName} photoUrl={userPhoto} />
               <div className="text-right">
                 <p className="text-[12px] font-medium text-foreground">{userName}</p>
-                <p className="text-[10px] text-muted-foreground/40">{userCargo}</p>
+                <p className="text-[10px] text-muted-foreground">{userCargo}</p>
               </div>
             </div>
           </motion.header>
@@ -361,20 +361,20 @@ const AprovarAcesso = () => {
                 <h1 className="text-[22px] font-bold text-foreground tracking-tight">
                   Solicitações de Acesso
                 </h1>
-                <p className="text-[12px] text-muted-foreground/50 mt-0.5">
+                <p className="text-[12px] text-muted-foreground mt-0.5">
                   Gerencie cadastros manuais e solicitações criadas pelo login Google.
                 </p>
               </div>
               <div className="flex items-center rounded-lg border border-border/25 bg-card/40 p-1">
                 <button
                   onClick={() => setVisao("solicitacoes")}
-                  className={`rounded-md px-3 py-1.5 text-[11px] font-medium transition-colors ${visao === "solicitacoes" ? "bg-accent/15 text-accent" : "text-muted-foreground/50 hover:text-foreground"}`}
+                  className={`rounded-md px-3 py-1.5 text-[11px] font-medium transition-colors ${visao === "solicitacoes" ? "bg-accent/15 text-accent" : "text-muted-foreground hover:text-foreground"}`}
                 >
                   Solicitações
                 </button>
                 <button
                   onClick={() => setVisao("acessos")}
-                  className={`rounded-md px-3 py-1.5 text-[11px] font-medium transition-colors ${visao === "acessos" ? "bg-accent/15 text-accent" : "text-muted-foreground/50 hover:text-foreground"}`}
+                  className={`rounded-md px-3 py-1.5 text-[11px] font-medium transition-colors ${visao === "acessos" ? "bg-accent/15 text-accent" : "text-muted-foreground hover:text-foreground"}`}
                 >
                   Acessos
                 </button>
@@ -420,7 +420,7 @@ const AprovarAcesso = () => {
                 </div>
                 <div>
                   <p className="text-[22px] font-bold text-foreground leading-none">{stat.value}</p>
-                  <p className="text-[11px] text-muted-foreground/50 mt-0.5">{stat.label}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{stat.label}</p>
                 </div>
               </motion.div>
             ))}
@@ -442,20 +442,20 @@ const AprovarAcesso = () => {
                   className={`px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all ${
                     filterStatus === f.value
                       ? "bg-accent/15 text-accent border border-accent/25"
-                      : "text-muted-foreground/50 hover:text-foreground hover:bg-muted/20 border border-transparent"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/20 border border-transparent"
                   }`}
                 >
                   {f.label}
                 </button>
               ))}
-              <div className="flex items-center gap-2 h-9 px-3 rounded-lg border border-border/25 bg-card/30 backdrop-blur-sm text-muted-foreground/50 w-[300px] ml-auto">
+              <div className="flex items-center gap-2 h-9 px-3 rounded-lg border border-border/25 bg-card/30 backdrop-blur-sm text-muted-foreground w-[300px] ml-auto">
                 <Search className="w-3.5 h-3.5 shrink-0" />
                 <input
                   type="text"
                   placeholder="Buscar por nome, email, cargo ou origem..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground/30 text-foreground"
+                  className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground text-foreground"
                 />
               </div>
             </div>
@@ -480,22 +480,22 @@ const AprovarAcesso = () => {
                 <table className="w-full min-w-[860px]">
                   <thead>
                     <tr className="border-b border-border/15">
-                      <th className="text-left px-5 py-3 text-[10px] font-semibold text-muted-foreground/50 tracking-wider uppercase">
+                      <th className="text-left px-5 py-3 text-[10px] font-semibold text-muted-foreground tracking-wider uppercase">
                         Usuário
                       </th>
-                      <th className="text-left px-4 py-3 text-[10px] font-semibold text-muted-foreground/50 tracking-wider uppercase">
+                      <th className="text-left px-4 py-3 text-[10px] font-semibold text-muted-foreground tracking-wider uppercase">
                         Origem / Cargo
                       </th>
-                      <th className="text-left px-4 py-3 text-[10px] font-semibold text-muted-foreground/50 tracking-wider uppercase">
+                      <th className="text-left px-4 py-3 text-[10px] font-semibold text-muted-foreground tracking-wider uppercase">
                         Dados
                       </th>
-                      <th className="text-left px-4 py-3 text-[10px] font-semibold text-muted-foreground/50 tracking-wider uppercase">
+                      <th className="text-left px-4 py-3 text-[10px] font-semibold text-muted-foreground tracking-wider uppercase">
                         Solicitação
                       </th>
-                      <th className="text-left px-4 py-3 text-[10px] font-semibold text-muted-foreground/50 tracking-wider uppercase">
+                      <th className="text-left px-4 py-3 text-[10px] font-semibold text-muted-foreground tracking-wider uppercase">
                         Status
                       </th>
-                      <th className="text-right px-5 py-3 text-[10px] font-semibold text-muted-foreground/50 tracking-wider uppercase">
+                      <th className="text-right px-5 py-3 text-[10px] font-semibold text-muted-foreground tracking-wider uppercase">
                         Ações
                       </th>
                     </tr>
@@ -504,13 +504,13 @@ const AprovarAcesso = () => {
                     <AnimatePresence>
                       {isLoading ? (
                         <tr>
-                          <td colSpan={6} className="text-center py-14 text-[12px] text-muted-foreground/40">
+                          <td colSpan={6} className="text-center py-14 text-[12px] text-muted-foreground">
                             Carregando solicitações...
                           </td>
                         </tr>
                       ) : filtered.length === 0 ? (
                         <tr>
-                          <td colSpan={6} className="text-center py-14 text-[12px] text-muted-foreground/30">
+                          <td colSpan={6} className="text-center py-14 text-[12px] text-muted-foreground">
                             <div className="flex flex-col items-center gap-2">
                               <User className="w-8 h-8 opacity-20" />
                               <span>Nenhuma solicitação encontrada</span>
@@ -544,7 +544,7 @@ const AprovarAcesso = () => {
                                 )}
                                 <div>
                                   <p className="text-[12px] font-medium text-foreground">{solicitacao.nome}</p>
-                                  <p className="text-[10px] text-muted-foreground/40">{solicitacao.email}</p>
+                                  <p className="text-[10px] text-muted-foreground">{solicitacao.email}</p>
                                 </div>
                               </div>
                             </td>
@@ -557,24 +557,24 @@ const AprovarAcesso = () => {
                               >
                                 {solicitacao.origemLabel}
                               </span>
-                              <p className="text-[10px] text-muted-foreground/40 mt-1">{solicitacao.cargo}</p>
+                              <p className="text-[10px] text-muted-foreground mt-1">{solicitacao.cargo}</p>
                             </td>
 
                             <td className="px-4 py-3">
                               <p className="text-[11px] text-foreground/70">
                                 CPF: {solicitacao.documento || "Não informado"}
                               </p>
-                              <p className="text-[10px] text-muted-foreground/40">
+                              <p className="text-[10px] text-muted-foreground">
                                 Contato: {solicitacao.contato || "Não informado"}
                               </p>
                             </td>
 
                             <td className="px-4 py-3">
-                              <p className="text-[11px] text-foreground/60">
+                              <p className="text-[11px] text-foreground">
                                 {formatDate(solicitacao.dataSolicitacao)}
                               </p>
                               {solicitacao.expiraEm && (
-                                <p className="text-[10px] text-muted-foreground/40">
+                                <p className="text-[10px] text-muted-foreground">
                                   Expira em {formatDate(solicitacao.expiraEm)}
                                 </p>
                               )}
@@ -621,7 +621,7 @@ const AprovarAcesso = () => {
                                     </motion.button>
                                   </>
                                 ) : (
-                                  <span className="text-[11px] text-muted-foreground/30 italic">Concluído</span>
+                                  <span className="text-[11px] text-muted-foreground italic">Concluído</span>
                                 )}
                               </div>
                             </td>

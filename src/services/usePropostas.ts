@@ -33,11 +33,12 @@ export type PropostaStatus = "PENDENTE" | "APROVADA" | "REJEITADA";
 export interface PropostaApi {
   idProposta: number;
   empresaId: number;
+  negocioId?: number | null;
   usuarioId: number;
   url: string;
   valuation: number | null;
   status: PropostaStatus;
-  dataCriacao: string;
+  dataCriacao?: string | null;
   servico?: CommercialService | null;
   mesInicio?: string | null;
   recorrenciaMeses?: number | null;
@@ -71,8 +72,14 @@ export function getPropostaFileNameFromUrl(url?: string | null) {
 interface CreatePropostaWithFileDTO {
   file: File;
   empresaId: number;
+  negocioId?: number | null;
   valuation: number;
   configuracao: PropostaCommercialConfig;
+}
+
+interface PropostaFilters {
+  empresaId?: number;
+  negocioId?: number;
 }
 
 interface UpdatePropostaStatusDTO {
@@ -107,11 +114,14 @@ function getApiErrorMessage(error: unknown) {
   return "Erro na API";
 }
 
-export function usePropostas() {
+export function usePropostas(filters: PropostaFilters = {}, enabled = true) {
   return useQuery<PropostaApi[]>({
-    queryKey: ["propostas"],
+    queryKey: ["propostas", filters.empresaId ?? null, filters.negocioId ?? null],
+    enabled,
     queryFn: async () => {
-      const response = await api.get<ApiEnvelope<PropostaApi[]> | PropostaApi[]>("/propostas");
+      const response = await api.get<ApiEnvelope<PropostaApi[]> | PropostaApi[]>("/propostas", {
+        params: filters,
+      });
       return unwrap(response.data);
     },
   });
@@ -139,11 +149,12 @@ export function useCreatePropostaWithFile() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ file, empresaId, valuation, configuracao }: CreatePropostaWithFileDTO) => {
+    mutationFn: async ({ file, empresaId, negocioId, valuation, configuracao }: CreatePropostaWithFileDTO) => {
       try {
         const formData = new FormData();
         formData.append("arquivo", file);
         formData.append("empresaId", String(empresaId));
+        if (negocioId) formData.append("negocioId", String(negocioId));
         formData.append("valuation", valuation.toFixed(2));
         formData.append("configuracao", new Blob([JSON.stringify(configuracao)], { type: "application/json" }));
 

@@ -33,7 +33,8 @@ const negocio: PipelineNegocio = {
   etapaNome: "Reunião marcada",
   origemNegocio: "Indicação",
   estrategiaComercial: "Diagnóstico consultivo",
-  servicoInteresse: "M&A",
+  servicoInteresse: "BPO, CFO",
+  servicosInteresse: ["BPO", "CFO"],
   valorEstimadoProposta: 150000,
   resultado: "ABERTO",
   criadoEm: "2026-07-28T10:00:00",
@@ -78,7 +79,8 @@ describe("Pipeline de Vendas", () => {
       responsavelId: "1",
       origemNegocio: "Indicação",
       estrategiaComercial: "Diagnóstico consultivo",
-      servicoInteresse: "M&A",
+      servicosInteresse: [],
+      cnpj: "11.222.333/0001-81",
     })).toBe(true);
   });
 
@@ -94,7 +96,7 @@ describe("Pipeline de Vendas", () => {
       etapaId: "3",
       origemNegocio: " Indicação ",
       estrategiaComercial: " Diagnóstico ",
-      servicoInteresse: " M&A ",
+      servicosInteresse: ["BPO", "CFO"],
       valorEstimadoProposta: "150000",
     });
 
@@ -120,7 +122,7 @@ describe("Pipeline de Vendas", () => {
     );
 
     expect(screen.getByLabelText("Origem do negócio *").tagName).toBe("SELECT");
-    expect(screen.getByLabelText("Serviço de interesse *").tagName).toBe("SELECT");
+    expect(screen.getByLabelText("Serviços de interesse").tagName).toBe("SELECT");
     expect(screen.getByLabelText("Estratégia comercial *").tagName).toBe("SELECT");
     origemNegocioOptions.forEach((option) =>
       expect(screen.getByRole("option", { name: option })).toBeInTheDocument(),
@@ -168,16 +170,52 @@ describe("Pipeline de Vendas", () => {
     });
   });
 
+  it("permite cadastrar a nova empresa e selecionar ou remover vários serviços", () => {
+    const setDraft = vi.fn();
+    const { rerender } = render(
+      <PipelineNegocioFormFields
+        draft={emptyPipelineNegocioDraft}
+        setDraft={setDraft}
+        empresas={[]}
+        usuarios={[]}
+        etapas={[]}
+        disabled={false}
+      />,
+    );
+
+    expect(screen.getByLabelText("CNPJ *")).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: /Cadastrar empresa ao salvar/i })).toBeChecked();
+    fireEvent.change(screen.getByLabelText("Serviços de interesse"), { target: { value: "BPO" } });
+    const addService = setDraft.mock.calls.at(-1)?.[0];
+    expect(addService(emptyPipelineNegocioDraft).servicosInteresse).toEqual(["BPO"]);
+
+    const withServices = { ...emptyPipelineNegocioDraft, servicosInteresse: ["BPO", "CFO"] };
+    rerender(
+      <PipelineNegocioFormFields
+        draft={withServices}
+        setDraft={setDraft}
+        empresas={[]}
+        usuarios={[]}
+        etapas={[]}
+        disabled={false}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Remover BPO" }));
+    const removeService = setDraft.mock.calls.at(-1)?.[0];
+    expect(removeService(withServices).servicosInteresse).toEqual(["CFO"]);
+  });
+
   it("normaliza opções legadas e rejeita valores fora das listas", () => {
     const draft = negocioToDraft({
       ...negocio,
       origemNegocio: "site",
       estrategiaComercial: "Diagnóstico consultivo",
       servicoInteresse: "M&A",
+      servicosInteresse: undefined,
     });
 
     expect(draft.origemNegocio).toBe("Site");
     expect(draft.estrategiaComercial).toBe("");
-    expect(draft.servicoInteresse).toBe("");
+    expect(draft.servicosInteresse).toEqual([]);
   });
 });

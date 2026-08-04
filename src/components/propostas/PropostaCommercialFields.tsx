@@ -15,7 +15,7 @@ type Props = {
 };
 
 const fieldClass = "w-full h-9 px-2.5 rounded-lg border border-border/25 bg-background/50 text-[12px] outline-none focus:border-accent/40 text-foreground";
-const labelClass = "text-[9px] text-muted-foreground/45 font-medium uppercase tracking-wider mb-1 block";
+const labelClass = "text-[9px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block";
 
 export const createEmptyProposalConfig = (): PropostaCommercialConfig => ({
   servico: "BPO",
@@ -47,16 +47,16 @@ export const PropostaCommercialFields = ({ value, usuarios, onChange }: Props) =
         <label><span className={labelClass}>Serviço *</span><select className={fieldClass} value={value.servico} onChange={(event) => update("servico", event.target.value as PropostaCommercialConfig["servico"])}>{SERVICE_OPTIONS.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
         <label><span className={labelClass}>Mês de início *</span><input className={fieldClass} type="month" value={value.mesInicio || ""} onChange={(event) => update("mesInicio", event.target.value)} /></label>
         {recurring ? (
-          <label><span className={labelClass}>Recorrência (0 a 24 meses)</span><input className={fieldClass} type="number" min={0} max={24} value={value.recorrenciaMeses ?? 0} onChange={(event) => update("recorrenciaMeses", Number(event.target.value))} /><small className="text-[10px] text-muted-foreground/40">O valor total será dividido pelos meses. 0 usa uma projeção de 24 parcelas.</small></label>
+          <label><span className={labelClass}>Recorrência (0 a 24 meses)</span><input className={fieldClass} type="number" min={0} max={24} value={value.recorrenciaMeses ?? 0} onChange={(event) => update("recorrenciaMeses", Number(event.target.value))} /><small className="text-[10px] text-muted-foreground">O valor total será dividido pelos meses. 0 usa uma projeção de 24 parcelas.</small></label>
         ) : (
-          <label><span className={labelClass}>Quantidade de parcelas</span><input className={fieldClass} type="number" min={1} max={24} value={value.quantidadeParcelas ?? 1} onChange={(event) => update("quantidadeParcelas", Number(event.target.value))} /><small className="text-[10px] text-muted-foreground/40">O valor total será dividido em parcelas iguais.</small></label>
+          <label><span className={labelClass}>Quantidade de parcelas</span><input className={fieldClass} type="number" min={1} max={24} value={value.quantidadeParcelas ?? 1} onChange={(event) => update("quantidadeParcelas", Number(event.target.value))} /><small className="text-[10px] text-muted-foreground">O valor total será dividido em parcelas iguais.</small></label>
         )}
         <label><span className={labelClass}>Comissão técnico %</span><input className={fieldClass} type="number" min={0} max={100} step="0.01" placeholder="Padrão: 30%" value={value.comissaoTecnicoPercentual ?? ""} onChange={(event) => update("comissaoTecnicoPercentual", event.target.value ? Number(event.target.value) : null)} /></label>
         <label><span className={labelClass}>Comissão comercial %</span><input className={fieldClass} type="number" min={0} max={100} step="0.01" placeholder="Padrão: 20%" value={value.comissaoComercialPercentual ?? ""} onChange={(event) => update("comissaoComercialPercentual", event.target.value ? Number(event.target.value) : null)} /></label>
       </div>
 
       <div>
-        <div className="mb-2 flex items-center justify-between"><div><span className={labelClass}>Reajustes/valores personalizados</span><p className="text-[10px] text-muted-foreground/40">Mês contado a partir do início do contrato de {getServiceLabel(value.servico)}.</p></div><button type="button" onClick={addAdjustment} className="h-8 px-3 rounded-lg border border-border/30 text-[11px] flex items-center gap-1"><Plus className="w-3 h-3" /> Adicionar</button></div>
+        <div className="mb-2 flex items-center justify-between"><div><span className={labelClass}>Reajustes/valores personalizados</span><p className="text-[10px] text-muted-foreground">Mês contado a partir do início do contrato de {getServiceLabel(value.servico)}.</p></div><button type="button" onClick={addAdjustment} className="h-8 px-3 rounded-lg border border-border/30 text-[11px] flex items-center gap-1"><Plus className="w-3 h-3" /> Adicionar</button></div>
         <div className="space-y-2">{value.reajustes.map((item, index) => <div key={index} className="grid grid-cols-[1fr_1fr_auto] gap-2"><input aria-label="Mês de vigência" className={fieldClass} type="number" min={1} max={24} value={item.mesVigencia} onChange={(event) => update("reajustes", value.reajustes.map((row, rowIndex) => rowIndex === index ? { ...row, mesVigencia: Number(event.target.value) } : row))} /><input aria-label="Valor do reajuste" className={fieldClass} type="number" min={0.01} step="0.01" value={item.valor || ""} placeholder="Valor em R$" onChange={(event) => update("reajustes", value.reajustes.map((row, rowIndex) => rowIndex === index ? { ...row, valor: Number(event.target.value) } : row))} /><button type="button" aria-label="Remover reajuste" onClick={() => update("reajustes", value.reajustes.filter((_, rowIndex) => rowIndex !== index))} className="w-9 h-9 rounded-lg text-destructive hover:bg-destructive/10"><Trash2 className="w-3.5 h-3.5 mx-auto" /></button></div>)}</div>
       </div>
 

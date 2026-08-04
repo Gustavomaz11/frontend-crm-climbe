@@ -301,7 +301,7 @@ const SolicitarAcesso = () => {
             >
               <Link
                 to="/"
-                className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground/50 hover:text-accent transition-colors duration-200 mb-8"
+                className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-accent transition-colors duration-200 mb-8"
               >
                 <ArrowLeft className="w-3 h-3" />
                 Voltar ao acesso
@@ -321,7 +321,7 @@ const SolicitarAcesso = () => {
                       <br />
                       <span className="text-accent">acesso</span>
                     </h1>
-                    <p className="text-sm text-muted-foreground/60 leading-relaxed mb-10 max-w-[340px]">
+                    <p className="text-sm text-muted-foreground leading-relaxed mb-10 max-w-[340px]">
                       Envie seus dados corporativos para análise de liberação ao
                       ambiente interno.
                     </p>
@@ -366,7 +366,7 @@ const SolicitarAcesso = () => {
                         },
                       ].map((field) => (
                         <div key={field.id}>
-                          <label className="text-[11px] font-medium text-muted-foreground/70 mb-1.5 block tracking-wide">
+                          <label className="text-[11px] font-medium text-muted-foreground mb-1.5 block tracking-wide">
                             {field.label}
                           </label>
                           <div className="relative">
@@ -382,7 +382,7 @@ const SolicitarAcesso = () => {
                               onFocus={() => setFocusedField(field.id)}
                               onBlur={() => setFocusedField(null)}
                               placeholder={field.placeholder}
-                              className={`w-full h-11 rounded-md border bg-background px-3.5 text-sm text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-accent/60 focus:ring-1 focus:ring-accent/15 transition-all duration-200 ${
+                              className={`w-full h-11 rounded-md border bg-background px-3.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent/60 focus:ring-1 focus:ring-accent/15 transition-all duration-200 ${
                                 errors[field.id] ? "border-red-500/70" : "border-input"
                               }`}
                             />
@@ -404,7 +404,7 @@ const SolicitarAcesso = () => {
                       ))}
 
                       <div>
-                        <label className="text-[11px] font-medium text-muted-foreground/70 mb-1.5 block tracking-wide">
+                        <label className="text-[11px] font-medium text-muted-foreground mb-1.5 block tracking-wide">
                           Cargo
                         </label>
                         <div className="relative">
@@ -466,7 +466,7 @@ const SolicitarAcesso = () => {
                           <div className="w-full border-t border-border/40" />
                         </div>
                         <div className="relative flex justify-center">
-                          <span className="bg-background px-3 text-[9px] uppercase tracking-wider text-muted-foreground/30">
+                          <span className="bg-background px-3 text-[9px] uppercase tracking-wider text-muted-foreground">
                             ou
                           </span>
                         </div>
@@ -521,7 +521,7 @@ const SolicitarAcesso = () => {
                           </>
                         )}
                       </motion.button>
-                      <p className="text-center text-[11px] text-muted-foreground/60">
+                      <p className="text-center text-[11px] text-muted-foreground">
                         O login aceita qualquer conta Google. A sincronização da agenda é exclusiva para contas @climbe.com.br.
                       </p>
                     </form>
@@ -562,7 +562,7 @@ const SolicitarAcesso = () => {
                       <br />
                       <span className="text-accent">enviada</span>
                     </h1>
-                    <p className="text-sm text-muted-foreground/60 leading-relaxed mb-8 max-w-[340px]">
+                    <p className="text-sm text-muted-foreground leading-relaxed mb-8 max-w-[340px]">
                       Recebemos o pedido para{" "}
                       <span className="text-foreground font-medium">
                         {form.email}
@@ -585,10 +585,10 @@ const SolicitarAcesso = () => {
         </main>
 
         <footer className="flex items-center justify-between px-6 md:px-10 lg:px-14 py-5">
-          <span className="text-[9px] text-muted-foreground/25 tracking-wide">
+          <span className="text-[9px] text-muted-foreground tracking-wide">
             © 2026 Climbe Investimentos Independentes
           </span>
-          <span className="text-[9px] text-muted-foreground/25 font-mono">
+          <span className="text-[9px] text-muted-foreground font-mono">
             v3.1.0
           </span>
         </footer>

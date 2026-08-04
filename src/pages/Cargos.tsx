@@ -66,7 +66,7 @@ export default function Cargos() {
         <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="text-[24px] font-bold tracking-tight">{hierarchyMode ? "Hierarquia de cargos" : "Cargos"}</h1>
-            <p className="mt-1 text-[12px] text-muted-foreground/55">{hierarchyMode ? "Organize os níveis e segmentos que definem a visibilidade das tarefas." : "Cadastre e mantenha os cargos disponíveis no sistema."}</p>
+            <p className="mt-1 text-[12px] text-muted-foreground">{hierarchyMode ? "Organize os níveis e segmentos que definem a visibilidade das tarefas." : "Cadastre e mantenha os cargos disponíveis no sistema."}</p>
           </div>
           {!hierarchyMode && canManageCatalog && <form onSubmit={criarCargo} className="flex gap-2">
             <input value={novoNome} onChange={(e) => setNovoNome(e.target.value)} placeholder="Nome do novo cargo" className="h-10 w-64 rounded-lg border border-border/30 bg-card/45 px-3 text-[13px] outline-none focus:border-accent/50" />
@@ -79,13 +79,13 @@ export default function Cargos() {
         {feedback && <div className="mb-4 flex items-center gap-2 rounded-lg border border-accent/20 bg-accent/10 px-3 py-2 text-[12px] text-accent"><Check className="h-4 w-4" />{feedback}</div>}
 
         {loadingPermissions ? <div className="flex justify-center p-20"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div> : !hasAccess ? <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-12 text-center"><LockKeyhole className="mx-auto h-7 w-7 text-destructive" /><p className="mt-3 text-sm font-semibold">Você não possui permissão para acessar esta configuração.</p></div> : hierarchyMode ? <CargoHierarchyTree cargos={cargos} isSaving={atualizarHierarquia.isPending} onSave={salvarHierarquia} /> : <section className="overflow-hidden rounded-xl border border-border/25 bg-card/45">
-          <div className="grid grid-cols-[1fr_160px] border-b border-border/20 px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/45">
+          <div className="grid grid-cols-[1fr_160px] border-b border-border/20 px-5 py-3 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
             <span>Cargo</span><span className="text-right">Ações</span>
           </div>
           {isLoading ? (
             <div className="flex justify-center p-12 text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin" /></div>
           ) : cargos.length === 0 ? (
-            <div className="p-12 text-center text-[12px] text-muted-foreground/50">Nenhum cargo cadastrado.</div>
+            <div className="p-12 text-center text-[12px] text-muted-foreground">Nenhum cargo cadastrado.</div>
           ) : cargos.map((cargo) => (
             <div key={cargo.id} className="grid grid-cols-[1fr_160px] items-center border-b border-border/10 px-5 py-3 last:border-0">
               <div className="flex items-center gap-3">

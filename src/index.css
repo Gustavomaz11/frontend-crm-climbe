@@ -53,7 +53,8 @@
     --secondary: 216 18% 15%;
     --secondary-foreground: 210 15% 78%;
     --muted: 216 18% 15%;
-    --muted-foreground: 215 12% 50%;
+    /* Secondary copy and icons must remain readable on the dark surface. */
+    --muted-foreground: 215 16% 72%;
     --accent: 178 35% 40%;
     --accent-foreground: 216 28% 7%;
     --destructive: 0 55% 45%;

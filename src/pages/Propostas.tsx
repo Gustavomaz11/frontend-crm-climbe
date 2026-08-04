@@ -8,7 +8,7 @@ import {
   UserCheck, UploadCloud, File as FileIcon, CheckCircle2, ScrollText, AlertCircle,
   Check, XCircle, History, DollarSign,
 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import ClimbLogo from "@/components/login/ClimbLogo";
 import { UserAvatar } from "@/components/UserAvatar";
 import { AppSidebarNav } from "@/components/layout/AppSidebarNav";
@@ -131,6 +131,9 @@ const Propostas = () => {
   const installmentPreview = proposalTotal > 0 ? proposalTotal / billingCount : 0;
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const contextualEmpresaId = Number(searchParams.get("empresaId")) || 0;
+  const contextualNegocioId = Number(searchParams.get("negocioId")) || 0;
 
   const basicUserData = useAuthStore((state) => state.basicUserData);
   const userData = useAuthStore((state) => state.userData);
@@ -158,6 +161,13 @@ const Propostas = () => {
     });
     return map;
   }, [empresas]);
+
+  useEffect(() => {
+    if (searchParams.get("nova") !== "true" || contextualEmpresaId <= 0) return;
+    if (!empresas.some((empresa) => Number(empresa.id) === contextualEmpresaId)) return;
+    setSelectedEmpresaId(String(contextualEmpresaId));
+    setUploadOpen(true);
+  }, [contextualEmpresaId, empresas, searchParams]);
 
   const propostasView = useMemo<Proposta[]>(
     () =>
@@ -245,6 +255,7 @@ const Propostas = () => {
         await createPropostaWithFile.mutateAsync({
           file,
           empresaId,
+          negocioId: contextualNegocioId || null,
           valuation,
           configuracao: {
             ...commercialConfig,
@@ -255,7 +266,7 @@ const Propostas = () => {
       setUploading(false);
       setUploadDone(true);
       setFiles([]);
-      setSelectedEmpresaId("");
+      setSelectedEmpresaId(contextualEmpresaId ? String(contextualEmpresaId) : "");
       setValuationInput("");
       setCommercialConfig(createEmptyProposalConfig());
     } catch (error) {
@@ -347,7 +358,7 @@ const Propostas = () => {
               <AnimatePresence mode="wait"><motion.div key={isDark ? "s" : "m"} initial={{ opacity: 0, rotate: -30 }} animate={{ opacity: 1, rotate: 0 }} exit={{ opacity: 0, rotate: 30 }}>{isDark ? <Sun className="w-[18px] h-[18px]" /> : <Moon className="w-[18px] h-[18px]" />}</motion.div></AnimatePresence>
               {!sidebarCollapsed && <span className="text-[13px] font-medium">{isDark ? "Modo claro" : "Modo escuro"}</span>}
             </motion.button>
-            <Link to="/"><motion.button className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground/50 hover:text-destructive hover:bg-destructive/5 transition-all ${sidebarCollapsed ? "justify-center" : ""}`} whileTap={{ scale: 0.98 }}><LogOut className="w-[18px] h-[18px]" />{!sidebarCollapsed && <span className="text-[13px] font-medium">Sair</span>}</motion.button></Link>
+            <Link to="/"><motion.button className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-all ${sidebarCollapsed ? "justify-center" : ""}`} whileTap={{ scale: 0.98 }}><LogOut className="w-[18px] h-[18px]" />{!sidebarCollapsed && <span className="text-[13px] font-medium">Sair</span>}</motion.button></Link>
           </div>
           <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)} className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-card border border-border/40 flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-accent/40 transition-all shadow-sm">
             {sidebarCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
@@ -357,9 +368,9 @@ const Propostas = () => {
         {/* Main */}
         <main className={`flex-1 transition-all duration-300 ${sidebarCollapsed ? "ml-[72px]" : "ml-[220px]"}`}>
           <motion.header className="sticky top-0 z-20 h-16 flex items-center justify-between px-6 border-b border-border/20 bg-background/80 backdrop-blur-xl" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="flex items-center gap-2 h-9 px-3 rounded-lg border border-border/25 bg-card/30 backdrop-blur-sm text-muted-foreground/50 w-[280px]">
+            <div className="flex items-center gap-2 h-9 px-3 rounded-lg border border-border/25 bg-card/30 backdrop-blur-sm text-muted-foreground w-[280px]">
               <Search className="w-3.5 h-3.5" />
-              <input type="text" placeholder="Buscar propostas..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground/30 text-foreground" />
+              <input type="text" placeholder="Buscar propostas..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground text-foreground" />
             </div>
             <UserAvatar name={userName} photoUrl={userPhoto} />
           </motion.header>
@@ -368,7 +379,7 @@ const Propostas = () => {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h1 className="text-[22px] font-bold text-foreground tracking-tight">Propostas</h1>
-                <p className="text-[12px] text-muted-foreground/50 mt-0.5">{`${filtered.length} de ${propostasView.length} propostas`}</p>
+                <p className="text-[12px] text-muted-foreground mt-0.5">{`${filtered.length} de ${propostasView.length} propostas`}</p>
               </div>
               <motion.button
                 onClick={() => { setUploadOpen(!uploadOpen); setUploadDone(false); setUploadError(""); }}
@@ -429,24 +440,25 @@ const Propostas = () => {
                       }`}
                     >
                       <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${dragOver ? "bg-accent/15" : "bg-muted/20"}`}>
-                        <UploadCloud className={`w-5 h-5 transition-colors ${dragOver ? "text-accent" : "text-muted-foreground/50"}`} />
+                        <UploadCloud className={`w-5 h-5 transition-colors ${dragOver ? "text-accent" : "text-muted-foreground"}`} />
                       </div>
                       <div className="text-center">
                         <p className="text-[13px] font-medium text-foreground/80">
                           {dragOver ? "Solte os arquivos aqui" : "Clique para selecionar ou arraste o arquivo"}
                         </p>
-                        <p className="text-[11px] text-muted-foreground/40 mt-0.5">PDF, PPT ou PPTX · o cliente receberá por e-mail</p>
+                        <p className="text-[11px] text-muted-foreground mt-0.5">PDF, PPT ou PPTX · o cliente receberá por e-mail</p>
                       </div>
                     </motion.div>
 
                     {/* Empresa select */}
                     <div className="mt-3 grid gap-3 md:grid-cols-2">
                       <div>
-                        <label className="text-[9px] text-muted-foreground/40 font-medium uppercase tracking-wider mb-1 block">Empresa</label>
+                        <label className="text-[9px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Empresa</label>
                       <select
                         value={selectedEmpresaId}
                         onChange={(e) => { setSelectedEmpresaId(e.target.value); setUploadError(""); }}
-                        className="w-full h-9 px-2.5 rounded-lg border border-border/25 bg-background/50 text-[12px] outline-none focus:border-accent/40 transition-colors text-foreground"
+                        disabled={contextualNegocioId > 0}
+                        className="w-full h-9 px-2.5 rounded-lg border border-border/25 bg-background/50 text-[12px] outline-none focus:border-accent/40 transition-colors text-foreground disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         <option value="">Selecione a empresa</option>
                         {empresas.filter((empresa) => Number(empresa.id) > 0).map((empresa) => (
@@ -455,16 +467,16 @@ const Propostas = () => {
                       </select>
                       </div>
                       <div>
-                        <label className="text-[9px] text-muted-foreground/40 font-medium uppercase tracking-wider mb-1 block">Valor total da proposta</label>
+                        <label className="text-[9px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Valor total da proposta</label>
                         <div className="flex h-9 items-center gap-2 rounded-lg border border-border/25 bg-background/50 px-2.5 transition-colors focus-within:border-accent/40">
-                          <DollarSign className="h-3.5 w-3.5 text-muted-foreground/35" />
+                          <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
                           <input
                             type="text"
                             inputMode="numeric"
                             value={valuationInput}
                             onChange={(e) => { setValuationInput(formatCurrencyInput(e.target.value)); setUploadError(""); }}
                             placeholder="R$ 0,00"
-                            className="min-w-0 flex-1 bg-transparent text-[12px] text-foreground outline-none placeholder:text-muted-foreground/30"
+                            className="min-w-0 flex-1 bg-transparent text-[12px] text-foreground outline-none placeholder:text-muted-foreground"
                           />
                         </div>
                         {installmentPreview > 0 && (
@@ -497,10 +509,10 @@ const Propostas = () => {
                             >
                               <FileIcon className="w-4 h-4 text-accent shrink-0" />
                               <span className="flex-1 text-[12px] text-foreground/80 truncate">{f.name}</span>
-                              <span className="text-[10px] text-muted-foreground/40 shrink-0">{formatBytes(f.size)}</span>
+                              <span className="text-[10px] text-muted-foreground shrink-0">{formatBytes(f.size)}</span>
                               <button
                                 onClick={() => removeFile(i)}
-                                className="w-5 h-5 flex items-center justify-center rounded hover:bg-muted/30 text-muted-foreground/40 hover:text-foreground transition-colors"
+                                className="w-5 h-5 flex items-center justify-center rounded hover:bg-muted/30 text-muted-foreground hover:text-foreground transition-colors"
                               >
                                 <X className="w-3 h-3" />
                               </button>
@@ -513,7 +525,7 @@ const Propostas = () => {
                     {/* Actions */}
                     <div className="mt-3 flex items-center justify-end gap-2">
                       <motion.button
-                        onClick={() => { setUploadOpen(false); setFiles([]); setUploadDone(false); setUploadError(""); setSelectedEmpresaId(""); setValuationInput(""); setCommercialConfig(createEmptyProposalConfig()); }}
+                        onClick={() => { setUploadOpen(false); setFiles([]); setUploadDone(false); setUploadError(""); setSelectedEmpresaId(contextualEmpresaId ? String(contextualEmpresaId) : ""); setValuationInput(""); setCommercialConfig(createEmptyProposalConfig()); }}
                         className="h-8 px-4 rounded-lg border border-border/30 text-[12px] text-muted-foreground hover:text-foreground transition-all"
                         whileTap={{ scale: 0.97 }}
                       >
@@ -555,7 +567,7 @@ const Propostas = () => {
             </AnimatePresence>
             <div className="flex items-center gap-1 h-9 rounded-lg border border-border/25 bg-card/30 overflow-hidden w-fit">
               {tabs.map(t => (
-                <motion.button key={t} onClick={() => setActiveTab(t)} className={`h-full px-4 text-[12px] font-medium transition-all ${activeTab === t ? "bg-accent/15 text-accent" : "text-muted-foreground/50 hover:text-foreground"}`} whileTap={{ scale: 0.97 }}>
+                <motion.button key={t} onClick={() => setActiveTab(t)} className={`h-full px-4 text-[12px] font-medium transition-all ${activeTab === t ? "bg-accent/15 text-accent" : "text-muted-foreground hover:text-foreground"}`} whileTap={{ scale: 0.97 }}>
                   {t}
                 </motion.button>
               ))}
@@ -566,19 +578,19 @@ const Propostas = () => {
             <motion.div className="rounded-xl border border-border/25 bg-card/40 backdrop-blur-sm overflow-hidden" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}>
               {/* Table header */}
               <div className="grid grid-cols-[1fr_1fr_130px_120px_132px] px-5 py-2.5 border-b border-border/15 bg-muted/5">
-                <span className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider">Documento</span>
-                <span className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider">Empresa</span>
-                <span className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider">Valor total</span>
-                <span className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider">Status</span>
-                <span className="text-[10px] font-medium text-muted-foreground/40 uppercase tracking-wider">Ações</span>
+                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Documento</span>
+                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Empresa</span>
+                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Valor total</span>
+                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Status</span>
+                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Ações</span>
               </div>
               <div className="divide-y divide-border/10 max-h-[calc(100vh-260px)] overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-muted-foreground/20 [&::-webkit-scrollbar-thumb]:rounded-full">
                 {propostasLoading ? (
-                  <div className="py-12 text-center text-[12px] text-muted-foreground/50">Carregando propostas...</div>
+                  <div className="py-12 text-center text-[12px] text-muted-foreground">Carregando propostas...</div>
                 ) : propostasError ? (
                   <div className="py-12 text-center text-[12px] text-destructive">Erro ao carregar propostas</div>
                 ) : filtered.length === 0 ? (
-                  <div className="py-12 text-center text-[12px] text-muted-foreground/30">Nenhuma proposta encontrada</div>
+                  <div className="py-12 text-center text-[12px] text-muted-foreground">Nenhuma proposta encontrada</div>
                 ) : (
                   filtered.map((p, i) => (
                     <motion.div
@@ -600,7 +612,7 @@ const Propostas = () => {
                         <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                           <Building2 className="w-2.5 h-2.5 text-primary" />
                         </div>
-                        <p className="text-[12px] text-foreground/60 truncate">{p.empresaNome}</p>
+                        <p className="text-[12px] text-foreground truncate">{p.empresaNome}</p>
                       </div>
                       <p className="text-[12px] font-semibold text-foreground/75">{formatCurrency(p.valuation)}</p>
                       <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full w-fit ${statusStyles[p.status] || "bg-muted/10 text-muted-foreground"}`}>
@@ -652,27 +664,27 @@ const Propostas = () => {
               <div className="flex items-center justify-between p-5 border-b border-border/20">
                 <div>
                   <h2 className="text-[16px] font-semibold text-foreground">{selectedProposta.nomeDocumento}</h2>
-                  <p className="text-[11px] text-muted-foreground/50 mt-0.5">{selectedProposta.empresaNome}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{selectedProposta.empresaNome}</p>
                 </div>
                 <motion.button onClick={() => setSelectedProposta(null)} className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/20" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}><X className="w-4 h-4" /></motion.button>
               </div>
               <div className="p-5 space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="rounded-lg border border-border/20 bg-background/50 p-4">
-                    <p className="text-[10px] text-muted-foreground/40 mb-1 uppercase tracking-wider">Empresa</p>
+                    <p className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wider">Empresa</p>
                     <p className="text-[13px] font-semibold text-foreground/80">{selectedProposta.empresaNome}</p>
                   </div>
                   <div className="rounded-lg border border-border/20 bg-background/50 p-4">
-                    <p className="text-[10px] text-muted-foreground/40 mb-1 uppercase tracking-wider">Status</p>
+                    <p className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wider">Status</p>
                     <span className={`text-[11px] font-medium px-2.5 py-0.5 rounded-full inline-block ${statusStyles[selectedProposta.status] || "bg-muted/10 text-muted-foreground"}`}>{selectedProposta.status}</span>
                   </div>
                 </div>
                 <div className="rounded-lg border border-border/20 bg-background/50 p-4">
-                  <p className="text-[10px] text-muted-foreground/40 mb-1 uppercase tracking-wider">Valor total da proposta</p>
+                  <p className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wider">Valor total da proposta</p>
                   <p className="text-[16px] font-semibold text-foreground/85">{formatCurrency(selectedProposta.valuation)}</p>
                 </div>
                 <div className="rounded-lg border border-border/20 bg-background/50 p-4">
-                  <p className="text-[10px] text-muted-foreground/40 mb-1 uppercase tracking-wider">Serviço</p>
+                  <p className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wider">Serviço</p>
                   <p className="text-[13px] font-semibold text-foreground/85">{getServiceLabel(selectedProposta.servico)}</p>
                 </div>
                 <div className="flex gap-2">
@@ -712,17 +724,17 @@ const Propostas = () => {
               <div className="flex items-center justify-between p-5 border-b border-border/20">
                 <div>
                   <h2 className="text-[16px] font-semibold text-foreground">Histórico da proposta</h2>
-                  <p className="text-[11px] text-muted-foreground/50 mt-0.5">{historyProposta.nomeDocumento}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{historyProposta.nomeDocumento}</p>
                 </div>
                 <motion.button onClick={() => setHistoryOpen(false)} className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/20" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}><X className="w-4 h-4" /></motion.button>
               </div>
               <div className="p-5">
                 {historyLoading ? (
-                  <div className="py-10 text-center text-[12px] text-muted-foreground/50">Carregando histórico...</div>
+                  <div className="py-10 text-center text-[12px] text-muted-foreground">Carregando histórico...</div>
                 ) : historyError ? (
                   <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-[12px] text-destructive">{historyError}</div>
                 ) : historyItems.length === 0 ? (
-                  <div className="py-10 text-center text-[12px] text-muted-foreground/40">Nenhuma alteração de status registrada</div>
+                  <div className="py-10 text-center text-[12px] text-muted-foreground">Nenhuma alteração de status registrada</div>
                 ) : (
                   <div className="space-y-2 max-h-[360px] overflow-y-auto pr-1 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-muted-foreground/20 [&::-webkit-scrollbar-thumb]:rounded-full">
                     {historyItems.map((item) => (
@@ -730,12 +742,12 @@ const Propostas = () => {
                         <div className="flex items-center justify-between gap-3">
                           <div className="flex items-center gap-2 min-w-0">
                             <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full ${statusStyles[item.statusAnterior] || "bg-muted/10 text-muted-foreground"}`}>{item.statusAnterior}</span>
-                            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/40 shrink-0" />
+                            <ChevronRight className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                             <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full ${statusStyles[item.statusNovo] || "bg-muted/10 text-muted-foreground"}`}>{item.statusNovo}</span>
                           </div>
-                          <span className="text-[11px] text-muted-foreground/50 shrink-0">{formatDateTime(item.dataAlteracao)}</span>
+                          <span className="text-[11px] text-muted-foreground shrink-0">{formatDateTime(item.dataAlteracao)}</span>
                         </div>
-                        <p className="mt-2 text-[11px] text-muted-foreground/45">{item.usuarioNome || `Usuário #${item.usuarioId}`}</p>
+                        <p className="mt-2 text-[11px] text-muted-foreground">{item.usuarioNome || `Usuário #${item.usuarioId}`}</p>
                       </div>
                     ))}
                   </div>

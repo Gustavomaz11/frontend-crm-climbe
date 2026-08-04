@@ -589,7 +589,7 @@ const Agenda = () => {
               <AnimatePresence mode="wait"><motion.div key={isDark ? "s" : "m"} initial={{ opacity: 0, rotate: -30 }} animate={{ opacity: 1, rotate: 0 }} exit={{ opacity: 0, rotate: 30 }} transition={{ duration: 0.2 }}>{isDark ? <Sun className="w-[18px] h-[18px]" /> : <Moon className="w-[18px] h-[18px]" />}</motion.div></AnimatePresence>
               {!sidebarCollapsed && <span className="text-[13px] font-medium">{isDark ? "Modo claro" : "Modo escuro"}</span>}
             </motion.button>
-            <Link to="/"><motion.button className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground/50 hover:text-destructive hover:bg-destructive/5 transition-all ${sidebarCollapsed ? "justify-center" : ""}`} whileTap={{ scale: 0.98 }}><LogOut className="w-[18px] h-[18px]" />{!sidebarCollapsed && <span className="text-[13px] font-medium">Sair</span>}</motion.button></Link>
+            <Link to="/"><motion.button className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-all ${sidebarCollapsed ? "justify-center" : ""}`} whileTap={{ scale: 0.98 }}><LogOut className="w-[18px] h-[18px]" />{!sidebarCollapsed && <span className="text-[13px] font-medium">Sair</span>}</motion.button></Link>
           </div>
           <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)} className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-card border border-border/40 flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-accent/40 transition-all shadow-sm">
             {sidebarCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
@@ -600,15 +600,15 @@ const Agenda = () => {
         <main className={`flex-1 transition-all duration-300 ${sidebarCollapsed ? "ml-[72px]" : "ml-[220px]"}`}>
           <motion.header className="sticky top-0 z-20 h-16 flex items-center justify-between px-6 border-b border-border/20 bg-background/80 backdrop-blur-xl" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
             <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2 h-9 px-3 rounded-lg border border-border/25 bg-card/30 backdrop-blur-sm text-muted-foreground/50 w-[240px]">
+              <div className="flex items-center gap-2 h-9 px-3 rounded-lg border border-border/25 bg-card/30 backdrop-blur-sm text-muted-foreground w-[240px]">
                 <Search className="w-3.5 h-3.5" />
-                <input type="text" placeholder="Buscar evento..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground/30 text-foreground" />
+                <input type="text" placeholder="Buscar evento..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground text-foreground" />
               </div>
             </div>
             <div className="flex items-center gap-3">
               <div className="flex items-center h-9 rounded-lg border border-border/25 bg-card/30 backdrop-blur-sm overflow-hidden">
                 {(["mes", "semana", "lista", "kanban"] as const).map(v => (
-                  <motion.button key={v} onClick={() => setActiveView(v)} className={`h-full px-4 text-[12px] font-medium transition-all ${activeView === v ? "bg-accent/15 text-accent" : "text-muted-foreground/50 hover:text-foreground"}`} whileTap={{ scale: 0.97 }}>
+                  <motion.button key={v} onClick={() => setActiveView(v)} className={`h-full px-4 text-[12px] font-medium transition-all ${activeView === v ? "bg-accent/15 text-accent" : "text-muted-foreground hover:text-foreground"}`} whileTap={{ scale: 0.97 }}>
                     {v === "mes" ? "Mês" : v === "semana" ? "Semana" : v === "lista" ? "Lista" : "Kanban"}
                   </motion.button>
                 ))}
@@ -622,7 +622,7 @@ const Agenda = () => {
 
           <div className="px-6 pt-6 pb-2">
             <h1 className="text-[22px] font-bold text-foreground tracking-tight">Agenda de Eventos</h1>
-            <p className="text-[12px] text-muted-foreground/50 mt-0.5">Visualize os próximos eventos de forma interativa com a agenda.</p>
+            <p className="text-[12px] text-muted-foreground mt-0.5">Visualize os próximos eventos de forma interativa com a agenda.</p>
           </div>
 
           <div className="px-6 pb-6">
@@ -640,7 +640,7 @@ const Agenda = () => {
                       <button onClick={goToToday} className="h-7 px-3 rounded-md text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted/20 border border-border/25 transition-all">Hoje</button>
                     </div>
                     <div className="grid grid-cols-7 border-b border-border/10">
-                      {DOW.map(d => <div key={d} className="text-center py-2.5 text-[10px] font-medium text-muted-foreground/40 tracking-wider uppercase">{d}</div>)}
+                      {DOW.map(d => <div key={d} className="text-center py-2.5 text-[10px] font-medium text-muted-foreground tracking-wider uppercase">{d}</div>)}
                     </div>
                     <div className="grid grid-cols-7">
                       {calendarGrid.map((day, i) => {
@@ -651,7 +651,7 @@ const Agenda = () => {
                           <motion.div key={i} className={`min-h-[100px] border-b border-r border-border/10 p-1.5 cursor-pointer transition-all duration-200 ${day === null ? "bg-muted/5" : isSelected ? "bg-accent/5 ring-1 ring-inset ring-accent/20" : isToday ? "bg-accent/[0.03]" : "hover:bg-muted/10"}`} onClick={() => day && setSelectedDay(day === selectedDay ? null : day)} whileTap={day ? { scale: 0.98 } : undefined}>
                             {day && (
                               <>
-                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] mb-1 ${isToday ? "bg-accent text-accent-foreground font-bold" : "text-foreground/50 font-medium"}`}>{day}</div>
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] mb-1 ${isToday ? "bg-accent text-accent-foreground font-bold" : "text-foreground font-medium"}`}>{day}</div>
                                 {events.map(ev => (
                                   <motion.div
                                     key={ev.id}
@@ -676,19 +676,19 @@ const Agenda = () => {
                       <div className="flex items-center justify-between mb-3">
                         <h4 className="text-[13px] font-semibold text-foreground capitalize">{currentMonthLabel}</h4>
                         <div className="flex gap-1">
-                          <button onClick={goToPreviousMonth} className="w-5 h-5 rounded flex items-center justify-center text-muted-foreground/40 hover:text-foreground"><ChevronLeft className="w-3 h-3" /></button>
-                          <button onClick={goToNextMonth} className="w-5 h-5 rounded flex items-center justify-center text-muted-foreground/40 hover:text-foreground"><ChevronRight className="w-3 h-3" /></button>
+                          <button onClick={goToPreviousMonth} className="w-5 h-5 rounded flex items-center justify-center text-muted-foreground hover:text-foreground"><ChevronLeft className="w-3 h-3" /></button>
+                          <button onClick={goToNextMonth} className="w-5 h-5 rounded flex items-center justify-center text-muted-foreground hover:text-foreground"><ChevronRight className="w-3 h-3" /></button>
                         </div>
                       </div>
                       <div className="grid grid-cols-7 gap-0.5 mb-1">
-                        {["D","S","T","Q","Q","S","S"].map((d, i) => <div key={i} className="text-center text-[8px] font-medium text-muted-foreground/30 py-0.5">{d}</div>)}
+                        {["D","S","T","Q","Q","S","S"].map((d, i) => <div key={i} className="text-center text-[8px] font-medium text-muted-foreground py-0.5">{d}</div>)}
                       </div>
                       <div className="grid grid-cols-7 gap-0.5">
                         {calendarGrid.map((day, i) => {
                           const has = day ? eventDays.has(day) : false;
                           const isT = isViewingCurrentMonth && day === todayDay;
                           const isS = day === selectedDay;
-                          return <div key={i} onClick={() => day && setSelectedDay(day === selectedDay ? null : day)} className={`aspect-square flex items-center justify-center text-[9px] rounded cursor-pointer transition-all ${day === null ? "" : isS ? "bg-accent text-accent-foreground font-bold" : isT ? "bg-accent text-accent-foreground font-bold" : has ? "bg-accent/15 text-accent font-semibold" : "text-foreground/50 hover:bg-muted/20"}`}>{day}</div>;
+                          return <div key={i} onClick={() => day && setSelectedDay(day === selectedDay ? null : day)} className={`aspect-square flex items-center justify-center text-[9px] rounded cursor-pointer transition-all ${day === null ? "" : isS ? "bg-accent text-accent-foreground font-bold" : isT ? "bg-accent text-accent-foreground font-bold" : has ? "bg-accent/15 text-accent font-semibold" : "text-foreground hover:bg-muted/20"}`}>{day}</div>;
                         })}
                       </div>
                     </div>
@@ -700,9 +700,9 @@ const Agenda = () => {
                           {dynamicMonthEvents[selectedDay].map(ev => (
                             <motion.div key={ev.id} className="rounded-lg border border-border/20 bg-background/50 p-3" initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}>
                               <p className="text-[12px] font-medium text-foreground/80 mb-1">{ev.title}</p>
-                              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground/50 mb-1"><Clock className="w-3 h-3" /><span>{formatAgendaTimeRange(ev)}</span></div>
-                              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground/50 mb-1"><Building2 className="w-3 h-3" /><span>{ev.empresa}</span></div>
-                              {ev.local && <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground/50"><MapPin className="w-3 h-3" /><span>{ev.local}</span></div>}
+                              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mb-1"><Clock className="w-3 h-3" /><span>{formatAgendaTimeRange(ev)}</span></div>
+                              <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mb-1"><Building2 className="w-3 h-3" /><span>{ev.empresa}</span></div>
+                              {ev.local && <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground"><MapPin className="w-3 h-3" /><span>{ev.local}</span></div>}
                               <div className={`inline-flex items-center gap-1 text-[8px] font-medium px-1.5 py-0.5 rounded-full mt-2 ${ev.type === "virtual" ? "bg-accent/10 text-accent" : "bg-primary/10 text-primary"}`}>
                                 {ev.type === "virtual" ? <Video className="w-2.5 h-2.5" /> : <MapPin className="w-2.5 h-2.5" />}
                                 {ev.type === "virtual" ? "Virtual" : "Presencial"}
@@ -729,17 +729,17 @@ const Agenda = () => {
                             </motion.div>
                           ))}
                         </div>
-                      ) : <p className="text-[11px] text-muted-foreground/30 text-center py-4">{selectedDay ? "Sem eventos neste dia" : "Clique em um dia"}</p>}
+                      ) : <p className="text-[11px] text-muted-foreground text-center py-4">{selectedDay ? "Sem eventos neste dia" : "Clique em um dia"}</p>}
                     </div>
 
                     <div className="rounded-xl border border-border/25 bg-card/40 backdrop-blur-sm p-4">
                       <h4 className="text-[12px] font-semibold text-foreground mb-3">Agendar Reunião</h4>
                       <div className="space-y-2.5">
-                        <div><label className="text-[9px] text-muted-foreground/40 font-medium uppercase tracking-wider mb-1 block">Pauta *</label><input type="text" placeholder="Pauta da reunião..." className="w-full h-8 px-2.5 rounded-lg border border-border/25 bg-background/50 text-[11px] outline-none focus:border-accent/40 transition-colors placeholder:text-muted-foreground/30" /></div>
-                        <div><label className="text-[9px] text-muted-foreground/40 font-medium uppercase tracking-wider mb-1 block">Empresa</label><input type="text" placeholder="Nome..." className="w-full h-8 px-2.5 rounded-lg border border-border/25 bg-background/50 text-[11px] outline-none focus:border-accent/40 transition-colors placeholder:text-muted-foreground/30" /></div>
+                        <div><label className="text-[9px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Pauta *</label><input type="text" placeholder="Pauta da reunião..." className="w-full h-8 px-2.5 rounded-lg border border-border/25 bg-background/50 text-[11px] outline-none focus:border-accent/40 transition-colors placeholder:text-muted-foreground" /></div>
+                        <div><label className="text-[9px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Empresa</label><input type="text" placeholder="Nome..." className="w-full h-8 px-2.5 rounded-lg border border-border/25 bg-background/50 text-[11px] outline-none focus:border-accent/40 transition-colors placeholder:text-muted-foreground" /></div>
                         <div className="grid grid-cols-2 gap-2">
-                          <div><label className="text-[9px] text-muted-foreground/40 font-medium uppercase tracking-wider mb-1 block">Data</label><input type="date" className="w-full h-8 px-2 rounded-lg border border-border/25 bg-background/50 text-[11px] outline-none focus:border-accent/40" /></div>
-                          <div><label className="text-[9px] text-muted-foreground/40 font-medium uppercase tracking-wider mb-1 block">Hora</label><input type="time" className="w-full h-8 px-2 rounded-lg border border-border/25 bg-background/50 text-[11px] outline-none focus:border-accent/40" /></div>
+                          <div><label className="text-[9px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Data</label><input type="date" className="w-full h-8 px-2 rounded-lg border border-border/25 bg-background/50 text-[11px] outline-none focus:border-accent/40" /></div>
+                          <div><label className="text-[9px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Hora</label><input type="time" className="w-full h-8 px-2 rounded-lg border border-border/25 bg-background/50 text-[11px] outline-none focus:border-accent/40" /></div>
                         </div>
                         <label className="flex items-center gap-2 cursor-pointer"><input type="checkbox" className="rounded border-border/30 accent-[hsl(var(--accent))]" /><span className="text-[11px] text-foreground/70">Presencial</span></label>
                         <motion.button className="w-full h-8 rounded-lg bg-accent text-accent-foreground text-[11px] font-semibold shadow-[0_2px_8px_-2px_hsl(var(--accent)/0.3)]" whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.98 }}>Confirmar</motion.button>
@@ -758,7 +758,7 @@ const Agenda = () => {
                       <button onClick={goToToday} className="h-7 px-3 rounded-md text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted/20 border border-border/25 transition-all">Hoje</button>
                       <motion.button onClick={goToNextWeek} className="w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/20 border border-border/20" whileTap={{ scale: 0.9 }}><ChevronRight className="w-4 h-4" /></motion.button>
                     </div>
-                    <p className="text-[12px] text-muted-foreground/50 capitalize">{weekLabel}</p>
+                    <p className="text-[12px] text-muted-foreground capitalize">{weekLabel}</p>
                   </div>
 
                   <div className="grid grid-cols-5 gap-4">
@@ -777,8 +777,8 @@ const Agenda = () => {
                         >
                           {/* Day header */}
                           <div className={`px-4 py-3 border-b text-center ${isToday ? "border-accent/20 bg-accent/5" : "border-border/15"}`}>
-                            <p className="text-[10px] font-medium text-muted-foreground/50 tracking-wider uppercase">{d}</p>
-                            <p className={`text-[22px] font-bold mt-0.5 ${isToday ? "text-accent" : "text-foreground/70"}`}>{dayNum}</p><p className="text-[9px] text-muted-foreground/35 capitalize">{dayDate.toLocaleDateString("pt-BR", { month: "short" })}</p>
+                            <p className="text-[10px] font-medium text-muted-foreground tracking-wider uppercase">{d}</p>
+                            <p className={`text-[22px] font-bold mt-0.5 ${isToday ? "text-accent" : "text-foreground/70"}`}>{dayNum}</p><p className="text-[9px] text-muted-foreground capitalize">{dayDate.toLocaleDateString("pt-BR", { month: "short" })}</p>
                           </div>
                           {/* Events */}
                           <div className="p-3 space-y-2 flex-1">
@@ -792,7 +792,7 @@ const Agenda = () => {
                                 whileHover={{ y: -2, boxShadow: "0 4px 12px -4px hsl(var(--accent) / 0.15)" }}
                               >
                                 <p className="text-[12px] font-semibold text-foreground/80 mb-1.5">{ev.title}</p>
-                                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground/50 mb-1">
+                                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mb-1">
                                   <Clock className="w-3 h-3" />
                                   <span>{formatAgendaTimeRange(ev)}</span>
                                 </div>
@@ -803,7 +803,7 @@ const Agenda = () => {
                               </motion.div>
                             ))}
                             {dayEvents.length === 0 && (
-                              <div className="flex items-center justify-center h-20 text-[10px] text-muted-foreground/20">Sem eventos</div>
+                              <div className="flex items-center justify-center h-20 text-[10px] text-muted-foreground">Sem eventos</div>
                             )}
                           </div>
                         </motion.div>
@@ -825,11 +825,11 @@ const Agenda = () => {
                         <motion.div key={ev.id} className="px-5 py-3 flex items-center gap-4 hover:bg-muted/10 transition-colors cursor-pointer" initial={{ opacity: 0 }} animate={{ opacity: 1 }} whileHover={{ x: 2 }}>
                           <div className="w-10 text-center">
                             <p className="text-[16px] font-bold text-foreground">{day}</p>
-                            <p className="text-[9px] text-muted-foreground/40 capitalize">{visibleMonthShortLabel}</p>
+                            <p className="text-[9px] text-muted-foreground capitalize">{visibleMonthShortLabel}</p>
                           </div>
                           <div className="flex-1">
                             <p className="text-[13px] font-medium text-foreground">{ev.title}</p>
-                            <div className="flex items-center gap-3 text-[10px] text-muted-foreground/50 mt-0.5">
+                            <div className="flex items-center gap-3 text-[10px] text-muted-foreground mt-0.5">
                               <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{formatAgendaTimeRange(ev)}</span>
                               <span className="flex items-center gap-1"><Building2 className="w-3 h-3" />{ev.empresa}</span>
                               {ev.local && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{ev.local}</span>}
@@ -856,7 +856,7 @@ const Agenda = () => {
                           <motion.div className="w-2 h-2 rounded-full" style={{ backgroundColor: `hsl(var(--${col.color}))` }} animate={{ scale: [1, 1.3, 1] }} transition={{ duration: 2, repeat: Infinity, delay: colIndex * 0.5 }} />
                           <span className="text-[12px] font-semibold text-foreground">{col.title}</span>
                         </div>
-                        <span className="text-[10px] font-mono text-muted-foreground/40 bg-muted/20 px-1.5 py-0.5 rounded">{kanbanEvents[col.id]?.length || 0}</span>
+                        <span className="text-[10px] font-mono text-muted-foreground bg-muted/20 px-1.5 py-0.5 rounded">{kanbanEvents[col.id]?.length || 0}</span>
                       </div>
                       <div className="p-3 space-y-2 flex-1 min-h-[400px]">
                         <AnimatePresence>
@@ -876,12 +876,12 @@ const Agenda = () => {
                             >
                               <div className="flex items-start justify-between mb-2">
                                 <p className="text-[12px] font-medium text-foreground leading-snug pr-2">{card.title}</p>
-                                <GripVertical className="w-3.5 h-3.5 text-muted-foreground/20 group-hover:text-muted-foreground/40 shrink-0 mt-0.5 transition-colors" />
+                                <GripVertical className="w-3.5 h-3.5 text-muted-foreground group-hover:text-muted-foreground shrink-0 mt-0.5 transition-colors" />
                               </div>
-                              <p className="text-[10px] text-muted-foreground/50 mb-2">{card.empresa}</p>
-                              {card.event?.local && <p className="text-[9px] text-muted-foreground/40 mb-2 truncate">{card.event.local}</p>}
+                              <p className="text-[10px] text-muted-foreground mb-2">{card.empresa}</p>
+                              {card.event?.local && <p className="text-[9px] text-muted-foreground mb-2 truncate">{card.event.local}</p>}
                               <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-1.5 text-[9px] text-muted-foreground/40"><CalendarIcon className="w-3 h-3" /><span>{card.date}</span></div>
+                                <div className="flex items-center gap-1.5 text-[9px] text-muted-foreground"><CalendarIcon className="w-3 h-3" /><span>{card.date}</span></div>
                                 <div className="flex items-center gap-1.5">
                                   <span className={`text-[8px] font-medium px-1.5 py-0.5 rounded-full border ${priorityColors[card.priority]}`}>{card.priority}</span>
                                   <span className={`inline-flex items-center gap-0.5 text-[8px] font-medium px-1.5 py-0.5 rounded-full ${card.type === "virtual" ? "bg-accent/10 text-accent" : "bg-primary/10 text-primary"}`}>
@@ -915,7 +915,7 @@ const Agenda = () => {
                           ))}
                         </AnimatePresence>
                         {(kanbanEvents[col.id] || []).length === 0 && (
-                          <motion.div className="flex items-center justify-center h-24 rounded-lg border border-dashed border-border/20 text-[10px] text-muted-foreground/20" animate={{ opacity: [0.3, 0.6, 0.3] }} transition={{ duration: 2, repeat: Infinity }}>Arraste cards aqui</motion.div>
+                          <motion.div className="flex items-center justify-center h-24 rounded-lg border border-dashed border-border/20 text-[10px] text-muted-foreground" animate={{ opacity: [0.3, 0.6, 0.3] }} transition={{ duration: 2, repeat: Infinity }}>Arraste cards aqui</motion.div>
                         )}
                       </div>
                     </motion.div>
@@ -939,32 +939,32 @@ const Agenda = () => {
               </div>
               <div className="p-5 space-y-4 max-h-[calc(100vh-130px)] overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-muted-foreground/20 [&::-webkit-scrollbar-thumb]:rounded-full">
                 <div>
-                  <label className="text-[10px] text-muted-foreground/50 font-medium tracking-wider uppercase mb-1.5 block">Pauta</label>
-                  <input type="text" placeholder="Pauta da reunião..." value={eventForm.titulo} onChange={(e) => setEventForm((prev) => ({ ...prev, titulo: e.target.value }))} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 transition-colors placeholder:text-muted-foreground/30" />
+                  <label className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Pauta</label>
+                  <input type="text" placeholder="Pauta da reunião..." value={eventForm.titulo} onChange={(e) => setEventForm((prev) => ({ ...prev, titulo: e.target.value }))} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 transition-colors placeholder:text-muted-foreground" />
                 </div>
                 <div>
-                  <label className="text-[10px] text-muted-foreground/50 font-medium tracking-wider uppercase mb-1.5 block">Empresa</label>
+                  <label className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Empresa</label>
                   <select value={eventForm.empresaId} onChange={(e) => setEventForm((prev) => ({ ...prev, empresaId: e.target.value }))} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 transition-colors">
                     <option value="">Selecione</option>
                     {empresas.map((empresa) => <option key={empresa.id} value={empresa.id}>{empresa.nome}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] text-muted-foreground/50 font-medium tracking-wider uppercase mb-1.5 block">Participantes</label>
-                  <div className="mb-2 flex h-9 items-center gap-2 rounded-lg border border-border/25 bg-background/50 px-3 text-muted-foreground/45 transition-colors focus-within:border-accent/40">
+                  <label className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Participantes</label>
+                  <div className="mb-2 flex h-9 items-center gap-2 rounded-lg border border-border/25 bg-background/50 px-3 text-muted-foreground transition-colors focus-within:border-accent/40">
                     <Search className="h-3.5 w-3.5 shrink-0" />
                     <input
                       type="text"
                       value={participantSearchQuery}
                       onChange={(e) => setParticipantSearchQuery(e.target.value)}
                       placeholder="Filtrar por nome ou e-mail"
-                      className="min-w-0 flex-1 bg-transparent text-[12px] text-foreground outline-none placeholder:text-muted-foreground/35"
+                      className="min-w-0 flex-1 bg-transparent text-[12px] text-foreground outline-none placeholder:text-muted-foreground"
                     />
                     {participantSearchQuery && (
                       <button
                         type="button"
                         onClick={() => setParticipantSearchQuery("")}
-                        className="flex h-5 w-5 items-center justify-center rounded-md text-muted-foreground/45 transition-colors hover:bg-muted/20 hover:text-foreground"
+                        className="flex h-5 w-5 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/20 hover:text-foreground"
                         aria-label="Limpar filtro de participantes"
                       >
                         <X className="h-3 w-3" />
@@ -973,7 +973,7 @@ const Agenda = () => {
                   </div>
                   <div className="max-h-32 overflow-y-auto rounded-lg border border-border/25 bg-background/50 p-2 space-y-1.5">
                     {usuarios.length === 0 ? (
-                      <p className="px-2 py-2 text-[11px] text-muted-foreground/40">Nenhum usuario cadastrado.</p>
+                      <p className="px-2 py-2 text-[11px] text-muted-foreground">Nenhum usuario cadastrado.</p>
                     ) : filteredUsuarios.length > 0 ? filteredUsuarios.map((usuario) => {
                       const checked = eventForm.participanteIds.includes(usuario.id);
                       return (
@@ -995,22 +995,22 @@ const Agenda = () => {
                         </label>
                       );
                     }) : (
-                      <p className="px-2 py-2 text-[11px] text-muted-foreground/40">Nenhum participante encontrado para este filtro.</p>
+                      <p className="px-2 py-2 text-[11px] text-muted-foreground">Nenhum participante encontrado para este filtro.</p>
                     )}
                   </div>
-                  <p className="mt-1 text-[10px] text-muted-foreground/40">
+                  <p className="mt-1 text-[10px] text-muted-foreground">
                     {eventForm.participanteIds.length > 0
                       ? `${eventForm.participanteIds.length} participante(s) selecionado(s).`
                       : "Selecione os usuarios que participarao da reuniao."}
                   </p>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><label className="text-[10px] text-muted-foreground/50 font-medium tracking-wider uppercase mb-1.5 block">Data</label><input type="date" value={eventForm.data} onChange={(e) => setEventForm((prev) => ({ ...prev, data: e.target.value }))} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 text-foreground" /></div>
-                  <div><label className="text-[10px] text-muted-foreground/50 font-medium tracking-wider uppercase mb-1.5 block">Horário</label><input type="time" value={eventForm.hora} onChange={(e) => setEventForm((prev) => ({ ...prev, hora: e.target.value }))} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 text-foreground" /></div>
+                  <div><label className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Data</label><input type="date" value={eventForm.data} onChange={(e) => setEventForm((prev) => ({ ...prev, data: e.target.value }))} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 text-foreground" /></div>
+                  <div><label className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Horário</label><input type="time" value={eventForm.hora} onChange={(e) => setEventForm((prev) => ({ ...prev, hora: e.target.value }))} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 text-foreground" /></div>
                 </div>
                 <div>
-                  <label className="text-[10px] text-muted-foreground/50 font-medium tracking-wider uppercase mb-1.5 block">Local</label>
-                  <input type="text" placeholder="Sala, endereço ou link" value={eventForm.local} disabled={!eventForm.presencial} onChange={(e) => setEventForm((prev) => ({ ...prev, local: e.target.value }))} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 transition-colors placeholder:text-muted-foreground/30 disabled:cursor-not-allowed disabled:opacity-45" />
+                  <label className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Local</label>
+                  <input type="text" placeholder="Sala, endereço ou link" value={eventForm.local} disabled={!eventForm.presencial} onChange={(e) => setEventForm((prev) => ({ ...prev, local: e.target.value }))} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 transition-colors placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-45" />
                 </div>
                 <div className="flex items-center gap-3">
                   <label className="flex items-center gap-2 cursor-pointer"><input type="radio" name="tipo-modal" checked={!eventForm.presencial} onChange={() => setEventForm((prev) => ({ ...prev, presencial: false, local: "" }))} className="accent-[hsl(var(--accent))]" /><span className="text-[12px] text-foreground/70">Virtual</span></label>
@@ -1020,14 +1020,14 @@ const Agenda = () => {
                 <motion.button onClick={handleCreateEvent} disabled={isSavingEvent} className="w-full h-10 rounded-lg bg-accent text-accent-foreground text-[13px] font-semibold shadow-[0_2px_10px_-2px_hsl(var(--accent)/0.3)]" whileHover={{ scale: 1.01, y: -1 }} whileTap={{ scale: 0.98 }}>{isSavingEvent ? "Salvando..." : "Confirmar Agendamento"}</motion.button>
               </div>
               <div className="hidden">
-                <div><label className="text-[10px] text-muted-foreground/50 font-medium tracking-wider uppercase mb-1.5 block">Pauta</label><input type="text" placeholder="Pauta da reunião..." className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 transition-colors placeholder:text-muted-foreground/30" /></div>
-                <div><label className="text-[10px] text-muted-foreground/50 font-medium tracking-wider uppercase mb-1.5 block">Empresa</label><input type="text" placeholder="Nome da empresa" className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 transition-colors placeholder:text-muted-foreground/30" /></div>
+                <div><label className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Pauta</label><input type="text" placeholder="Pauta da reunião..." className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 transition-colors placeholder:text-muted-foreground" /></div>
+                <div><label className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Empresa</label><input type="text" placeholder="Nome da empresa" className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 transition-colors placeholder:text-muted-foreground" /></div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><label className="text-[10px] text-muted-foreground/50 font-medium tracking-wider uppercase mb-1.5 block">Data</label><input type="date" className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 text-foreground" /></div>
-                  <div><label className="text-[10px] text-muted-foreground/50 font-medium tracking-wider uppercase mb-1.5 block">Horário</label><input type="time" className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 text-foreground" /></div>
+                  <div><label className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Data</label><input type="date" className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 text-foreground" /></div>
+                  <div><label className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Horário</label><input type="time" className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 text-foreground" /></div>
                 </div>
                 <div>
-                  <label className="text-[10px] text-muted-foreground/50 font-medium tracking-wider uppercase mb-1.5 block">Tipo</label>
+                  <label className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Tipo</label>
                   <div className="flex items-center gap-3">
                     <label className="flex items-center gap-2 cursor-pointer"><input type="radio" name="tipo" defaultChecked className="accent-[hsl(var(--accent))]" /><span className="text-[12px] text-foreground/70">Virtual</span></label>
                     <label className="flex items-center gap-2 cursor-pointer"><input type="radio" name="tipo" className="accent-[hsl(var(--accent))]" /><span className="text-[12px] text-foreground/70">Presencial</span></label>

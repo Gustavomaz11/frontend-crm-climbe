@@ -139,7 +139,7 @@ export const PipelineTaskKanban = ({
                   </div>
                 ))}
                 {columnTasks.length === 0 && (
-                  <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-border/20 px-3 py-8 text-center text-[9px] text-muted-foreground/40">
+                  <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-border/20 px-3 py-8 text-center text-[9px] text-muted-foreground">
                     {canMove ? "Arraste uma tarefa para esta coluna" : "Nenhuma tarefa nesta coluna"}
                   </div>
                 )}

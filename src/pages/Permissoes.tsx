@@ -264,7 +264,7 @@ const Permissoes = () => {
               <AnimatePresence mode="wait"><motion.div key={isDark ? "s" : "m"} initial={{ opacity: 0, rotate: -30 }} animate={{ opacity: 1, rotate: 0 }} exit={{ opacity: 0, rotate: 30 }}>{isDark ? <Sun className="w-[18px] h-[18px]" /> : <Moon className="w-[18px] h-[18px]" />}</motion.div></AnimatePresence>
               {!sidebarCollapsed && <span className="text-[13px] font-medium">{isDark ? "Modo claro" : "Modo escuro"}</span>}
             </motion.button>
-            <Link to="/"><motion.button className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground/50 hover:text-destructive hover:bg-destructive/5 transition-all ${sidebarCollapsed ? "justify-center" : ""}`} whileTap={{ scale: 0.98 }}><LogOut className="w-[18px] h-[18px]" />{!sidebarCollapsed && <span className="text-[13px] font-medium">Sair</span>}</motion.button></Link>
+            <Link to="/"><motion.button className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-all ${sidebarCollapsed ? "justify-center" : ""}`} whileTap={{ scale: 0.98 }}><LogOut className="w-[18px] h-[18px]" />{!sidebarCollapsed && <span className="text-[13px] font-medium">Sair</span>}</motion.button></Link>
           </div>
           <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)} className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-card border border-border/40 flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-accent/40 transition-all shadow-sm">
             {sidebarCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
@@ -273,16 +273,16 @@ const Permissoes = () => {
 
         <main className={`flex-1 transition-all duration-300 ${sidebarCollapsed ? "ml-[72px]" : "ml-[220px]"}`}>
           <motion.header className="sticky top-0 z-20 h-16 flex items-center justify-between px-6 border-b border-border/20 bg-background/80 backdrop-blur-xl" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="flex items-center gap-2 h-9 px-3 rounded-lg border border-border/25 bg-card/30 backdrop-blur-sm text-muted-foreground/50 w-[300px]">
+            <div className="flex items-center gap-2 h-9 px-3 rounded-lg border border-border/25 bg-card/30 backdrop-blur-sm text-muted-foreground w-[300px]">
               <Search className="w-3.5 h-3.5" />
-              <input type="text" placeholder="Buscar usuário..." value={userSearch} onChange={(e) => setUserSearch(e.target.value)} className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground/30 text-foreground" />
+              <input type="text" placeholder="Buscar usuário..." value={userSearch} onChange={(e) => setUserSearch(e.target.value)} className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground text-foreground" />
             </div>
             <UserAvatar name={userName} photoUrl={userPhoto} />
           </motion.header>
 
           <div className="px-6 pt-6 pb-2">
             <h1 className="text-[22px] font-bold text-foreground tracking-tight">Permissões por Usuário</h1>
-            <p className="text-[12px] text-muted-foreground/50 mt-0.5">Controle individual das políticas de acesso aplicadas a cada usuário.</p>
+            <p className="text-[12px] text-muted-foreground mt-0.5">Controle individual das políticas de acesso aplicadas a cada usuário.</p>
           </div>
 
           <div className="px-6 pb-6 space-y-3">
@@ -301,7 +301,7 @@ const Permissoes = () => {
                 Erro ao carregar usuários ou permissões.
               </div>
             ) : isLoading ? (
-              <div className="rounded-xl border border-border/25 bg-card/40 p-8 text-center text-[13px] text-muted-foreground/50">
+              <div className="rounded-xl border border-border/25 bg-card/40 p-8 text-center text-[13px] text-muted-foreground">
                 Carregando políticas de acesso...
               </div>
             ) : (
@@ -309,7 +309,7 @@ const Permissoes = () => {
                 <motion.section className="rounded-xl border border-border/25 bg-card/40 backdrop-blur-sm overflow-hidden" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}>
                   <div className="border-b border-border/15 p-4">
                     <p className="text-[13px] font-semibold text-foreground">Usuários</p>
-                    <p className="mt-0.5 text-[11px] text-muted-foreground/45">{filteredUsers.length} de {usuarios.length}</p>
+                    <p className="mt-0.5 text-[11px] text-muted-foreground">{filteredUsers.length} de {usuarios.length}</p>
                   </div>
                   <div className="max-h-[calc(100vh-250px)] divide-y divide-border/10 overflow-y-auto [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted-foreground/20 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar]:w-1.5">
                     {filteredUsers.map((usuario, index) => {
@@ -335,7 +335,7 @@ const Permissoes = () => {
                       );
                     })}
                     {filteredUsers.length === 0 && (
-                      <div className="px-4 py-8 text-center text-[12px] text-muted-foreground/35">Nenhum usuário encontrado</div>
+                      <div className="px-4 py-8 text-center text-[12px] text-muted-foreground">Nenhum usuário encontrado</div>
                     )}
                   </div>
                 </motion.section>
@@ -350,34 +350,34 @@ const Permissoes = () => {
                           </div>
                           <div className="min-w-0">
                             <h2 className="truncate text-[16px] font-semibold text-foreground">{selectedUser?.nomeCompleto || "Selecione um usuário"}</h2>
-                            <p className="truncate text-[11px] text-muted-foreground/45">{selectedUser?.email || "—"}</p>
+                            <p className="truncate text-[11px] text-muted-foreground">{selectedUser?.email || "—"}</p>
                           </div>
                         </div>
                       </div>
 
                       <div className="rounded-lg border border-border/20 bg-background/45 px-3 py-2 text-right">
                         <p className="text-[18px] font-bold leading-none text-foreground">{optimisticPermissionIds.size}</p>
-                        <p className="mt-1 text-[9px] uppercase tracking-[0.08em] text-muted-foreground/40">habilitadas</p>
+                        <p className="mt-1 text-[9px] uppercase tracking-[0.08em] text-muted-foreground">habilitadas</p>
                       </div>
                     </div>
 
-                    <div className="mt-4 flex items-center gap-2 h-9 px-3 rounded-lg border border-border/25 bg-background/50 text-muted-foreground/50">
+                    <div className="mt-4 flex items-center gap-2 h-9 px-3 rounded-lg border border-border/25 bg-background/50 text-muted-foreground">
                       <Search className="w-3.5 h-3.5" />
-                      <input type="text" placeholder="Buscar permissão..." value={permissionSearch} onChange={(e) => setPermissionSearch(e.target.value)} className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground/30 text-foreground" />
+                      <input type="text" placeholder="Buscar permissão..." value={permissionSearch} onChange={(e) => setPermissionSearch(e.target.value)} className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground text-foreground" />
                     </div>
                   </div>
 
                   <div className="max-h-[calc(100vh-330px)] overflow-y-auto p-5 space-y-5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-muted-foreground/20 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar]:w-1.5">
                     {!selectedUser ? (
-                      <div className="py-12 text-center text-[12px] text-muted-foreground/35">Nenhum usuário selecionado</div>
+                      <div className="py-12 text-center text-[12px] text-muted-foreground">Nenhum usuário selecionado</div>
                     ) : loadingUsuarioPermissoes ? (
-                      <div className="py-12 text-center text-[12px] text-muted-foreground/45">Carregando permissões do usuário...</div>
+                      <div className="py-12 text-center text-[12px] text-muted-foreground">Carregando permissões do usuário...</div>
                     ) : Object.keys(permissoesGrouped).length === 0 ? (
-                      <div className="py-12 text-center text-[12px] text-muted-foreground/35">Nenhuma permissão encontrada</div>
+                      <div className="py-12 text-center text-[12px] text-muted-foreground">Nenhuma permissão encontrada</div>
                     ) : (
                       Object.entries(permissoesGrouped).map(([group, groupPermissoes]) => (
                         <div key={group} className="space-y-2">
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/40">{group}</p>
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">{group}</p>
                           <div className="space-y-2">
                             {groupPermissoes.map((permissao) => {
                               const enabled = optimisticPermissionIds.has(permissao.id);
@@ -396,13 +396,13 @@ const Permissoes = () => {
                                   <div className="min-w-0 flex-1">
                                     <div className="flex flex-wrap items-center gap-2">
                                       <p className="text-[13px] font-medium text-foreground/85">{permissao.nome}</p>
-                                      <span className="rounded-md border border-border/25 bg-card/40 px-1.5 py-0.5 font-mono text-[9px] text-muted-foreground/50">{permissao.codigo}</span>
+                                      <span className="rounded-md border border-border/25 bg-card/40 px-1.5 py-0.5 font-mono text-[9px] text-muted-foreground">{permissao.codigo}</span>
                                     </div>
                                     {permissao.descricao && permissao.descricao !== permissao.nome && (
-                                      <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground/45">{permissao.descricao}</p>
+                                      <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">{permissao.descricao}</p>
                                     )}
                                   </div>
-                                  <span className={`rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.05em] ${enabled ? "bg-accent/10 text-accent" : "bg-muted/25 text-muted-foreground/45"}`}>
+                                  <span className={`rounded-full px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.05em] ${enabled ? "bg-accent/10 text-accent" : "bg-muted/25 text-muted-foreground"}`}>
                                     {pending ? "Salvando" : enabled ? "Permitido" : "Negado"}
                                   </span>
                                 </div>

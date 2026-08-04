@@ -48,18 +48,18 @@ export const HierarchyBranch = ({ node, selectedId, invalidDropIds, onSelect }: 
           onClick={() => onSelect(node.id)}
           className={`min-h-20 w-full rounded-xl border px-4 py-3 pr-10 text-left shadow-sm transition-colors ${isOver ? "border-accent bg-accent/20 ring-4 ring-accent/15" : selectedId === node.id ? "border-accent/60 bg-accent/12 ring-2 ring-accent/10" : "border-border/30 bg-card/90 hover:border-accent/35 hover:bg-card"}`}
         >
-          <span className="mb-2 flex items-center gap-2 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground/45">
+          <span className="mb-2 flex items-center gap-2 text-[9px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
             <UsersRound className="h-3.5 w-3.5" />Cargo
           </span>
           <span className="block text-[12px] font-semibold leading-snug text-foreground">{node.nome}</span>
-          <span className="mt-1 block text-[9px] text-muted-foreground/45">{node.children.length} subordinado(s) direto(s)</span>
+          <span className="mt-1 block text-[9px] text-muted-foreground">{node.children.length} subordinado(s) direto(s)</span>
         </motion.button>
         <button
           ref={setActivatorNodeRef}
           type="button"
           aria-label={`Arrastar ${node.nome}`}
           title="Arraste para alterar a hierarquia"
-          className="absolute right-2 top-2 inline-flex h-8 w-7 touch-none cursor-grab items-center justify-center rounded-lg text-muted-foreground/45 transition hover:bg-accent/10 hover:text-accent active:cursor-grabbing"
+          className="absolute right-2 top-2 inline-flex h-8 w-7 touch-none cursor-grab items-center justify-center rounded-lg text-muted-foreground transition hover:bg-accent/10 hover:text-accent active:cursor-grabbing"
           {...listeners}
           {...attributes}
         >
@@ -95,7 +95,7 @@ export const AdministratorDropTarget = () => {
     >
       <Crown className="mx-auto mb-2 h-5 w-5 text-accent" />
       <p className="text-[14px] font-bold">Administrador</p>
-      <p className="mt-1 text-[9px] uppercase tracking-[0.12em] text-muted-foreground/50">Raiz fixa da organização</p>
+      <p className="mt-1 text-[9px] uppercase tracking-[0.12em] text-muted-foreground">Raiz fixa da organização</p>
       {isOver && <p className="mt-2 text-[9px] font-semibold text-accent">Solte para mover à raiz</p>}
     </div>
   );

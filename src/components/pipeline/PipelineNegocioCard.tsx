@@ -41,7 +41,7 @@ export const PipelineNegocioCard = memo(({ negocio, canMove, isMoving, onOpen, o
     <div className="flex items-start justify-between gap-2">
       <div className="min-w-0">
         <p className="truncate text-[13px] font-semibold text-foreground">{negocio.nomeEmpresa}</p>
-        <p className="mt-0.5 truncate text-[10px] text-muted-foreground/55">{negocio.servicoInteresse}</p>
+        <p className="mt-0.5 truncate text-[10px] text-muted-foreground">{negocio.servicoInteresse}</p>
       </div>
       {isMoving ? (
         <span className="flex items-center gap-1 rounded-full bg-accent/10 px-2 py-0.5 text-[8px] font-semibold text-accent">
@@ -55,7 +55,7 @@ export const PipelineNegocioCard = memo(({ negocio, canMove, isMoving, onOpen, o
       )}
     </div>
 
-    <div className="mt-3 space-y-1.5 text-[10px] text-muted-foreground/60">
+    <div className="mt-3 space-y-1.5 text-[10px] text-muted-foreground">
       <div className="flex items-center gap-1.5"><UserRound className="h-3 w-3" /><span className="truncate">{negocio.nomeContato}</span></div>
       <div className="flex items-center gap-1.5"><CalendarDays className="h-3 w-3" /><span className="truncate">{formatDate(negocio.dataReuniao)}</span></div>
       <div className="flex items-center gap-1.5"><CircleDollarSign className="h-3 w-3" /><span className="truncate">{formatCurrency(negocio.valorEstimadoProposta)}</span></div>

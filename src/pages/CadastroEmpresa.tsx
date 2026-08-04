@@ -20,6 +20,7 @@ import {
   useUpdateEmpresa,
 } from "@/services";
 import { FileCheck } from "lucide-react";
+import { formatCnpj, isValidCnpj } from "@/lib/cnpj";
 
 const UF_OPTIONS = [
   "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG",
@@ -33,12 +34,12 @@ function InputField({
 }: React.InputHTMLAttributes<HTMLInputElement> & { label: string; required?: boolean }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-[11px] font-medium text-muted-foreground/70 tracking-wide uppercase">
+      <label className="text-[11px] font-medium text-muted-foreground tracking-wide uppercase">
         {label}{required && <span className="text-destructive ml-0.5">*</span>}
       </label>
       <input
         {...props}
-        className="h-9 rounded-lg border border-border/30 bg-background/50 px-3 text-[13px] text-foreground placeholder:text-muted-foreground/30 outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all"
+        className="h-9 rounded-lg border border-border/30 bg-background/50 px-3 text-[13px] text-foreground placeholder:text-muted-foreground outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all"
       />
     </div>
   );
@@ -52,7 +53,7 @@ function SelectField({
 }: React.SelectHTMLAttributes<HTMLSelectElement> & { label: string; required?: boolean }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-[11px] font-medium text-muted-foreground/70 tracking-wide uppercase">
+      <label className="text-[11px] font-medium text-muted-foreground tracking-wide uppercase">
         {label}{required && <span className="text-destructive ml-0.5">*</span>}
       </label>
       <select
@@ -81,31 +82,6 @@ const emptyForm: CreateEmpresaDTO = {
   representanteCpf: "",
   representanteContato: "",
 };
-
-function formatCnpj(v: string) {
-  return v.replace(/\D/g, "")
-    .slice(0, 14)
-    .replace(/^(\d{2})(\d)/, "$1.$2")
-    .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
-    .replace(/\.(\d{3})(\d)/, ".$1/$2")
-    .replace(/(\d{4})(\d)/, "$1-$2");
-}
-
-function isValidCnpj(value: string) {
-  const cnpj = value.replace(/\D/g, "");
-  if (cnpj.length !== 14 || /^(\d)\1+$/.test(cnpj)) return false;
-
-  const calculateDigit = (base: string, factors: number[]) => {
-    const sum = factors.reduce((acc, factor, index) => acc + Number(base[index]) * factor, 0);
-    const rest = sum % 11;
-    return rest < 2 ? 0 : 11 - rest;
-  };
-
-  const firstDigit = calculateDigit(cnpj.slice(0, 12), [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
-  const secondDigit = calculateDigit(cnpj.slice(0, 13), [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
-
-  return firstDigit === Number(cnpj[12]) && secondDigit === Number(cnpj[13]);
-}
 
 function formatCpf(v: string) {
   return v.replace(/\D/g, "")
@@ -323,7 +299,7 @@ const CadastroEmpresa = () => {
             </motion.button>
             <Link to="/">
               <motion.button
-                className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground/50 hover:text-destructive hover:bg-destructive/5 transition-all ${sidebarCollapsed ? "justify-center" : ""}`}
+                className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-all ${sidebarCollapsed ? "justify-center" : ""}`}
                 whileTap={{ scale: 0.98 }}
               >
                 <LogOut className="w-[18px] h-[18px]" />
@@ -365,7 +341,7 @@ const CadastroEmpresa = () => {
               <h1 className="text-[22px] font-bold text-foreground tracking-tight">
                 {isEditing ? "Editar Empresa" : "Cadastrar Empresa"}
               </h1>
-              <p className="text-[12px] text-muted-foreground/50 mt-0.5">
+              <p className="text-[12px] text-muted-foreground mt-0.5">
                 {isEditing
                   ? "Atualize as informações cadastrais da empresa."
                   : "Preencha os dados para registrar uma nova empresa na plataforma."}
@@ -404,7 +380,7 @@ const CadastroEmpresa = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.05 }}
               >
-                <p className="text-[10px] font-semibold text-muted-foreground/50 tracking-[0.1em] uppercase">Dados da Empresa</p>
+                <p className="text-[10px] font-semibold text-muted-foreground tracking-[0.1em] uppercase">Dados da Empresa</p>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2">
                     <InputField
@@ -438,7 +414,7 @@ const CadastroEmpresa = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 }}
               >
-                <p className="text-[10px] font-semibold text-muted-foreground/50 tracking-[0.1em] uppercase">Endereço</p>
+                <p className="text-[10px] font-semibold text-muted-foreground tracking-[0.1em] uppercase">Endereço</p>
                 <div className="grid grid-cols-4 gap-4">
                   <div className="col-span-2">
                     <InputField
@@ -453,7 +429,7 @@ const CadastroEmpresa = () => {
                         className={`mt-1 text-[10px] ${
                           cepMessage.includes("preenchido")
                             ? "text-accent"
-                            : "text-muted-foreground/55"
+                            : "text-muted-foreground"
                         }`}
                       >
                         {cepLoading ? "Consultando CEP..." : cepMessage}
@@ -515,7 +491,7 @@ const CadastroEmpresa = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.15 }}
               >
-                <p className="text-[10px] font-semibold text-muted-foreground/50 tracking-[0.1em] uppercase">Contato</p>
+                <p className="text-[10px] font-semibold text-muted-foreground tracking-[0.1em] uppercase">Contato</p>
                 <div className="grid grid-cols-2 gap-4">
                   <InputField
                     label="Telefone"
@@ -542,7 +518,7 @@ const CadastroEmpresa = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
               >
-                <p className="text-[10px] font-semibold text-muted-foreground/50 tracking-[0.1em] uppercase">Representante Legal</p>
+                <p className="text-[10px] font-semibold text-muted-foreground tracking-[0.1em] uppercase">Representante Legal</p>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2">
                     <InputField
@@ -627,7 +603,7 @@ const CadastroEmpresa = () => {
                   <h2 className="text-[16px] font-semibold text-foreground">
                     {isEditing ? "Empresa atualizada!" : "Empresa cadastrada!"}
                   </h2>
-                  <p className="text-[12px] text-muted-foreground/50 mt-1">
+                  <p className="text-[12px] text-muted-foreground mt-1">
                     {form.nomeFantasia || form.razaoSocial} foi {isEditing ? "atualizada" : "registrada"} com sucesso.
                   </p>
                 </div>

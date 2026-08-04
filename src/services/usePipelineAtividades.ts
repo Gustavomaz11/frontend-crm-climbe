@@ -44,7 +44,7 @@ export interface PipelineTarefaInput {
   descricao?: string | null;
   responsavelId: number;
   dataInicio?: string | null;
-  prazo?: string | null;
+  prazo: string;
   prioridade: PipelineTarefaPrioridade;
   status: PipelineTarefaStatus;
   tipo: string;

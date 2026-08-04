@@ -140,16 +140,16 @@ const InvestmentGraphics = () => {
         transition={{ duration: 0.6, delay: 0.5 }}
       >
         <div className="flex items-center gap-3 mb-4">
-          <span className="text-[9px] font-medium tracking-[0.2em] uppercase text-muted-foreground/50">
+          <span className="text-[9px] font-medium tracking-[0.2em] uppercase text-muted-foreground">
             Performance patrimonial
           </span>
           <div className="flex-1 h-px bg-border/30" />
         </div>
         <PerformanceCurve />
         <div className="flex justify-between mt-3">
-          <span className="text-[9px] text-muted-foreground/40 font-mono">Jan</span>
-          <span className="text-[9px] text-muted-foreground/40 font-mono">Jun</span>
-          <span className="text-[9px] text-muted-foreground/40 font-mono">Dez</span>
+          <span className="text-[9px] text-muted-foreground font-mono">Jan</span>
+          <span className="text-[9px] text-muted-foreground font-mono">Jun</span>
+          <span className="text-[9px] text-muted-foreground font-mono">Dez</span>
         </div>
       </motion.div>
 
@@ -162,12 +162,12 @@ const InvestmentGraphics = () => {
       >
         <div>
           <AllocationRing />
-          <span className="text-[8px] tracking-[0.15em] uppercase text-muted-foreground/40 mt-2 block text-center">
+          <span className="text-[8px] tracking-[0.15em] uppercase text-muted-foreground mt-2 block text-center">
             Alocação
           </span>
         </div>
         <div className="flex-1">
-          <span className="text-[9px] font-medium tracking-[0.2em] uppercase text-muted-foreground/50 block mb-3">
+          <span className="text-[9px] font-medium tracking-[0.2em] uppercase text-muted-foreground block mb-3">
             Evolução patrimonial
           </span>
           <PatrimonioChart />
@@ -186,7 +186,7 @@ const InvestmentGraphics = () => {
           animate={{ opacity: [1, 0.4, 1] }}
           transition={{ duration: 3, repeat: Infinity }}
         />
-        <span className="text-[9px] text-muted-foreground/40">
+        <span className="text-[9px] text-muted-foreground">
           Ambiente protegido · Gestão patrimonial ativa
         </span>
       </motion.div>

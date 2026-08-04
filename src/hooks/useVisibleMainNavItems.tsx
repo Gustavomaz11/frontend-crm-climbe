@@ -17,6 +17,7 @@ import {
   FileCode2,
   BriefcaseBusiness,
   Network,
+  UsersRound,
   type LucideIcon,
 } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -45,6 +46,7 @@ const mainNavItems: MainNavItem[] = [
   { icon: BriefcaseBusiness, label: "Cargos", path: "/cargos", permissions: ["CARGO_CRUD"] },
   { icon: Network, label: "Hierarquia de cargos", path: "/cargos/hierarquia", permissions: ["CARGO_HIERARQUIA_EDITAR"] },
   { icon: Building2, label: "Empresas", path: "/empresas" },
+  { icon: UsersRound, label: "Pessoas", path: "/pessoas" },
   {
     icon: FileCheck,
     label: "Documentos",

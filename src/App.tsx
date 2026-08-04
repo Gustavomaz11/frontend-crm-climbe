@@ -28,6 +28,7 @@ import {
   NotFound,
   PendingApproval,
   Perfil,
+  Pessoas,
   Permissoes,
   PipelineCampanhas,
   PipelineDashboard,
@@ -180,6 +181,14 @@ const App = () => (
               element={
                 <PrivateRoute>
                   <CadastroEmpresa />
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/pessoas"
+              element={
+                <PrivateRoute>
+                  <Pessoas />
                 </PrivateRoute>
               }
             />

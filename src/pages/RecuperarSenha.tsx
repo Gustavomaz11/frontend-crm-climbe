@@ -76,7 +76,7 @@ const RecuperarSenha = () => {
             >
               <Link
                 to="/"
-                className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground/50 hover:text-accent transition-colors duration-200 mb-8"
+                className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-accent transition-colors duration-200 mb-8"
               >
                 <ArrowLeft className="w-3 h-3" />
                 Voltar ao acesso
@@ -96,7 +96,7 @@ const RecuperarSenha = () => {
                       <br />
                       <span className="text-accent">senha</span>
                     </h1>
-                    <p className="text-sm text-muted-foreground/60 leading-relaxed mb-10 max-w-[320px]">
+                    <p className="text-sm text-muted-foreground leading-relaxed mb-10 max-w-[320px]">
                       Informe o e-mail corporativo associado à sua conta para receber o link de redefinição.
                     </p>
 
@@ -108,7 +108,7 @@ const RecuperarSenha = () => {
                       className="space-y-5"
                     >
                       <div>
-                        <label className="text-[11px] font-medium text-muted-foreground/70 mb-1.5 block tracking-wide">
+                        <label className="text-[11px] font-medium text-muted-foreground mb-1.5 block tracking-wide">
                           E-mail corporativo
                         </label>
                         <div className="relative">
@@ -119,7 +119,7 @@ const RecuperarSenha = () => {
                             onFocus={() => setFocusedField("email")}
                             onBlur={() => setFocusedField(null)}
                             placeholder="nome@climbe.com.br"
-                            className="w-full h-11 rounded-md border border-input bg-background px-3.5 text-sm text-foreground placeholder:text-muted-foreground/30 focus:outline-none focus:border-accent/60 focus:ring-1 focus:ring-accent/15 transition-all duration-200"
+                            className="w-full h-11 rounded-md border border-input bg-background px-3.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-accent/60 focus:ring-1 focus:ring-accent/15 transition-all duration-200"
                           />
                           <motion.div
                             className="absolute bottom-0 left-0 right-0 h-[2px] rounded-full bg-accent origin-left"
@@ -179,7 +179,7 @@ const RecuperarSenha = () => {
                       <br />
                       <span className="text-accent">enviado</span>
                     </h1>
-                    <p className="text-sm text-muted-foreground/60 leading-relaxed mb-8 max-w-[320px]">
+                    <p className="text-sm text-muted-foreground leading-relaxed mb-8 max-w-[320px]">
                       Se o e-mail <span className="text-foreground font-medium">{email}</span> estiver cadastrado, você receberá as instruções de redefinição em instantes.
                     </p>
 
@@ -198,10 +198,10 @@ const RecuperarSenha = () => {
         </main>
 
         <footer className="flex items-center justify-between px-6 md:px-10 lg:px-14 py-5">
-          <span className="text-[9px] text-muted-foreground/25 tracking-wide">
+          <span className="text-[9px] text-muted-foreground tracking-wide">
             © 2026 Climbe Investimentos Independentes
           </span>
-          <span className="text-[9px] text-muted-foreground/25 font-mono">
+          <span className="text-[9px] text-muted-foreground font-mono">
             v3.1.0
           </span>
         </footer>

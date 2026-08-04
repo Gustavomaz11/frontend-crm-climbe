@@ -236,7 +236,7 @@ const Index = () => {
 
           <div className="flex items-center gap-3">
             <motion.div
-              className="hidden items-center gap-1.5 rounded-full border border-border/40 px-2.5 py-1 text-[9px] uppercase tracking-[0.15em] text-muted-foreground/50 md:flex"
+              className="hidden items-center gap-1.5 rounded-full border border-border/40 px-2.5 py-1 text-[9px] uppercase tracking-[0.15em] text-muted-foreground md:flex"
               initial={{ opacity: 0, y: -8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
@@ -289,7 +289,7 @@ const Index = () => {
                   <span className="text-accent">interno</span>
                 </h1>
 
-                <p className="mb-10 max-w-[340px] text-sm leading-relaxed text-muted-foreground/60">
+                <p className="mb-10 max-w-[340px] text-sm leading-relaxed text-muted-foreground">
                   Plataforma restrita para operações, análises e gestão
                   patrimonial.
                 </p>
@@ -303,7 +303,7 @@ const Index = () => {
                 transition={{ duration: 0.5, delay: 0.15, ease: "easeOut" }}
               >
                 <div>
-                  <label className="mb-1.5 block text-[11px] font-medium tracking-wide text-muted-foreground/70">
+                  <label className="mb-1.5 block text-[11px] font-medium tracking-wide text-muted-foreground">
                     E-mail
                   </label>
 
@@ -315,7 +315,7 @@ const Index = () => {
                       onFocus={() => setFocusedField("email")}
                       onBlur={() => setFocusedField(null)}
                       placeholder="nome@empresa.com.br"
-                      className="h-11 w-full rounded-md border border-input bg-background px-3.5 text-sm text-foreground placeholder:text-muted-foreground/30 transition-all duration-200 focus:border-accent/60 focus:outline-none focus:ring-1 focus:ring-accent/15"
+                      className="h-11 w-full rounded-md border border-input bg-background px-3.5 text-sm text-foreground placeholder:text-muted-foreground transition-all duration-200 focus:border-accent/60 focus:outline-none focus:ring-1 focus:ring-accent/15"
                     />
 
                     <motion.div
@@ -328,7 +328,7 @@ const Index = () => {
                 </div>
 
                 <div>
-                  <label className="mb-1.5 block text-[11px] font-medium tracking-wide text-muted-foreground/70">
+                  <label className="mb-1.5 block text-[11px] font-medium tracking-wide text-muted-foreground">
                     Senha
                   </label>
 
@@ -340,13 +340,13 @@ const Index = () => {
                       onFocus={() => setFocusedField("password")}
                       onBlur={() => setFocusedField(null)}
                       placeholder="••••••••"
-                      className="h-11 w-full rounded-md border border-input bg-background px-3.5 pr-10 text-sm text-foreground placeholder:text-muted-foreground/30 transition-all duration-200 focus:border-accent/60 focus:outline-none focus:ring-1 focus:ring-accent/15"
+                      className="h-11 w-full rounded-md border border-input bg-background px-3.5 pr-10 text-sm text-foreground placeholder:text-muted-foreground transition-all duration-200 focus:border-accent/60 focus:outline-none focus:ring-1 focus:ring-accent/15"
                     />
 
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/40 transition-colors hover:text-foreground"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground"
                     >
                       {showPassword ? (
                         <EyeOff className="h-3.5 w-3.5" />
@@ -373,14 +373,14 @@ const Index = () => {
                 <div className="flex items-center justify-between">
                   <Link
                     to="/recuperar-senha"
-                    className="text-[10px] text-muted-foreground/50 transition-colors duration-200 hover:text-accent"
+                    className="text-[10px] text-muted-foreground transition-colors duration-200 hover:text-accent"
                   >
                     Esqueceu a senha?
                   </Link>
 
                   <Link
                     to="/solicitar-acesso"
-                    className="text-[10px] text-muted-foreground/50 transition-colors duration-200 hover:text-accent"
+                    className="text-[10px] text-muted-foreground transition-colors duration-200 hover:text-accent"
                   >
                     Solicitar acesso
                   </Link>
@@ -423,7 +423,7 @@ const Index = () => {
                   </div>
 
                   <div className="relative flex justify-center">
-                    <span className="bg-background px-3 text-[9px] uppercase tracking-wider text-muted-foreground/30">
+                    <span className="bg-background px-3 text-[9px] uppercase tracking-wider text-muted-foreground">
                       ou
                     </span>
                   </div>
@@ -478,7 +478,7 @@ const Index = () => {
                     </>
                   )}
                 </motion.button>
-                <p className="text-center text-[11px] text-muted-foreground/60">
+                <p className="text-center text-[11px] text-muted-foreground">
                   O login aceita qualquer conta Google. A sincronização da agenda é exclusiva para contas @climbe.com.br.
                 </p>
               </motion.form>
@@ -494,7 +494,7 @@ const Index = () => {
 
         <footer className="flex items-center justify-between px-6 py-5 md:px-10 lg:px-14">
           <motion.span
-            className="text-[9px] tracking-wide text-muted-foreground/25"
+            className="text-[9px] tracking-wide text-muted-foreground"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 1.2 }}
@@ -503,7 +503,7 @@ const Index = () => {
           </motion.span>
 
           <motion.span
-            className="font-mono text-[9px] text-muted-foreground/25"
+            className="font-mono text-[9px] text-muted-foreground"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.6, delay: 1.4 }}

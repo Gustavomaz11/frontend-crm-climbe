@@ -28,6 +28,7 @@ export interface PipelineNegocio {
   origemNegocio: string;
   estrategiaComercial: string;
   servicoInteresse: string;
+  servicosInteresse?: string[];
   valorEstimadoProposta?: number | null;
   observacoes?: string | null;
   resultado: PipelineResultado;
@@ -62,6 +63,8 @@ export interface PipelineBoard {
 export interface PipelineNegocioInput {
   funilId?: number | null;
   empresaId?: number | null;
+  cadastrarEmpresa?: boolean;
+  cnpj?: string | null;
   nomeEmpresa: string;
   nomeContato: string;
   telefone: string;
@@ -72,6 +75,7 @@ export interface PipelineNegocioInput {
   origemNegocio: string;
   estrategiaComercial: string;
   servicoInteresse: string;
+  servicosInteresse: string[];
   valorEstimadoProposta?: number | null;
   observacoes?: string | null;
 }
@@ -139,6 +143,7 @@ export const usePipelineVendas = (funilId?: number | null) => useQuery<PipelineB
 
 export const useCreatePipelineNegocio = () => {
   const invalidate = useInvalidatePipeline();
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (data: PipelineNegocioInput) => {
       try {
@@ -147,7 +152,12 @@ export const useCreatePipelineNegocio = () => {
         throw new Error(getErrorMessage(error));
       }
     },
-    onSuccess: invalidate,
+    onSuccess: async (_negocio, variables) => {
+      await invalidate();
+      if (variables.cadastrarEmpresa) {
+        await queryClient.invalidateQueries({ queryKey: ["empresas"] });
+      }
+    },
   });
 };
 

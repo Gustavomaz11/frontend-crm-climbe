@@ -26,7 +26,49 @@ export const formatTaskDate = (value?: string | null) => {
   return new Intl.DateTimeFormat("pt-BR", { timeZone: "UTC" }).format(new Date(`${value}T00:00:00Z`));
 };
 
-export const isOpenTask = (task: PipelineTarefa) => !["CONCLUIDA", "CANCELADA"].includes(task.status);
+export const isOpenTask = (task: Pick<PipelineTarefa, "status">) => !["CONCLUIDA", "CANCELADA"].includes(task.status);
+
+export type TaskDeadlineStatus = "OVERDUE" | "DUE_SOON" | "ON_TRACK" | "INACTIVE";
+
+export interface TaskDeadlineClassification {
+  status: TaskDeadlineStatus;
+  daysRemaining: number | null;
+  label: string;
+}
+
+const toLocalCalendarDay = (date: Date) => Date.UTC(
+  date.getFullYear(),
+  date.getMonth(),
+  date.getDate(),
+) / 86_400_000;
+
+export const classifyTaskDeadline = (
+  task: Pick<PipelineTarefa, "prazo" | "status">,
+  today = new Date(),
+): TaskDeadlineClassification => {
+  if (!isOpenTask(task) || !task.prazo) {
+    return { status: "INACTIVE", daysRemaining: null, label: "Prazo encerrado" };
+  }
+
+  const deadline = new Date(`${task.prazo}T00:00:00`);
+  const daysRemaining = toLocalCalendarDay(deadline) - toLocalCalendarDay(today);
+  if (daysRemaining < 0) {
+    const overdueDays = Math.abs(daysRemaining);
+    return {
+      status: "OVERDUE",
+      daysRemaining,
+      label: `Atrasada há ${overdueDays} ${overdueDays === 1 ? "dia" : "dias"}`,
+    };
+  }
+  if (daysRemaining <= 5) {
+    return {
+      status: "DUE_SOON",
+      daysRemaining,
+      label: daysRemaining === 0 ? "Vence hoje" : `Vence em ${daysRemaining} ${daysRemaining === 1 ? "dia" : "dias"}`,
+    };
+  }
+  return { status: "ON_TRACK", daysRemaining, label: "Prazo em dia" };
+};
 
 export const findNextTask = (tasks: PipelineTarefa[]) => tasks
   .filter(isOpenTask)

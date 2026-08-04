@@ -347,7 +347,7 @@ const SectionHeader = ({
         {title}
       </h3>
       {subtitle && (
-        <p className="mt-0.5 text-[11px] text-muted-foreground/40">
+        <p className="mt-0.5 text-[11px] text-muted-foreground">
           {subtitle}
         </p>
       )}
@@ -359,7 +359,7 @@ const SectionHeader = ({
       {!isMaximized && (
         <motion.button
           onClick={onMaximize}
-          className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground/40 transition-all hover:bg-muted/20 hover:text-foreground"
+          className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-all hover:bg-muted/20 hover:text-foreground"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           title="Maximizar"
@@ -956,13 +956,13 @@ const Dashboard = () => {
       {showSearch && (
         <div className="border-b border-border/10 px-5 py-3">
           <div className="flex h-9 items-center gap-2 rounded-lg border border-border/25 bg-background/50 px-3 text-muted-foreground">
-            <Search className="h-3.5 w-3.5 text-muted-foreground/40" />
+            <Search className="h-3.5 w-3.5 text-muted-foreground" />
             <input
               type="text"
               placeholder="Buscar empresa..."
               value={pipelineSearch}
               onChange={(e) => setPipelineSearch(e.target.value)}
-              className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground/30"
+              className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground"
             />
           </div>
         </div>
@@ -979,10 +979,10 @@ const Dashboard = () => {
               whileTap={{ scale: 0.98 }}
             >
               <div className="mb-1.5 flex items-center justify-between">
-                <span className="text-[9px] font-medium text-muted-foreground/40 transition-colors group-hover:text-accent">
+                <span className="text-[9px] font-medium text-muted-foreground transition-colors group-hover:text-accent">
                   {stage.label}
                 </span>
-                <span className="font-mono text-[9px] text-muted-foreground/30 transition-colors group-hover:text-accent">
+                <span className="font-mono text-[9px] text-muted-foreground transition-colors group-hover:text-accent">
                   {stage.count}
                 </span>
               </div>
@@ -1016,7 +1016,7 @@ const Dashboard = () => {
       </div>
 
       <div className="divide-y divide-border/10">
-        <div className="grid grid-cols-[1fr_80px_110px_120px_70px] px-5 py-2.5 text-[10px] font-medium uppercase tracking-[0.06em] text-muted-foreground/35">
+        <div className="grid grid-cols-[1fr_80px_110px_120px_70px] px-5 py-2.5 text-[10px] font-medium uppercase tracking-[0.06em] text-muted-foreground">
           <span>Empresa</span>
           <span>Tipo</span>
           <span>Resp.</span>
@@ -1036,10 +1036,10 @@ const Dashboard = () => {
             <span className="text-[13px] font-medium text-foreground transition-colors duration-200 group-hover:text-accent">
               {row.empresa}
             </span>
-            <span className="text-[12px] text-muted-foreground/50">
+            <span className="text-[12px] text-muted-foreground">
               {row.tipo}
             </span>
-            <span className="text-[12px] text-muted-foreground/50">
+            <span className="text-[12px] text-muted-foreground">
               {row.responsavel}
             </span>
             <span className="pl-3">
@@ -1049,14 +1049,14 @@ const Dashboard = () => {
                 {row.status}
               </span>
             </span>
-            <span className="text-right font-mono text-[12px] text-muted-foreground/40">
+            <span className="text-right font-mono text-[12px] text-muted-foreground">
               {row.data}
             </span>
           </motion.div>
         ))}
 
         {data.length === 0 && (
-          <div className="px-5 py-8 text-center text-[12px] text-muted-foreground/30">
+          <div className="px-5 py-8 text-center text-[12px] text-muted-foreground">
             Nenhuma empresa encontrada
           </div>
         )}
@@ -1109,7 +1109,7 @@ const Dashboard = () => {
                 </span>
               )}
             </div>
-            <p className="mt-1 text-[10px] text-muted-foreground/35">
+            <p className="mt-1 text-[10px] text-muted-foreground">
               {notif.time}
             </p>
           </div>
@@ -1151,7 +1151,7 @@ const Dashboard = () => {
       docsResumo.length > 0 ? Math.round((validatedCount / docsResumo.length) * 100) : 0;
 
     const emptyState = (label: string) => (
-      <div className="rounded-lg border border-dashed border-border/25 px-3 py-4 text-center text-[12px] text-muted-foreground/35">
+      <div className="rounded-lg border border-dashed border-border/25 px-3 py-4 text-center text-[12px] text-muted-foreground">
         Nenhum {label} vinculado.
       </div>
     );
@@ -1172,33 +1172,33 @@ const Dashboard = () => {
             </p>
           </div>
 
-          <span className="ml-auto text-[11px] text-muted-foreground/40">
+          <span className="ml-auto text-[11px] text-muted-foreground">
             {company.ultimoContato || "—"}
           </span>
         </div>
 
-        <p className="text-[11px] text-muted-foreground/40">
+        <p className="text-[11px] text-muted-foreground">
           Último contato: {company.ultimoContato || "—"}
         </p>
 
         <div className="grid grid-cols-3 gap-3">
           <div className="rounded-xl border border-border/20 bg-background/50 p-4">
-            <p className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground/35">Documentos</p>
+            <p className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground">Documentos</p>
             <p className="mt-1 text-[22px] font-bold text-foreground">{documentosEmpresa.length}</p>
           </div>
           <div className="rounded-xl border border-border/20 bg-background/50 p-4">
-            <p className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground/35">Contratos</p>
+            <p className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground">Contratos</p>
             <p className="mt-1 text-[22px] font-bold text-foreground">{contratosEmpresa.length}</p>
           </div>
           <div className="rounded-xl border border-border/20 bg-background/50 p-4">
-            <p className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground/35">Propostas</p>
+            <p className="text-[10px] uppercase tracking-[0.08em] text-muted-foreground">Propostas</p>
             <p className="mt-1 text-[22px] font-bold text-foreground">{propostasEmpresa.length}</p>
           </div>
         </div>
 
         <div>
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-[10px] text-muted-foreground/35">
+            <span className="text-[10px] text-muted-foreground">
               Conformidade documental
             </span>
             <span className="text-[12px] font-semibold text-accent">
@@ -1217,7 +1217,7 @@ const Dashboard = () => {
         </div>
 
         <div className="space-y-3 rounded-xl border border-border/20 bg-background/50 p-4">
-          <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground/40">
+          <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
             Documentos
           </p>
           {documentosEmpresa.length === 0
@@ -1227,7 +1227,7 @@ const Dashboard = () => {
                   <FileCheck className="h-4 w-4 text-accent" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[12px] font-medium text-foreground/80">{doc.nome}</p>
-                    <p className="text-[10px] text-muted-foreground/40">{doc.validado} · {formatDate(doc.dataUpload)}</p>
+                    <p className="text-[10px] text-muted-foreground">{doc.validado} · {formatDate(doc.dataUpload)}</p>
                   </div>
                   <button
                     onClick={() => handleDownloadVinculo("documento", doc.id)}
@@ -1241,7 +1241,7 @@ const Dashboard = () => {
         </div>
 
         <div className="space-y-3 rounded-xl border border-border/20 bg-background/50 p-4">
-          <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground/40">
+          <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
             Contratos
           </p>
           {contratosEmpresa.length === 0
@@ -1251,7 +1251,7 @@ const Dashboard = () => {
                   <FileText className="h-4 w-4 text-primary" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[12px] font-medium text-foreground/80">{contrato.titulo}</p>
-                    <p className="text-[10px] text-muted-foreground/40">{contrato.status} · início {formatDate(contrato.dataInicio)}</p>
+                    <p className="text-[10px] text-muted-foreground">{contrato.status} · início {formatDate(contrato.dataInicio)}</p>
                   </div>
                   <button
                     onClick={() => handleDownloadVinculo("contrato", contrato.id)}
@@ -1265,7 +1265,7 @@ const Dashboard = () => {
         </div>
 
         <div className="space-y-3 rounded-xl border border-border/20 bg-background/50 p-4">
-          <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground/40">
+          <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
             Propostas
           </p>
           {propostasEmpresa.length === 0
@@ -1275,7 +1275,7 @@ const Dashboard = () => {
                   <ScrollText className="h-4 w-4 text-accent" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-[12px] font-medium text-foreground/80">{getPropostaFileNameFromUrl(proposta.url)}</p>
-                    <p className="text-[10px] text-muted-foreground/40">
+                    <p className="text-[10px] text-muted-foreground">
                       {proposta.status} · {formatDate(proposta.dataCriacao)}
                       {proposta.valuation != null ? ` · ${formatCurrency(Number(proposta.valuation))}` : ""}
                     </p>
@@ -1292,7 +1292,7 @@ const Dashboard = () => {
         </div>
 
         <div className="space-y-3 rounded-xl border border-border/20 bg-background/50 p-4">
-          <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground/40">
+          <p className="text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
             Fluxo
           </p>
           {fluxo.map((item, index) => (
@@ -1300,7 +1300,7 @@ const Dashboard = () => {
               <div className={`flex h-4 w-4 items-center justify-center rounded-full border-2 ${item.done ? "border-accent bg-accent/10" : "border-border/30"}`}>
                 {item.done && <CheckCircle2 className="h-3 w-3 text-accent" />}
               </div>
-              <span className={`text-[12px] ${item.done ? "text-foreground/70" : "text-muted-foreground/40"}`}>
+              <span className={`text-[12px] ${item.done ? "text-foreground/70" : "text-muted-foreground"}`}>
                 {item.name}
               </span>
             </div>
@@ -1408,7 +1408,7 @@ const Dashboard = () => {
         {["D", "S", "T", "Q", "Q", "S", "S"].map((day, index) => (
           <div
             key={`${day}-${index}`}
-            className="py-0.5 text-center text-[8px] font-medium text-muted-foreground/30"
+            className="py-0.5 text-center text-[8px] font-medium text-muted-foreground"
           >
             {day}
           </div>
@@ -1438,7 +1438,7 @@ const Dashboard = () => {
                       ? "bg-accent text-accent-foreground font-semibold"
                       : hasMeeting
                         ? "bg-accent/15 font-semibold text-accent hover:bg-accent/25"
-                        : "text-foreground/50 hover:bg-muted/20"
+                        : "text-foreground hover:bg-muted/20"
               }`}
               whileHover={day ? { scale: expanded ? 1.05 : 1.08 } : undefined}
               whileTap={day ? { scale: 0.95 } : undefined}
@@ -1467,7 +1467,7 @@ const Dashboard = () => {
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.3 }}
           >
-            <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground/40">
+            <p className="mb-2 text-[10px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
               Reuniões em {selectedDay.toString().padStart(2, "0")}/
               {(currentMonth + 1).toString().padStart(2, "0")}
             </p>
@@ -1489,7 +1489,7 @@ const Dashboard = () => {
                   </span>
                 </div>
 
-                <div className="flex items-center gap-3 text-[10px] text-muted-foreground/50">
+                <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <Building2 className="h-3 w-3" /> {meeting.empresa}
                   </span>
@@ -1535,7 +1535,7 @@ const Dashboard = () => {
                 onChange={(event) =>
                   setMeetingForm((form) => ({ ...form, titulo: event.target.value }))
                 }
-                className="h-9 w-full rounded-lg border border-border/25 bg-background/50 px-3 text-[12px] outline-none transition-colors placeholder:text-muted-foreground/30 focus:border-accent/40"
+                className="h-9 w-full rounded-lg border border-border/25 bg-background/50 px-3 text-[12px] outline-none transition-colors placeholder:text-muted-foreground focus:border-accent/40"
               />
 
               <div className="grid grid-cols-2 gap-3">
@@ -1545,7 +1545,7 @@ const Dashboard = () => {
                   onChange={(event) =>
                     setMeetingForm((form) => ({ ...form, empresaId: event.target.value }))
                   }
-                  className="h-9 rounded-lg border border-border/25 bg-background/50 px-3 text-[12px] outline-none transition-colors placeholder:text-muted-foreground/30 focus:border-accent/40"
+                  className="h-9 rounded-lg border border-border/25 bg-background/50 px-3 text-[12px] outline-none transition-colors placeholder:text-muted-foreground focus:border-accent/40"
                 >
                   <option value="">Selecione a empresa</option>
                   {empresas.map((empresa) => (
@@ -1561,7 +1561,7 @@ const Dashboard = () => {
                   onChange={(event) =>
                     setMeetingForm((form) => ({ ...form, hora: event.target.value }))
                   }
-                  className="h-9 rounded-lg border border-border/25 bg-background/50 px-3 text-[12px] outline-none transition-colors placeholder:text-muted-foreground/30 focus:border-accent/40"
+                  className="h-9 rounded-lg border border-border/25 bg-background/50 px-3 text-[12px] outline-none transition-colors placeholder:text-muted-foreground focus:border-accent/40"
                 />
               </div>
 
@@ -1580,7 +1580,7 @@ const Dashboard = () => {
                 onChange={(event) =>
                   setMeetingForm((form) => ({ ...form, local: event.target.value }))
                 }
-                className="h-9 w-full rounded-lg border border-border/25 bg-background/50 px-3 text-[12px] outline-none transition-colors placeholder:text-muted-foreground/30 focus:border-accent/40"
+                className="h-9 w-full rounded-lg border border-border/25 bg-background/50 px-3 text-[12px] outline-none transition-colors placeholder:text-muted-foreground focus:border-accent/40"
               />
 
               {meetingError && (
@@ -1732,7 +1732,7 @@ const Dashboard = () => {
 
             <motion.button
               onClick={() => authContext?.signOut()}
-              className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground/50 transition-all duration-200 hover:bg-destructive/5 hover:text-destructive ${
+              className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground transition-all duration-200 hover:bg-destructive/5 hover:text-destructive ${
                 sidebarCollapsed ? "justify-center" : ""
               }`}
               whileTap={{ scale: 0.98 }}
@@ -1768,7 +1768,7 @@ const Dashboard = () => {
             transition={{ duration: 0.4 }}
           >
             <div>
-              <p className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground/40">
+              <p className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
                 bem-vindo de volta
               </p>
               <h2 className="text-[15px] font-semibold tracking-tight text-foreground">
@@ -1856,7 +1856,7 @@ const Dashboard = () => {
 
                   <div className="relative z-10">
                     <div className="mb-3 flex items-center justify-between">
-                      <span className="text-[11px] font-medium text-muted-foreground/60">
+                      <span className="text-[11px] font-medium text-muted-foreground">
                         {stat.label}
                       </span>
 
@@ -1885,7 +1885,7 @@ const Dashboard = () => {
                       {stat.value}
                     </motion.p>
 
-                    <p className="flex items-center gap-1 text-[13px] text-muted-foreground/50">
+                    <p className="flex items-center gap-1 text-[13px] text-muted-foreground">
                       {stat.trend === "up" && (
                         <ArrowUpRight className="h-3.5 w-3.5 text-accent" />
                       )}
@@ -1918,7 +1918,7 @@ const Dashboard = () => {
                             className={`h-7 rounded-md px-2.5 text-[10px] font-medium transition-all duration-200 ${
                               filter === pipelineFilter
                                 ? "border border-accent/20 bg-accent/10 text-accent"
-                                : "text-muted-foreground/50 hover:bg-muted/20 hover:text-foreground"
+                                : "text-muted-foreground hover:bg-muted/20 hover:text-foreground"
                             }`}
                           >
                             {filter}
@@ -1931,13 +1931,13 @@ const Dashboard = () => {
 
                 <div className="border-b border-border/10 px-5 py-3">
                   <div className="flex h-8 items-center gap-2 rounded-lg border border-border/20 bg-background/40 px-3 text-muted-foreground">
-                    <Search className="h-3.5 w-3.5 text-muted-foreground/30" />
+                    <Search className="h-3.5 w-3.5 text-muted-foreground" />
                     <input
                       type="text"
                       placeholder="Buscar empresa..."
                       value={pipelineSearch}
                       onChange={(e) => setPipelineSearch(e.target.value)}
-                      className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground/25"
+                      className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground"
                     />
                   </div>
                 </div>
@@ -1982,13 +1982,13 @@ const Dashboard = () => {
 
                 <div className="border-b border-border/10 px-5 py-3">
                   <div className="flex h-8 items-center gap-2 rounded-lg border border-border/20 bg-background/40 px-3 text-muted-foreground">
-                    <Search className="h-3.5 w-3.5 text-muted-foreground/30" />
+                    <Search className="h-3.5 w-3.5 text-muted-foreground" />
                     <input
                       type="text"
                       placeholder="Buscar empresa..."
                       value={empresaSearch}
                       onChange={(e) => setEmpresaSearch(e.target.value)}
-                      className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground/25"
+                      className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground"
                     />
                   </div>
                 </div>
@@ -2012,7 +2012,7 @@ const Dashboard = () => {
                           <p className="text-[13px] font-medium text-foreground transition-colors group-hover:text-accent">
                             {row.empresa}
                           </p>
-                          <p className="text-[10px] text-muted-foreground/40">
+                          <p className="text-[10px] text-muted-foreground">
                             {row.tipo} · {row.responsavel} · Contato:{" "}
                             {row.ultimoContato || "—"}
                           </p>
@@ -2023,7 +2023,7 @@ const Dashboard = () => {
                   ))}
 
                   {filteredEmpresas.length === 0 && (
-                    <div className="px-5 py-8 text-center text-[12px] text-muted-foreground/30">
+                    <div className="px-5 py-8 text-center text-[12px] text-muted-foreground">
                       Nenhuma empresa encontrada
                     </div>
                   )}
@@ -2065,13 +2065,13 @@ const Dashboard = () => {
                       </div>
 
                       <div className="flex-1">
-                        <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/40">
+                        <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
                           Próxima reunião
                         </p>
                         <p className="text-[12px] font-medium text-foreground">
                           {nextMeeting.title}
                         </p>
-                        <p className="text-[10px] text-muted-foreground/50">
+                        <p className="text-[10px] text-muted-foreground">
                           {nextMeeting.day}/
                           {(currentMonth + 1).toString().padStart(2, "0")} às{" "}
                           {nextMeeting.time} · {nextMeeting.empresa}
@@ -2101,7 +2101,7 @@ const Dashboard = () => {
               className={`h-7 rounded-md px-2.5 text-[10px] font-medium transition-all ${
                 filter === pipelineFilter
                   ? "border border-accent/20 bg-accent/10 text-accent"
-                  : "text-muted-foreground/50 hover:bg-muted/20 hover:text-foreground"
+                  : "text-muted-foreground hover:bg-muted/20 hover:text-foreground"
               }`}
             >
               {filter}
@@ -2145,13 +2145,13 @@ const Dashboard = () => {
             <div className="mb-4 flex items-center gap-3">
               <div className="flex-1">
                 <div className="flex h-8 items-center gap-2 rounded-lg border border-border/20 bg-background/40 px-3">
-                  <Search className="h-3.5 w-3.5 text-muted-foreground/30" />
+                  <Search className="h-3.5 w-3.5 text-muted-foreground" />
                   <input
                     type="text"
                     placeholder="Buscar empresa..."
                     value={empresaSearch}
                     onChange={(e) => setEmpresaSearch(e.target.value)}
-                    className="flex-1 bg-transparent text-[12px] text-foreground outline-none placeholder:text-muted-foreground/25"
+                    className="flex-1 bg-transparent text-[12px] text-foreground outline-none placeholder:text-muted-foreground"
                   />
                 </div>
               </div>
@@ -2176,7 +2176,7 @@ const Dashboard = () => {
                       <p className="text-[13px] font-medium text-foreground transition-colors group-hover:text-accent">
                         {row.empresa}
                       </p>
-                      <p className="text-[10px] text-muted-foreground/40">
+                      <p className="text-[10px] text-muted-foreground">
                         {row.tipo} · {row.responsavel} · Contato:{" "}
                         {row.ultimoContato || "—"}
                       </p>
@@ -2187,7 +2187,7 @@ const Dashboard = () => {
               ))}
 
               {filteredEmpresas.length === 0 && (
-                <div className="py-8 text-center text-[12px] text-muted-foreground/30">
+                <div className="py-8 text-center text-[12px] text-muted-foreground">
                   Nenhuma empresa encontrada
                 </div>
               )}
@@ -2231,7 +2231,7 @@ const Dashboard = () => {
                   <h2 className="text-[16px] font-semibold text-foreground">
                     {selectedStage.label}
                   </h2>
-                  <p className="text-[11px] text-muted-foreground/40">
+                  <p className="text-[11px] text-muted-foreground">
                     {selectedStage.docs.length} documentos
                   </p>
                 </div>
@@ -2255,16 +2255,16 @@ const Dashboard = () => {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: index * 0.03 }}
                   >
-                    <FileText className="h-4 w-4 text-muted-foreground/40 transition-colors group-hover:text-accent" />
+                    <FileText className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-accent" />
                     <span className="flex-1 text-[12px] text-foreground/70 transition-colors group-hover:text-foreground">
                       {doc}
                     </span>
-                    <Download className="h-3.5 w-3.5 text-muted-foreground/20 transition-colors group-hover:text-accent" />
+                    <Download className="h-3.5 w-3.5 text-muted-foreground transition-colors group-hover:text-accent" />
                   </motion.div>
                 ))}
 
                 {selectedStage.docs.length === 0 && (
-                  <div className="py-6 text-center text-[12px] text-muted-foreground/30">
+                  <div className="py-6 text-center text-[12px] text-muted-foreground">
                     Nenhum documento nesta etapa
                   </div>
                 )}

@@ -1,7 +1,7 @@
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import { AlertCircle, CalendarCheck2, CircleDollarSign, Columns3, Plus, TrendingUp, Trophy } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { PipelineKanbanBoard } from "@/components/pipeline/PipelineKanbanBoard";
 import { PipelineNegocioDialog } from "@/components/pipeline/PipelineNegocioDialog";
@@ -41,6 +41,7 @@ const commercialPermissions = {
   commentView: "COMERCIAL_COMENTARIO_VISUALIZAR",
   commentCreate: "COMERCIAL_COMENTARIO_CRIAR",
   historyView: "COMERCIAL_HISTORICO_VISUALIZAR",
+  proposalCreate: "PROPOSTA_CRUD",
 } as const;
 
 const formatCurrency = (value: number) => new Intl.NumberFormat("pt-BR", {
@@ -51,9 +52,13 @@ const formatCurrency = (value: number) => new Intl.NumberFormat("pt-BR", {
 
 const PipelineVendas = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const linkedFunnelId = Number(searchParams.get("funilId")) || undefined;
+  const linkedBusinessId = Number(searchParams.get("negocioId")) || undefined;
+  const linkedTaskId = Number(searchParams.get("tarefaId")) || undefined;
   const [search, setSearch] = useState("");
   const [view, setView] = useState<"pipeline" | "tarefas">("pipeline");
-  const [selectedFunnelId, setSelectedFunnelId] = useState<number>();
+  const [selectedFunnelId, setSelectedFunnelId] = useState<number | undefined>(linkedFunnelId);
   const [selectedBusiness, setSelectedBusiness] = useState<PipelineNegocio | null>(null);
   const [createStageId, setCreateStageId] = useState<number | null>(null);
   const [pendingLoss, setPendingLoss] = useState<{ business: PipelineNegocio; stageId: number } | null>(null);
@@ -84,6 +89,11 @@ const PipelineVendas = () => {
     .some((mutation) => mutation.isPending);
 
   const allBusinesses = useMemo(() => (board?.etapas || []).flatMap((stage) => stage.negocios), [board?.etapas]);
+  useEffect(() => {
+    if (!linkedBusinessId || selectedBusiness?.id === linkedBusinessId) return;
+    const linkedBusiness = allBusinesses.find((business) => business.id === linkedBusinessId);
+    if (linkedBusiness) setSelectedBusiness(linkedBusiness);
+  }, [allBusinesses, linkedBusinessId, selectedBusiness?.id]);
   const filteredStages = useMemo(() => {
     const normalizedSearch = deferredSearch.trim().toLowerCase();
     if (!normalizedSearch) return board?.etapas || [];
@@ -111,6 +121,12 @@ const PipelineVendas = () => {
   const closeDialog = () => {
     setSelectedBusiness(null);
     setCreateStageId(null);
+    if (linkedBusinessId || linkedTaskId) {
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete("negocioId");
+      nextParams.delete("tarefaId");
+      setSearchParams(nextParams, { replace: true });
+    }
   };
 
   const saveBusiness = async (data: PipelineNegocioInput) => {
@@ -192,7 +208,7 @@ const PipelineVendas = () => {
     <PipelineVendasShell search={search} onSearchChange={setSearch}>
       <section className="p-6">
         <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
-          <div><div className="flex items-center gap-2"><TrendingUp className="h-5 w-5 text-accent" /><h1 className="text-[22px] font-bold tracking-tight">Pipeline de Vendas</h1></div><p className="mt-1 text-[12px] text-muted-foreground/55">Acompanhe oportunidades e deixe a próxima ação sempre clara.</p></div>
+          <div><div className="flex items-center gap-2"><TrendingUp className="h-5 w-5 text-accent" /><h1 className="text-[22px] font-bold tracking-tight">Pipeline de Vendas</h1></div><p className="mt-1 text-[12px] text-muted-foreground">Acompanhe oportunidades e deixe a próxima ação sempre clara.</p></div>
           <div className="flex flex-wrap gap-2"><div className="flex rounded-lg border border-border/25 bg-card/40 p-1"><button type="button" onClick={() => setView("pipeline")} className={`flex h-8 items-center gap-2 rounded-md px-3 text-[10px] font-medium ${view === "pipeline" ? "bg-accent text-accent-foreground" : "text-muted-foreground"}`}><Columns3 className="h-3.5 w-3.5" />Pipeline</button><button type="button" onClick={() => setView("tarefas")} className={`flex h-8 items-center gap-2 rounded-md px-3 text-[10px] font-medium ${view === "tarefas" ? "bg-accent text-accent-foreground" : "text-muted-foreground"}`}><CalendarCheck2 className="h-3.5 w-3.5" />Tarefas</button></div>{can(commercialPermissions.create) && <button type="button" onClick={() => setCreateStageId(board?.etapas.find((stage) => stage.resultado === "ABERTO")?.id || null)} className="flex h-10 items-center gap-2 rounded-lg bg-accent px-4 text-[12px] font-semibold text-accent-foreground shadow-lg shadow-accent/10"><Plus className="h-4 w-4" />Novo negócio</button>}</div>
         </div>
 
@@ -203,15 +219,15 @@ const PipelineVendas = () => {
               {funnels.map((funnel) => <option key={funnel.id} value={funnel.id}>{funnel.nome} · {funnel.estrategia}</option>)}
             </select>
           </label>
-          {board && <span className="text-[10px] text-muted-foreground/50">{board.etapas.length} etapas configuradas</span>}
+          {board && <span className="text-[10px] text-muted-foreground">{board.etapas.length} etapas configuradas</span>}
         </div>
 
-        {view === "pipeline" && <><div className="mb-5 grid gap-3 sm:grid-cols-3"><div className="rounded-xl border border-border/25 bg-card/45 p-4"><p className="text-[10px] uppercase tracking-wider text-muted-foreground/50">Negócios ativos</p><p className="mt-1 text-xl font-bold">{pipelineMetrics.openBusinesses}</p></div><div className="rounded-xl border border-border/25 bg-card/45 p-4"><p className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground/50"><CircleDollarSign className="h-3 w-3" />Pipeline estimado</p><p className="mt-1 text-xl font-bold">{formatCurrency(pipelineMetrics.pipelineValue)}</p></div><div className="rounded-xl border border-border/25 bg-card/45 p-4"><p className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground/50"><Trophy className="h-3 w-3" />Ganhos</p><p className="mt-1 text-xl font-bold text-emerald-500">{pipelineMetrics.won}</p></div></div>{isLoading ? <div className="py-20 text-center text-sm text-muted-foreground">Carregando pipeline...</div> : error ? <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive">Não foi possível carregar o Pipeline de Vendas.</div> : <PipelineKanbanBoard etapas={filteredStages} canMove={can(commercialPermissions.move) && !moveBusiness.isPending} canCreate={can(commercialPermissions.create)} movingBusinessId={moveBusiness.isPending ? moveBusiness.variables?.id : undefined} onOpen={setSelectedBusiness} onAdd={setCreateStageId} onMove={move} />}</>}
+        {view === "pipeline" && <><div className="mb-5 grid gap-3 sm:grid-cols-3"><div className="rounded-xl border border-border/25 bg-card/45 p-4"><p className="text-[10px] uppercase tracking-wider text-muted-foreground">Negócios ativos</p><p className="mt-1 text-xl font-bold">{pipelineMetrics.openBusinesses}</p></div><div className="rounded-xl border border-border/25 bg-card/45 p-4"><p className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground"><CircleDollarSign className="h-3 w-3" />Pipeline estimado</p><p className="mt-1 text-xl font-bold">{formatCurrency(pipelineMetrics.pipelineValue)}</p></div><div className="rounded-xl border border-border/25 bg-card/45 p-4"><p className="flex items-center gap-1 text-[10px] uppercase tracking-wider text-muted-foreground"><Trophy className="h-3 w-3" />Ganhos</p><p className="mt-1 text-xl font-bold text-emerald-500">{pipelineMetrics.won}</p></div></div>{isLoading ? <div className="py-20 text-center text-sm text-muted-foreground">Carregando pipeline...</div> : error ? <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive">Não foi possível carregar o Pipeline de Vendas.</div> : <PipelineKanbanBoard etapas={filteredStages} canMove={can(commercialPermissions.move) && !moveBusiness.isPending} canCreate={can(commercialPermissions.create)} movingBusinessId={moveBusiness.isPending ? moveBusiness.variables?.id : undefined} onOpen={setSelectedBusiness} onAdd={setCreateStageId} onMove={move} />}</>}
 
         {view === "tarefas" && <PipelineTarefasVisao funilId={effectiveFunnelId} negocios={allBusinesses} usuarios={users} canView={can(commercialPermissions.taskView)} canViewAll={can(commercialPermissions.taskViewAll)} canConclude={can(commercialPermissions.taskConclude)} onOpenNegocio={setSelectedBusiness} />}
       </section>
 
-      <AnimatePresence>{(selectedBusiness || createStageId) && <PipelineNegocioDialog negocio={selectedBusiness} initialEtapaId={createStageId || undefined} initialResponsavelId={userId} etapas={board?.etapas || []} empresas={companies} usuarios={users} motivosPerda={lossReasons} canEdit={can(commercialPermissions.edit)} canConclude={can(commercialPermissions.conclude)} canConvert={can(commercialPermissions.convert)} canViewTasks={can(commercialPermissions.taskView)} canCreateTask={can(commercialPermissions.taskCreate)} canEditTask={can(commercialPermissions.taskEdit)} canConcludeTask={can(commercialPermissions.taskConclude)} canViewComments={can(commercialPermissions.commentView)} canCreateComment={can(commercialPermissions.commentCreate)} canViewHistory={can(commercialPermissions.historyView)} isProcessing={isProcessing} onClose={closeDialog} onSave={(data) => void saveBusiness(data)} onConclude={(result, motivoId, observacao) => void conclude(result, motivoId, observacao)} onReactivate={() => void reactivate()} onConvert={(companyId) => void convert(companyId)} onOpenContract={() => navigate("/contratos")} />}</AnimatePresence>
+      <AnimatePresence>{(selectedBusiness || createStageId) && <PipelineNegocioDialog negocio={selectedBusiness} initialEtapaId={createStageId || undefined} initialResponsavelId={userId} initialTaskId={selectedBusiness?.id === linkedBusinessId ? linkedTaskId : undefined} etapas={board?.etapas || []} empresas={companies} usuarios={users} motivosPerda={lossReasons} canEdit={can(commercialPermissions.edit)} canConclude={can(commercialPermissions.conclude)} canConvert={can(commercialPermissions.convert)} canViewTasks={can(commercialPermissions.taskView)} canCreateTask={can(commercialPermissions.taskCreate)} canEditTask={can(commercialPermissions.taskEdit)} canConcludeTask={can(commercialPermissions.taskConclude)} canViewComments={can(commercialPermissions.commentView)} canCreateComment={can(commercialPermissions.commentCreate)} canViewHistory={can(commercialPermissions.historyView)} canCreateProposal={can(commercialPermissions.proposalCreate)} isProcessing={isProcessing} onClose={closeDialog} onSave={(data) => void saveBusiness(data)} onConclude={(result, motivoId, observacao) => void conclude(result, motivoId, observacao)} onReactivate={() => void reactivate()} onConvert={(companyId) => void convert(companyId)} onOpenContract={() => navigate("/contratos")} onCreateProposal={() => { if (!selectedBusiness?.empresaId) return; navigate(`/propostas?empresaId=${selectedBusiness.empresaId}&negocioId=${selectedBusiness.id}&nova=true`); }} />}</AnimatePresence>
       {pendingLoss && <PipelinePerdaDialog empresa={pendingLoss.business.nomeEmpresa} motivos={lossReasons} isProcessing={moveBusiness.isPending} onCancel={() => setPendingLoss(null)} onConfirm={(motivoId, observacao) => void confirmDraggedLoss(motivoId, observacao)} />}
     </PipelineVendasShell>
   );

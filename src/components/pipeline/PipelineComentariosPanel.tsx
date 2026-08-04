@@ -70,7 +70,7 @@ export const PipelineComentariosPanel = ({
     <div className="space-y-4">
       <div>
         <h3 className="text-[13px] font-semibold">Comentários e observações</h3>
-        <p className="mt-0.5 text-[10px] text-muted-foreground/50">
+        <p className="mt-0.5 text-[10px] text-muted-foreground">
           Registre decisões e informações relevantes da negociação.
         </p>
       </div>
@@ -117,8 +117,8 @@ export const PipelineComentariosPanel = ({
           ))}
           {threads.length === 0 && (
             <div className="py-10 text-center">
-              <MessageSquareText className="mx-auto h-5 w-5 text-muted-foreground/30" />
-              <p className="mt-2 text-[10px] text-muted-foreground/45">Nenhum comentário registrado.</p>
+              <MessageSquareText className="mx-auto h-5 w-5 text-muted-foreground" />
+              <p className="mt-2 text-[10px] text-muted-foreground">Nenhum comentário registrado.</p>
             </div>
           )}
         </div>

@@ -111,7 +111,7 @@ export const CargoHierarchyTree = ({ cargos, isSaving, onSave }: CargoHierarchyT
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/25 bg-card/45 p-4">
         <div>
           <h2 className="text-[14px] font-semibold">Estrutura organizacional</h2>
-          <p className="mt-1 text-[10px] text-muted-foreground/55">Arraste um cargo sobre outro para torná-lo subordinado ou solte-o sobre o Administrador para movê-lo à raiz.</p>
+          <p className="mt-1 text-[10px] text-muted-foreground">Arraste um cargo sobre outro para torná-lo subordinado ou solte-o sobre o Administrador para movê-lo à raiz.</p>
         </div>
         <div className="flex gap-2">
           <button type="button" onClick={reset} disabled={!dirty || isSaving} className="inline-flex h-9 items-center gap-2 rounded-lg border border-border/30 px-3 text-[11px] text-muted-foreground disabled:opacity-40"><RotateCcw className="h-3.5 w-3.5" />Desfazer</button>
@@ -141,7 +141,7 @@ export const CargoHierarchyTree = ({ cargos, isSaving, onSave }: CargoHierarchyT
                     ))}
                   </div>
                 </>
-              ) : <p className="mt-10 text-[11px] text-muted-foreground/50">Cadastre cargos para começar a estrutura.</p>}
+              ) : <p className="mt-10 text-[11px] text-muted-foreground">Cadastre cargos para começar a estrutura.</p>}
             </div>
           </section>
           <DragOverlay dropAnimation={{ duration: 180, easing: "ease-out" }}>
@@ -157,7 +157,7 @@ export const CargoHierarchyTree = ({ cargos, isSaving, onSave }: CargoHierarchyT
               <div><p className="mb-1.5 text-[10px] font-medium text-muted-foreground">Posição no mesmo nível</p><div className="grid grid-cols-2 gap-2"><button type="button" onClick={() => move(-1)} className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-border/30 text-[10px] hover:border-accent/35"><ArrowLeft className="h-3.5 w-3.5" />Anterior</button><button type="button" onClick={() => move(1)} className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg border border-border/30 text-[10px] hover:border-accent/35">Próximo<ArrowRight className="h-3.5 w-3.5" /></button></div></div>
               <div className="rounded-lg border border-accent/15 bg-accent/5 p-3 text-[10px] leading-relaxed text-muted-foreground">Usuários deste cargo enxergam suas próprias tarefas e as tarefas de todos os cargos posicionados abaixo dele.</div>
             </div>
-          ) : <div className="py-10 text-center"><UsersRound className="mx-auto h-6 w-6 text-muted-foreground/25" /><p className="mt-3 text-[11px] font-medium">Selecione um cargo</p><p className="mt-1 text-[10px] leading-relaxed text-muted-foreground/45">As configurações do cargo aparecerão aqui.</p></div>}
+          ) : <div className="py-10 text-center"><UsersRound className="mx-auto h-6 w-6 text-muted-foreground" /><p className="mt-3 text-[11px] font-medium">Selecione um cargo</p><p className="mt-1 text-[10px] leading-relaxed text-muted-foreground">As configurações do cargo aparecerão aqui.</p></div>}
         </aside>
       </div>
     </div>

@@ -70,7 +70,7 @@ export default function Perfil() {
       <div className="mx-auto w-full max-w-5xl px-6 py-7">
         <div className="mb-6">
           <h1 className="text-[24px] font-bold tracking-tight">Meu perfil</h1>
-          <p className="mt-1 text-[12px] text-muted-foreground/55">Atualize suas informações pessoais e sua foto.</p>
+          <p className="mt-1 text-[12px] text-muted-foreground">Atualize suas informações pessoais e sua foto.</p>
         </div>
 
         {isLoading ? (
@@ -88,7 +88,7 @@ export default function Perfil() {
                 initialsClassName="text-2xl"
               />
               <h2 className="mt-4 text-[16px] font-semibold">{perfil?.nomeCompleto}</h2>
-              <p className="mt-1 text-[11px] text-muted-foreground/55">{perfil?.cargo}</p>
+              <p className="mt-1 text-[11px] text-muted-foreground">{perfil?.cargo}</p>
               <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={selecionarFoto} />
               <button
                 type="button"

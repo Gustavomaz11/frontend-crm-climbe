@@ -36,14 +36,14 @@ export const PipelineVendasShell = ({ search, onSearchChange, searchPlaceholder 
           </nav>
           <div className="space-y-1 border-t border-border/20 px-2 py-3">
             <motion.button onClick={() => setIsDark(!isDark)} className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground hover:bg-muted/30 hover:text-foreground ${sidebarCollapsed ? "justify-center" : ""}`} whileTap={{ scale: 0.98 }}><AnimatePresence mode="wait"><motion.span key={isDark ? "sun" : "moon"} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>{isDark ? <Sun className="h-[18px] w-[18px]" /> : <Moon className="h-[18px] w-[18px]" />}</motion.span></AnimatePresence>{!sidebarCollapsed && <span className="text-[13px] font-medium">{isDark ? "Modo claro" : "Modo escuro"}</span>}</motion.button>
-            <Link to="/"><motion.button className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground/50 hover:bg-destructive/5 hover:text-destructive ${sidebarCollapsed ? "justify-center" : ""}`} whileTap={{ scale: 0.98 }}><LogOut className="h-[18px] w-[18px]" />{!sidebarCollapsed && <span className="text-[13px] font-medium">Sair</span>}</motion.button></Link>
+            <Link to="/"><motion.button className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground hover:bg-destructive/5 hover:text-destructive ${sidebarCollapsed ? "justify-center" : ""}`} whileTap={{ scale: 0.98 }}><LogOut className="h-[18px] w-[18px]" />{!sidebarCollapsed && <span className="text-[13px] font-medium">Sair</span>}</motion.button></Link>
           </div>
           <button type="button" onClick={() => setSidebarCollapsed(!sidebarCollapsed)} className="absolute -right-3 top-20 flex h-6 w-6 items-center justify-center rounded-full border border-border/40 bg-card text-muted-foreground shadow-sm">{sidebarCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}</button>
         </motion.aside>
 
         <main className={`min-w-0 flex-1 transition-all duration-300 ${sidebarCollapsed ? "ml-[72px]" : "ml-[220px]"}`}>
           <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border/20 bg-background/80 px-6 backdrop-blur-xl">
-            <div className="flex h-9 w-[300px] items-center gap-2 rounded-lg border border-border/25 bg-card/30 px-3"><Search className="h-3.5 w-3.5 text-muted-foreground/50" /><input value={search} onChange={(event) => onSearchChange(event.target.value)} placeholder={searchPlaceholder} className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground/30" /></div>
+            <div className="flex h-9 w-[300px] items-center gap-2 rounded-lg border border-border/25 bg-card/30 px-3"><Search className="h-3.5 w-3.5 text-muted-foreground" /><input value={search} onChange={(event) => onSearchChange(event.target.value)} placeholder={searchPlaceholder} className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground" /></div>
             <UserAvatar name={userName} photoUrl={userPhoto} />
           </header>
           {children}

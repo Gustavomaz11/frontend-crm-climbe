@@ -101,17 +101,17 @@ export const GerenciamentoAcessos = ({ usuarioAtualId }: GerenciamentoAcessosPro
         ].map((item) => (
           <div key={item.label} className="flex items-center gap-3 rounded-xl border border-border/25 bg-card/40 p-4">
             <item.icon className={`h-5 w-5 ${item.color}`} />
-            <div><p className="text-[22px] font-bold leading-none">{item.value}</p><p className="mt-1 text-[11px] text-muted-foreground/50">{item.label}</p></div>
+            <div><p className="text-[22px] font-bold leading-none">{item.value}</p><p className="mt-1 text-[11px] text-muted-foreground">{item.label}</p></div>
           </div>
         ))}
       </div>
 
       <div className="flex items-center gap-1.5 px-6 pb-4">
         {([['todos', 'Todos'], ['ATIVO', 'Ativos'], ['REVOGADO', 'Revogados']] as [FiltroAcesso, string][]).map(([valor, label]) => (
-          <button key={valor} onClick={() => setFiltro(valor)} className={`rounded-lg border px-3 py-1.5 text-[11px] font-medium ${filtro === valor ? "border-accent/25 bg-accent/15 text-accent" : "border-transparent text-muted-foreground/50 hover:bg-muted/20"}`}>{label}</button>
+          <button key={valor} onClick={() => setFiltro(valor)} className={`rounded-lg border px-3 py-1.5 text-[11px] font-medium ${filtro === valor ? "border-accent/25 bg-accent/15 text-accent" : "border-transparent text-muted-foreground hover:bg-muted/20"}`}>{label}</button>
         ))}
         <div className="ml-auto flex h-9 w-[300px] items-center gap-2 rounded-lg border border-border/25 bg-card/30 px-3">
-          <Search className="h-3.5 w-3.5 text-muted-foreground/50" />
+          <Search className="h-3.5 w-3.5 text-muted-foreground" />
           <input value={busca} onChange={(event) => setBusca(event.target.value)} placeholder="Buscar usuário, e-mail ou cargo..." className="flex-1 bg-transparent text-[12px] outline-none" />
         </div>
       </div>
@@ -120,19 +120,19 @@ export const GerenciamentoAcessos = ({ usuarioAtualId }: GerenciamentoAcessosPro
         {isError && <div className="mb-4 rounded-xl border border-red-400/20 bg-red-400/10 px-4 py-3 text-[12px] text-red-500">{mensagemErro(error)}</div>}
         <div className="overflow-hidden rounded-xl border border-border/25 bg-card/40">
           <table className="w-full min-w-[760px]">
-            <thead><tr className="border-b border-border/15"><th className="px-5 py-3 text-left text-[10px] uppercase text-muted-foreground/50">Usuário</th><th className="px-4 py-3 text-left text-[10px] uppercase text-muted-foreground/50">Cargo</th><th className="px-4 py-3 text-left text-[10px] uppercase text-muted-foreground/50">Status</th><th className="px-5 py-3 text-right text-[10px] uppercase text-muted-foreground/50">Ações</th></tr></thead>
+            <thead><tr className="border-b border-border/15"><th className="px-5 py-3 text-left text-[10px] uppercase text-muted-foreground">Usuário</th><th className="px-4 py-3 text-left text-[10px] uppercase text-muted-foreground">Cargo</th><th className="px-4 py-3 text-left text-[10px] uppercase text-muted-foreground">Status</th><th className="px-5 py-3 text-right text-[10px] uppercase text-muted-foreground">Ações</th></tr></thead>
             <tbody>
-              {isLoading ? <tr><td colSpan={4} className="py-14 text-center text-[12px] text-muted-foreground/40">Carregando acessos...</td></tr>
-                : filtrados.length === 0 ? <tr><td colSpan={4} className="py-14 text-center text-[12px] text-muted-foreground/40"><User className="mx-auto mb-2 h-7 w-7 opacity-30" />Nenhum usuário encontrado</td></tr>
+              {isLoading ? <tr><td colSpan={4} className="py-14 text-center text-[12px] text-muted-foreground">Carregando acessos...</td></tr>
+                : filtrados.length === 0 ? <tr><td colSpan={4} className="py-14 text-center text-[12px] text-muted-foreground"><User className="mx-auto mb-2 h-7 w-7 opacity-30" />Nenhum usuário encontrado</td></tr>
                 : filtrados.map((usuario) => (
                   <tr key={usuario.id} className="border-b border-border/10 hover:bg-muted/10">
-                    <td className="px-5 py-3"><p className="text-[12px] font-medium">{usuario.nomeCompleto}</p><p className="text-[10px] text-muted-foreground/45">{usuario.email}</p></td>
+                    <td className="px-5 py-3"><p className="text-[12px] font-medium">{usuario.nomeCompleto}</p><p className="text-[10px] text-muted-foreground">{usuario.email}</p></td>
                     <td className="px-4 py-3 text-[11px] text-foreground/70">{usuario.cargo}</td>
                     <td className="px-4 py-3"><span className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-medium ${usuario.situacao === "ATIVO" ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-500" : "border-red-400/20 bg-red-400/10 text-red-500"}`}>{usuario.situacao === "ATIVO" ? <CheckCircle2 className="h-2.5 w-2.5" /> : <Ban className="h-2.5 w-2.5" />}{usuario.situacao === "ATIVO" ? "Ativo" : "Revogado"}</span></td>
                     <td className="px-5 py-3">
                       <div className="flex items-center justify-end gap-2">
                         <button onClick={() => abrirEdicaoCargo(usuario)} className="inline-flex items-center gap-1 rounded-lg border border-border/30 bg-muted/15 px-2.5 py-1.5 text-[11px] font-medium text-foreground/70 hover:bg-muted/30"><Pencil className="h-3 w-3" />Cargo</button>
-                        {usuario.id === usuarioAtualId ? <span className="text-[10px] italic text-muted-foreground/40">Sessão atual</span>
+                        {usuario.id === usuarioAtualId ? <span className="text-[10px] italic text-muted-foreground">Sessão atual</span>
                           : usuario.situacao === "ATIVO" ? <button onClick={() => setConfirmacao({ usuario, acao: "revogar" })} className="inline-flex items-center gap-1 rounded-lg border border-red-400/20 bg-red-400/10 px-2.5 py-1.5 text-[11px] font-medium text-red-500 hover:bg-red-400/20"><Ban className="h-3 w-3" />Revogar</button>
                           : <button onClick={() => setConfirmacao({ usuario, acao: "reativar" })} className="inline-flex items-center gap-1 rounded-lg border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-1.5 text-[11px] font-medium text-emerald-500 hover:bg-emerald-400/20"><RotateCcw className="h-3 w-3" />Reativar</button>}
                       </div>

@@ -63,21 +63,21 @@ export const KanbanTaskCard = ({
               title="Editar tarefa"
               aria-label={`Editar tarefa ${task.titulo}`}
               onClick={() => onEdit(task)}
-              className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground/40 hover:bg-accent/10 hover:text-accent"
+              className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-accent/10 hover:text-accent"
             >
               <Edit3 className="h-3 w-3" />
             </button>
           )}
-          {canMoveTask && <GripVertical className="h-3.5 w-3.5 text-muted-foreground/25 transition-colors group-hover:text-muted-foreground/50" />}
+          {canMoveTask && <GripVertical className="h-3.5 w-3.5 text-muted-foreground transition-colors group-hover:text-muted-foreground" />}
         </div>
       </div>
 
       <div className="mt-2"><KanbanPriorityBadge prioridade={task.prioridade} /></div>
-      {task.descricao && <p className="mt-2 line-clamp-3 text-[11px] text-muted-foreground/55">{task.descricao}</p>}
+      {task.descricao && <p className="mt-2 line-clamp-3 text-[11px] text-muted-foreground">{task.descricao}</p>}
 
       {task.subtarefas.length > 0 && (
         <div className="mt-3 space-y-1.5 border-t border-border/15 pt-2">
-          <div className="flex items-center justify-between text-[10px] text-muted-foreground/45">
+          <div className="flex items-center justify-between text-[10px] text-muted-foreground">
             <span className="flex items-center gap-1"><CheckSquare2 className="h-3 w-3" /> Subtarefas</span>
             <span>{completedSubtasks}/{task.subtarefas.length}</span>
           </div>
@@ -92,13 +92,13 @@ export const KanbanTaskCard = ({
               <span className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded border ${subtarefa.concluida ? "border-accent bg-accent text-accent-foreground" : "border-border/50 text-transparent"}`}>
                 <Check className="h-2.5 w-2.5" />
               </span>
-              <span className={`truncate text-[10px] ${subtarefa.concluida ? "text-muted-foreground/35 line-through" : "text-foreground/60"}`}>{subtarefa.titulo}</span>
+              <span className={`truncate text-[10px] ${subtarefa.concluida ? "text-muted-foreground line-through" : "text-foreground"}`}>{subtarefa.titulo}</span>
             </button>
           ))}
         </div>
       )}
 
-      <div className="mt-3 space-y-1 text-[10px] text-muted-foreground/50">
+      <div className="mt-3 space-y-1 text-[10px] text-muted-foreground">
         <div className="flex items-center gap-1.5"><UserRound className="h-3 w-3" /> {task.responsavel?.nomeCompleto || "Sem responsável"}</div>
         <div className="flex items-center gap-1.5"><Clock3 className="h-3 w-3" /> {formatDate(task.dataInicio)} até {formatDate(task.dataFim)}</div>
       </div>

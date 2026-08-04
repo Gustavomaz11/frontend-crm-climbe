@@ -65,7 +65,7 @@ export const PipelineKanbanBoard = ({
             <header className="flex items-center justify-between border-b border-border/20 px-3 py-3">
               <div>
                 <h2 className="text-[12px] font-semibold">{stage.nome}</h2>
-                <p className="mt-0.5 text-[9px] text-muted-foreground/45">{stage.negocios.length} negócio(s)</p>
+                <p className="mt-0.5 text-[9px] text-muted-foreground">{stage.negocios.length} negócio(s)</p>
               </div>
               <span className={`h-2 w-2 rounded-full ${stage.resultado === "GANHO" ? "bg-emerald-500" : stage.resultado === "PERDIDO" ? "bg-red-500" : "bg-accent/60"}`} />
             </header>
@@ -81,7 +81,7 @@ export const PipelineKanbanBoard = ({
                 />
               ))}
               {stage.negocios.length === 0 && (
-                <div className="rounded-lg border border-dashed border-border/25 py-10 text-center text-[10px] text-muted-foreground/35">Sem negócios</div>
+                <div className="rounded-lg border border-dashed border-border/25 py-10 text-center text-[10px] text-muted-foreground">Sem negócios</div>
               )}
             </div>
             {canCreate && stage.resultado === "ABERTO" && (
