@@ -22,6 +22,14 @@ export interface Cargo {
   ativo?: boolean;
   cargoSuperiorId?: number | null;
   ordemHierarquia?: number;
+  grupoId?: number | null;
+}
+
+export interface GrupoCargo {
+  id: number;
+  nome: string;
+  descricao?: string | null;
+  ativo?: boolean;
 }
 
 export interface CargoHierarquiaItem {
@@ -182,14 +190,73 @@ export function useSolicitacoesAcesso() {
   });
 }
 
+export function useGruposCargos() {
+  return useQuery<GrupoCargo[]>({
+    queryKey: ["grupos-cargos"],
+    queryFn: async () => {
+      const response = await api.get<GrupoCargo[]>("/grupos-cargos");
+      return response.data;
+    },
+  });
+}
+
 export function useCreateCargo() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (nome: string) => {
-      const response = await api.post<Cargo>("/cargos", { nome });
+    mutationFn: async ({ nome, grupoId }: { nome: string; grupoId?: number | null }) => {
+      const response = await api.post<Cargo>("/cargos", { nome, grupoId });
       return response.data;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["cargos"] }),
+  });
+}
+
+export function useCreateGrupoCargo() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (data: { nome: string; descricao?: string | null }) => {
+      const response = await api.post<GrupoCargo>("/grupos-cargos", data);
+      return response.data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["grupos-cargos"] }),
+  });
+}
+
+export function useUpdateGrupoCargo() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: number; nome: string; descricao?: string | null }) => {
+      const response = await api.put<GrupoCargo>(`/grupos-cargos/${id}`, data);
+      return response.data;
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["grupos-cargos"] }),
+  });
+}
+
+export function useDeleteGrupoCargo() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => api.delete(`/grupos-cargos/${id}`),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["grupos-cargos"] }),
+        queryClient.invalidateQueries({ queryKey: ["cargos"] }),
+      ]);
+    },
+  });
+}
+
+export function useAssignCargoGrupo() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ cargoId, grupoId }: { cargoId: number; grupoId: number | null }) => {
+      const response = await api.put<Cargo>(`/grupos-cargos/cargos/${cargoId}`, { grupoId });
+      return response.data;
+    },
+    onSuccess: (cargo) => {
+      queryClient.setQueryData<Cargo[]>(["cargos"], (current = []) =>
+        current.map((item) => item.id === cargo.id ? cargo : item));
+    },
   });
 }
 
