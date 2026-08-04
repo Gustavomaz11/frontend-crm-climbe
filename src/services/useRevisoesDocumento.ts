@@ -56,6 +56,7 @@ export interface RevisaoDocumento {
   respondidoEm?: string | null;
   emailStatus: "PENDENTE" | "ENVIADO" | "FALHOU";
   emailEnviadoEm?: string | null;
+  assinaturaUrl?: string | null;
   versoes: RevisaoVersao[];
 }
 

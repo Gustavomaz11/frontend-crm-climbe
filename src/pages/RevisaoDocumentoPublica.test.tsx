@@ -1,15 +1,16 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { beforeAll, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import RevisaoDocumentoPublica from "./RevisaoDocumentoPublica";
 
 const getRevisaoPublicaMock = vi.fn();
+const aprovarRevisaoPublicaMock = vi.fn();
 
 vi.mock("@/services", () => ({
   getRevisaoPublica: (...args: unknown[]) => getRevisaoPublicaMock(...args),
   getRevisaoPublicPageUrl: () => "https://example.com/pagina-1.png",
   enviarRevisaoPublica: vi.fn(),
-  aprovarRevisaoPublica: vi.fn(),
+  aprovarRevisaoPublica: (...args: unknown[]) => aprovarRevisaoPublicaMock(...args),
   reprovarRevisaoPublica: vi.fn(),
 }));
 
@@ -44,6 +45,10 @@ beforeAll(() => {
   Object.defineProperty(HTMLElement.prototype, "scrollIntoView", { configurable: true, value: vi.fn() });
 });
 
+beforeEach(() => {
+  vi.clearAllMocks();
+});
+
 describe("RevisaoDocumentoPublica", () => {
   it("bloqueia a decisão e sincroniza comentário e trecho quando existem marcações", async () => {
     getRevisaoPublicaMock.mockResolvedValue(revisao);
@@ -64,5 +69,30 @@ describe("RevisaoDocumentoPublica", () => {
 
     fireEvent.click(mark);
     await waitFor(() => expect(comment).toHaveAttribute("aria-pressed", "true"));
+  });
+
+  it("direciona contratos para o link de assinatura retornado pela ZapSign", async () => {
+    const contrato = {
+      ...revisao,
+      tipo: "CONTRATO",
+      nomeArquivo: "contrato.pdf",
+      versoes: [{ ...revisao.versoes[0], nomeArquivo: "contrato.pdf", anotacoes: [] }],
+    };
+    const assinaturaUrl = "https://app.zapsign.com.br/verificar/signatario-token";
+    getRevisaoPublicaMock.mockResolvedValue(contrato);
+    aprovarRevisaoPublicaMock.mockResolvedValue({ ...contrato, assinaturaUrl });
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    const open = vi.spyOn(window, "open").mockImplementation(() => null);
+
+    render(
+      <MemoryRouter initialEntries={["/revisao/token-contrato"]}>
+        <Routes><Route path="/revisao/:token" element={<RevisaoDocumentoPublica />} /></Routes>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(await screen.findByRole("button", { name: "Aprovar" }));
+
+    await waitFor(() => expect(aprovarRevisaoPublicaMock).toHaveBeenCalledWith("token-contrato"));
+    expect(open).toHaveBeenCalledWith(assinaturaUrl, "_self");
   });
 });
