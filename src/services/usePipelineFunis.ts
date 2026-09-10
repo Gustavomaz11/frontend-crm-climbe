@@ -15,6 +15,7 @@ export interface PipelineFunilResumo {
   estrategia: string;
   posicao: number;
   ativo: boolean;
+  tipo?: string;
 }
 
 export interface PipelineEtapaConfiguracao {
@@ -28,6 +29,7 @@ export interface PipelineEtapaConfiguracao {
   perda: boolean;
   camposObrigatorios: string[];
   ativo: boolean;
+  tipo?: string;
 }
 
 export interface PipelineFunil extends PipelineFunilResumo {
@@ -41,6 +43,7 @@ export interface PipelineFunilInput {
   descricao?: string | null;
   estrategia: string;
   ativo: boolean;
+  tipo?: string;
   etapas: PipelineEtapaConfiguracao[];
 }
 

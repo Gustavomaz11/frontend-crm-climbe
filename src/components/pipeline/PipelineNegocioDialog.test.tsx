@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { PipelineNegocio } from "@/services/usePipelineVendas";
 import { PipelineNegocioDialog } from "./PipelineNegocioDialog";
 
+vi.mock("./PipelineDadosAdicionais", () => ({ PipelineDadosAdicionais: () => null }));
 vi.mock("./PipelineTarefasPanel", () => ({ PipelineTarefasPanel: () => null }));
 vi.mock("./PipelineComentariosPanel", () => ({ PipelineComentariosPanel: () => null }));
 vi.mock("./PipelineHistoricoPanel", () => ({ PipelineHistoricoPanel: () => null }));

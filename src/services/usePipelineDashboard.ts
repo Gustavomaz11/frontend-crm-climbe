@@ -8,6 +8,7 @@ export interface PipelineDashboardFilters {
   dataInicio?: string; dataFim?: string; responsavelId?: number; funilId?: number;
   estrategia?: string; servico?: string; origem?: string; empresaId?: number;
   situacao?: PipelineSituacao;
+  campanhaId?: number;
 }
 
 export interface PipelineConversao { chave: string; total: number; ganhos: number; perdidos: number; taxaConversao: number }

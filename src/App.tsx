@@ -1,4 +1,5 @@
-import { Suspense } from "react";
+import PipelineCadastros from "@/pages/PipelineCadastros";
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Analytics } from "@vercel/analytics/react";
@@ -41,6 +42,8 @@ import {
   RevisaoDocumentoPublica,
   SolicitarAcesso,
 } from "@/routes/lazyPages";
+
+const PipelinePreVendas = lazy(() => import("@/pages/PipelinePreVendas"));
 
 const App = () => (
   <QueryProvider>
@@ -217,6 +220,8 @@ const App = () => (
               }
             />
             <Route path="/revisao/:token" element={<RevisaoDocumentoPublica />} />
+            <Route path="/pipeline-vendas/cadastros" element={<PrivateRoute><PipelineCadastros /></PrivateRoute>} />
+            <Route path="/pipeline-pre-vendas" element={<PrivateRoute><PipelinePreVendas /></PrivateRoute>} />
             <Route
               path="/pipeline-vendas"
               element={

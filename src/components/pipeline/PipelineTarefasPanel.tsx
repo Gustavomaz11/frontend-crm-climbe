@@ -13,6 +13,7 @@ import {
 import type { Usuario } from "@/services/useUsuarios";
 import { findNextTask, formatTaskDate, taskStatusLabels } from "./pipelineTaskUtils";
 import { PipelineTarefaDialog } from "./PipelineTarefaDialog";
+import { PipelineCancelarTarefaDialog } from "./PipelineCancelarTarefaDialog";
 import { PipelineTaskKanban } from "./PipelineTaskKanban";
 
 interface PipelineTarefasPanelProps {
@@ -36,6 +37,7 @@ export const PipelineTarefasPanel = ({
   canEdit,
   canConclude,
 }: PipelineTarefasPanelProps) => {
+  const [cancelling, setCancelling] = useState<PipelineTarefa | null>(null);
   const [editingTask, setEditingTask] = useState<PipelineTarefa | null | undefined>(undefined);
   const [statusOverrides, setStatusOverrides] = useState<Record<number, PipelineTarefaStatus>>({});
   const { data: tasks = [], isLoading } = useNegocioTarefas(negocioId, canView);
@@ -62,6 +64,7 @@ export const PipelineTarefasPanel = ({
 
   const moveTask = async (task: PipelineTarefa, status: PipelineTarefaStatus) => {
     if (task.status === status) return;
+    if (status === "CANCELADA") { setCancelling(task); return; }
     setStatusOverrides((current) => ({ ...current, [task.id]: status }));
 
     try {
@@ -88,6 +91,7 @@ export const PipelineTarefasPanel = ({
 
       {isLoading ? <p className="py-8 text-center text-[11px] text-muted-foreground">Carregando tarefas...</p> : <PipelineTaskKanban tasks={displayedTasks} highlightedTaskId={initialTaskId ?? nextTask?.id} canEdit={canEdit} canMove={canConclude && !setStatus.isPending} onEdit={setEditingTask} onMove={(task, status) => void moveTask(task, status)} />}
 
+      {cancelling && <PipelineCancelarTarefaDialog tarefa={cancelling} onClose={() => setCancelling(null)} />}
       {editingTask !== undefined && <PipelineTarefaDialog tarefa={editingTask} usuarios={usuarios} defaultResponsavelId={responsavelId} isProcessing={processing} onClose={() => setEditingTask(undefined)} onSave={(input) => void saveTask(input)} />}
     </div>
   );

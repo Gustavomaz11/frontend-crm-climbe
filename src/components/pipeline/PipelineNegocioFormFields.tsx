@@ -22,6 +22,7 @@ interface PipelineNegocioFormFieldsProps {
   usuarios: Usuario[];
   etapas: PipelineEtapa[];
   disabled: boolean;
+  preVendas?: boolean;
 }
 
 const fieldClass = "h-10 w-full rounded-lg border border-border/30 bg-background/70 px-3 text-[12px] text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-accent/45 disabled:cursor-not-allowed disabled:opacity-60";
@@ -33,7 +34,7 @@ export const PipelineNegocioFormFields = ({
   empresas,
   usuarios,
   etapas,
-  disabled,
+  disabled, preVendas = false,
 }: PipelineNegocioFormFieldsProps) => {
   const update = <Field extends keyof PipelineNegocioDraft>(
     field: Field,
@@ -58,6 +59,7 @@ export const PipelineNegocioFormFields = ({
     setDraft((current) => ({
       ...current,
       empresaId,
+      pessoaId: "",
       cadastrarEmpresa: false,
       ...empresaToNegocioContactFields(empresa),
     }));
@@ -73,14 +75,14 @@ export const PipelineNegocioFormFields = ({
       </>}
       <label><span className={labelClass}>Nome do contato *</span><input value={draft.nomeContato} onChange={(event) => update("nomeContato", event.target.value)} disabled={disabled} className={fieldClass} /></label>
       <div><span className={labelClass}>Responsável *</span><UserSelect users={usuarios.filter((usuario) => !usuario.situacao || usuario.situacao === "ATIVO")} value={draft.responsavelId} onValueChange={(next) => update("responsavelId", next)} disabled={disabled} placeholder="Selecione" emptyLabel="Selecione" ariaLabel="Responsável *" className="h-10 rounded-lg bg-background/70 px-3 py-0" /></div>
-      <label><span className={labelClass}>Telefone *</span><input value={draft.telefone} onChange={(event) => update("telefone", event.target.value)} disabled={disabled} className={fieldClass} /></label>
-      <label><span className={labelClass}>E-mail *</span><input type="email" value={draft.email} onChange={(event) => update("email", event.target.value)} disabled={disabled} className={fieldClass} /></label>
+      <label><span className={labelClass}>Telefone</span><input value={draft.telefone} onChange={(event) => update("telefone", event.target.value)} disabled={disabled} className={fieldClass} /></label>
+      <label><span className={labelClass}>E-mail</span><input type="email" value={draft.email} onChange={(event) => update("email", event.target.value)} disabled={disabled} className={fieldClass} /></label>
       <label><span className={labelClass}>Etapa atual</span><select value={draft.etapaId} onChange={(event) => update("etapaId", event.target.value)} disabled={disabled} className={fieldClass}><option value="">Primeira etapa do funil</option>{etapas.map((etapa) => <option key={etapa.id} value={etapa.id}>{etapa.nome}</option>)}</select></label>
       <label><span className={labelClass}>Data da reunião</span><input type="datetime-local" value={draft.dataReuniao} onChange={(event) => update("dataReuniao", event.target.value)} disabled={disabled} className={fieldClass} /></label>
       <label><span className={labelClass}>Origem do negócio *</span><select value={draft.origemNegocio} onChange={(event) => update("origemNegocio", event.target.value)} disabled={disabled} className={fieldClass}><option value="">Selecione</option>{origemNegocioOptions.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
       <PipelineServiceMultiSelect options={servicoInteresseOptions} value={draft.servicosInteresse} onChange={(services) => update("servicosInteresse", services)} disabled={disabled} />
-      <label><span className={labelClass}>Valor estimado da proposta</span><input type="number" min="0" step="0.01" value={draft.valorEstimadoProposta} onChange={(event) => update("valorEstimadoProposta", event.target.value)} disabled={disabled} className={fieldClass} /></label>
-      <label className="md:col-span-2"><span className={labelClass}>Estratégia comercial *</span><select value={draft.estrategiaComercial} onChange={(event) => update("estrategiaComercial", event.target.value)} disabled={disabled} className={fieldClass}><option value="">Selecione</option>{estrategiaComercialOptions.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
+      {!preVendas && <label><span className={labelClass}>Valor estimado da proposta</span><input type="number" min="0" step="0.01" value={draft.valorEstimadoProposta} onChange={(event) => update("valorEstimadoProposta", event.target.value)} disabled={disabled} className={fieldClass} /></label>}
+      <label className="md:col-span-2"><span className={labelClass}>Estratégia comercial *</span><select value={draft.estrategiaComercial} onChange={(event) => update("estrategiaComercial", event.target.value)} disabled={disabled} className={fieldClass}><option value="">Selecione</option>{draft.estrategiaComercial && !(estrategiaComercialOptions as readonly string[]).includes(draft.estrategiaComercial) && <option>{draft.estrategiaComercial}</option>}{estrategiaComercialOptions.map((option) => <option key={option} value={option}>{option}</option>)}</select></label>
       <label className="md:col-span-2"><span className={labelClass}>Observações</span><textarea value={draft.observacoes} onChange={(event) => update("observacoes", event.target.value)} disabled={disabled} className={`${fieldClass} min-h-24 py-2.5`} /></label>
     </div>
   );

@@ -1,0 +1,1 @@
+export const motivosCancelamento: Record<string, string> = { SEM_CANAL_CONTATO: "Sem canal de contato", DESNECESSARIA: "Tarefa desnecessária", REPETIDA: "Tarefa repetida", MOVIMENTACAO_ETAPA: "Mudança de etapa ou encerramento" };

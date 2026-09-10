@@ -14,6 +14,15 @@ export interface PipelineNegocio {
   id: number;
   funilId: number;
   funilNome: string;
+  tipoFunil?: string;
+  pessoaId?: number;
+  campanhaOrigemId?: number;
+  campanhaOrigemNome?: string;
+  preVendaOrigemId?: number;
+  negocioGeradoId?: number;
+  tags?: import("./usePipelineCadastros").PipelineTag[];
+  campos?: Record<number, string>;
+  cadenciaStatus?: string;
   empresaId?: number | null;
   nomeEmpresa: string;
   nomeContato: string;
@@ -63,6 +72,10 @@ export interface PipelineBoard {
 }
 
 export interface PipelineNegocioInput {
+  pessoaId?: number | null;
+  campanhaOrigemId?: number | null;
+  tagIds?: number[];
+  campos?: Record<number, string>;
   funilId?: number | null;
   empresaId?: number | null;
   cadastrarEmpresa?: boolean;
@@ -133,11 +146,17 @@ const unwrap = <T,>(response: ApiResponse<T>) => {
 
 const useInvalidatePipeline = () => {
   const queryClient = useQueryClient();
-  return () => queryClient.invalidateQueries({ queryKey: ["pipeline-vendas"] });
+  return () => Promise.all([
+    queryClient.invalidateQueries({ queryKey: ["pipeline-vendas"] }),
+    queryClient.invalidateQueries({ queryKey: ["pipeline-atividades"] }),
+    queryClient.invalidateQueries({ queryKey: ["pipeline-campaigns"] }),
+    queryClient.invalidateQueries({ queryKey: ["pipeline-dashboard"] }),
+  ]);
 };
 
-export const usePipelineVendas = (funilId?: number | null) => useQuery<PipelineBoard>({
+export const usePipelineVendas = (funilId?: number | null, enabled = true) => useQuery<PipelineBoard>({
   queryKey: ["pipeline-vendas", funilId],
+  enabled,
   refetchInterval: 60_000,
   queryFn: async () => unwrap((await api.get<ApiResponse<PipelineBoard>>("/pipeline-vendas", {
     params: { funilId: funilId || undefined },
@@ -201,7 +220,7 @@ export const useMovePipelineNegocio = () => {
       });
       queryClient.setQueriesData<PipelineBoard>(
         { queryKey: ["pipeline-vendas"] },
-        (current) => current ? movePipelineNegocioInBoard(current, id, etapaId) : current,
+        (current) => current?.etapas ? movePipelineNegocioInBoard(current, id, etapaId) : current,
       );
       return { previousBoards };
     },

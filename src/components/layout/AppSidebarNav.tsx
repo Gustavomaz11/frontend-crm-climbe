@@ -37,7 +37,7 @@ export function AppSidebarNav({ collapsed }: AppSidebarNavProps) {
   const items = useVisibleMainNavItems();
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const commercialActive = pathname.startsWith("/pipeline-vendas");
+  const commercialActive = [...commercialPaths].some((path) => routeIsActive(pathname, path));
   const settingsActive = settingsPaths.has(pathname);
   const [commercialOpen, setCommercialOpen] = useState(commercialActive);
   const [settingsOpen, setSettingsOpen] = useState(settingsActive);

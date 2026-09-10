@@ -32,7 +32,7 @@ const formatDate = (value?: string | null) => {
 export const PipelineNegocioCard = memo(({ negocio, canMove, isMoving, onOpen, onDragStart }: PipelineNegocioCardProps) => (
   <button
     type="button"
-    draggable={canMove}
+    draggable={canMove && !(negocio.tipoFunil === "PRE_VENDAS" && negocio.resultado !== "ABERTO")}
     aria-busy={isMoving}
     onDragStart={(event) => onDragStart(event, negocio.id)}
     onClick={() => onOpen(negocio)}
@@ -61,10 +61,13 @@ export const PipelineNegocioCard = memo(({ negocio, canMove, isMoving, onOpen, o
       </div>
     </div>
 
+    <div className="mt-2 flex flex-wrap gap-1">{negocio.tags?.map(t => <span key={t.id} className="rounded border px-2 py-0.5 text-[10px]" style={{ borderColor: t.cor }}><span style={{ color: t.cor }}>●</span> {t.nome}</span>)}</div>
+    {negocio.campanhaOrigemNome && <p className="mt-1 text-[10px] text-muted-foreground">{negocio.campanhaOrigemNome} · {negocio.estrategiaComercial}</p>}
+    {negocio.resultado === "ABERTO" && ["CONCLUIDA", "SEM_RESPOSTA"].includes(negocio.cadenciaStatus || "") && <p className="mt-2 rounded bg-amber-500/10 px-2 py-1 text-xs text-amber-600">Cadência encerrada</p>}
     <div className="mt-3 space-y-1.5 text-[10px] text-muted-foreground">
       <div className="flex items-center gap-1.5"><UserRound className="h-3 w-3" /><span className="truncate">{negocio.nomeContato}</span></div>
       <div className="flex items-center gap-1.5"><CalendarDays className="h-3 w-3" /><span className="truncate">{formatDate(negocio.dataReuniao)}</span></div>
-      <div className="flex items-center gap-1.5"><CircleDollarSign className="h-3 w-3" /><span className="truncate">{formatCurrency(negocio.valorEstimadoProposta)}</span></div>
+      {negocio.tipoFunil !== "PRE_VENDAS" && <div className="flex items-center gap-1.5"><CircleDollarSign className="h-3 w-3" /><span className="truncate">{formatCurrency(negocio.valorEstimadoProposta)}</span></div>}
       <div className="flex items-center gap-1.5"><Building2 className="h-3 w-3" /><span className="truncate">{negocio.responsavelNome}</span></div>
     </div>
   </button>

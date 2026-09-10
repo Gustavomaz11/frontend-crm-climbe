@@ -9,6 +9,10 @@ import {
 } from "./pipelineNegocioOptions";
 
 export interface PipelineNegocioDraft {
+  pessoaId?: string;
+  campanhaOrigemId?: string;
+  tagIds?: number[];
+  campos?: Record<number, string>;
   empresaId: string;
   cadastrarEmpresa: boolean;
   cnpj: string;
@@ -71,24 +75,32 @@ const negocioServicosToDraft = (negocio: PipelineNegocio) => {
 };
 
 export const negocioToDraft = (negocio: PipelineNegocio): PipelineNegocioDraft => ({
+  pessoaId: negocio.pessoaId ? String(negocio.pessoaId) : "",
+  campanhaOrigemId: negocio.campanhaOrigemId ? String(negocio.campanhaOrigemId) : "",
+  tagIds: negocio.tags?.map(t => t.id) || [],
+  campos: negocio.campos || {},
   empresaId: negocio.empresaId ? String(negocio.empresaId) : "",
   cadastrarEmpresa: false,
   cnpj: "",
   nomeEmpresa: negocio.nomeEmpresa,
   nomeContato: negocio.nomeContato,
-  telefone: negocio.telefone,
-  email: negocio.email,
+  telefone: negocio.telefone || "",
+  email: negocio.email || "",
   responsavelId: String(negocio.responsavelId),
   etapaId: String(negocio.etapaId),
   dataReuniao: negocio.dataReuniao?.slice(0, 16) || "",
   origemNegocio: normalizePipelineNegocioOption(negocio.origemNegocio, origemNegocioOptions),
-  estrategiaComercial: normalizePipelineNegocioOption(negocio.estrategiaComercial, estrategiaComercialOptions),
+  estrategiaComercial: negocio.estrategiaComercial,
   servicosInteresse: negocioServicosToDraft(negocio),
   valorEstimadoProposta: negocio.valorEstimadoProposta ? String(negocio.valorEstimadoProposta) : "",
   observacoes: negocio.observacoes || "",
 });
 
 export const draftToNegocioInput = (draft: PipelineNegocioDraft): PipelineNegocioInput => ({
+  pessoaId: draft.pessoaId ? Number(draft.pessoaId) : null,
+  campanhaOrigemId: draft.campanhaOrigemId ? Number(draft.campanhaOrigemId) : null,
+  tagIds: draft.tagIds || [],
+  campos: draft.campos || {},
   empresaId: draft.empresaId ? Number(draft.empresaId) : null,
   cadastrarEmpresa: !draft.empresaId && draft.cadastrarEmpresa,
   cnpj: !draft.empresaId && draft.cadastrarEmpresa ? draft.cnpj.trim() : null,
@@ -110,8 +122,6 @@ export const draftToNegocioInput = (draft: PipelineNegocioDraft): PipelineNegoci
 export const isPipelineNegocioDraftValid = (draft: PipelineNegocioDraft) => Boolean(
   draft.nomeEmpresa.trim()
   && draft.nomeContato.trim()
-  && draft.telefone.trim()
-  && draft.email.trim()
   && draft.responsavelId
   && draft.origemNegocio.trim()
   && draft.estrategiaComercial.trim()

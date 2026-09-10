@@ -220,7 +220,7 @@ describe("Pipeline de Vendas", () => {
     expect(removeService(withServices).servicosInteresse).toEqual(["CFO"]);
   });
 
-  it("normaliza opções legadas e rejeita valores fora das listas", () => {
+  it("normaliza origem e serviços, preservando a estratégia de campanhas", () => {
     const draft = negocioToDraft({
       ...negocio,
       origemNegocio: "site",
@@ -230,7 +230,7 @@ describe("Pipeline de Vendas", () => {
     });
 
     expect(draft.origemNegocio).toBe("Site");
-    expect(draft.estrategiaComercial).toBe("");
+    expect(draft.estrategiaComercial).toBe("Diagnóstico consultivo");
     expect(draft.servicosInteresse).toEqual([]);
   });
 });

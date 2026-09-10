@@ -7,6 +7,7 @@ export type CadenceStepType = "TAREFA" | "ESPERA" | "ENCERRAR" | "SEM_RESPOSTA";
 export type TaskPriority = "BAIXA" | "MEDIA" | "ALTA" | "URGENTE";
 
 export interface CadenceStep {
+  etapaFunilCodigo?: string;
   id?: number; ordem?: number; tipo: CadenceStepType; titulo?: string; descricao?: string;
   tipoTarefa?: string; prioridade?: TaskPriority; diasUteisEspera?: number;
   prazoDiasUteis?: number; scriptId?: number; scriptNome?: string;
@@ -20,6 +21,7 @@ export interface PipelineCampaign extends PipelineCampaignInput {
   criadoEm: string; atualizadoEm: string;
 }
 export interface CampaignLead {
+  tipoFunil?: string; campanhaOrigemId?: number;
   id: number; empresa: string; contato: string; responsavel: string; servico: string; funil: string; etapa: string;
 }
 
@@ -44,6 +46,8 @@ const useInvalidate = () => {
   return () => Promise.all([
     client.invalidateQueries({ queryKey: ["pipeline-campaigns"] }),
     client.invalidateQueries({ queryKey: ["pipeline-vendas"] }),
+    client.invalidateQueries({ queryKey: ["pipeline-atividades"] }),
+    client.invalidateQueries({ queryKey: ["pipeline-cadastros", "campanhas"] }),
   ]);
 };
 

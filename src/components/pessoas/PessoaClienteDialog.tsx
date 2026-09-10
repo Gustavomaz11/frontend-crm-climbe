@@ -55,7 +55,7 @@ export const PessoaClienteDialog = ({ pessoa, empresas, isProcessing, onClose, o
       : [...form.empresaIds, empresaId]);
   };
 
-  const valid = Boolean(form.nome.trim() && form.email.trim() && form.telefone.trim() && form.empresaIds.length);
+  const valid = Boolean(form.nome.trim() && form.empresaIds.length);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -69,8 +69,8 @@ export const PessoaClienteDialog = ({ pessoa, empresas, isProcessing, onClose, o
           <div className="grid gap-4 md:grid-cols-2">
             <label><span className={labelClass}>Nome completo *</span><input className={inputClass} value={form.nome} onChange={(event) => update("nome", event.target.value)} disabled={isProcessing} /></label>
             <label><span className={labelClass}>CPF</span><input className={inputClass} value={form.cpf} onChange={(event) => update("cpf", formatCpf(event.target.value))} disabled={isProcessing} inputMode="numeric" placeholder="000.000.000-00" /></label>
-            <label><span className={labelClass}>E-mail *</span><input type="email" className={inputClass} value={form.email} onChange={(event) => update("email", event.target.value)} disabled={isProcessing} /></label>
-            <label><span className={labelClass}>Telefone *</span><input className={inputClass} value={form.telefone} onChange={(event) => update("telefone", event.target.value)} disabled={isProcessing} /></label>
+            <label><span className={labelClass}>E-mail</span><input type="email" className={inputClass} value={form.email} onChange={(event) => update("email", event.target.value)} disabled={isProcessing} /></label>
+            <label><span className={labelClass}>Telefone</span><input className={inputClass} value={form.telefone} onChange={(event) => update("telefone", event.target.value)} disabled={isProcessing} /></label>
             <label className="md:col-span-2"><span className={labelClass}>Cargo na empresa</span><input className={inputClass} value={form.cargo} onChange={(event) => update("cargo", event.target.value)} disabled={isProcessing} placeholder="Ex.: Diretor Financeiro" /></label>
           </div>
 

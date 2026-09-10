@@ -67,6 +67,7 @@ describe("RevisaoDocumentoDialog", () => {
       </QueryClientProvider>,
     );
 
+    await screen.findByRole("img", { name: "Página 1" });
     const comment = await screen.findByRole("button", { name: /Marcação 1.*página 1/i });
     const mark = screen.getByRole("button", { name: "Marcação: Ajustar cláusula" });
     fireEvent.click(comment);

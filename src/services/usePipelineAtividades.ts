@@ -20,6 +20,7 @@ export interface PipelineSubtarefa {
 }
 
 export interface PipelineTarefa {
+  campanhaId?: number; campanhaNome?: string; contato?: string; telefone?: string; email?: string; motivoCancelamento?: string; comentarioCancelamento?: string; canceladoEm?: string;
   id: number;
   negocioId: number;
   negocioNome: string;
@@ -96,6 +97,8 @@ const useInvalidateAtividades = () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["pipeline-atividades"] }),
       queryClient.invalidateQueries({ queryKey: ["pipeline-vendas"] }),
+      queryClient.invalidateQueries({ queryKey: ["pipeline-campaigns"] }),
+      queryClient.invalidateQueries({ queryKey: ["pipeline-dashboard"] }),
     ]);
   };
 };
