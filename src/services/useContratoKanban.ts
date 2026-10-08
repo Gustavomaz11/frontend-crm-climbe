@@ -217,8 +217,10 @@ export function useCreateKanbanTask() {
         throw new Error(getApiErrorMessage(error));
       }
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["contratos", variables.contratoId, "kanban"] });
+    onSuccess: (board, variables) => {
+      const queryKey = ["contratos", variables.contratoId, "kanban"];
+      queryClient.setQueryData(queryKey, board);
+      queryClient.invalidateQueries({ queryKey });
     },
   });
 }
