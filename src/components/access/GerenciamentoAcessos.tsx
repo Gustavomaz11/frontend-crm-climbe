@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Ban, CheckCircle2, Pencil, RotateCcw, Search, ShieldCheck, User } from "lucide-react";
+import { Ban, CheckCircle2, Clock, Pencil, RotateCcw, Search, ShieldCheck, User } from "lucide-react";
 
 import {
   AlertDialog,
@@ -21,7 +21,7 @@ import {
   type Usuario,
 } from "@/services/useUsuarios";
 
-type FiltroAcesso = "todos" | "ATIVO" | "REVOGADO";
+type FiltroAcesso = "todos" | "ATIVO" | "REVOGADO" | "COMPLETAR_CADASTRO";
 type AcaoAcesso = "revogar" | "reativar";
 
 interface GerenciamentoAcessosProps {
@@ -57,6 +57,7 @@ export const GerenciamentoAcessos = ({ usuarioAtualId }: GerenciamentoAcessosPro
 
   const ativos = usuarios.filter((usuario) => usuario.situacao === "ATIVO").length;
   const revogados = usuarios.filter((usuario) => usuario.situacao === "REVOGADO").length;
+  const incompletos = usuarios.filter((usuario) => usuario.situacao === "COMPLETAR_CADASTRO").length;
 
   const confirmar = async () => {
     if (!confirmacao) return;
@@ -94,10 +95,11 @@ export const GerenciamentoAcessos = ({ usuarioAtualId }: GerenciamentoAcessosPro
 
   return (
     <>
-      <div className="grid grid-cols-2 gap-3 px-6 pb-4">
+      <div className="grid grid-cols-3 gap-3 px-6 pb-4">
         {[
           { label: "Usuários ativos", value: ativos, icon: ShieldCheck, color: "text-emerald-500" },
           { label: "Acessos revogados", value: revogados, icon: Ban, color: "text-red-500" },
+          { label: "Aguardando completar cadastro", value: incompletos, icon: Clock, color: "text-yellow-500" },
         ].map((item) => (
           <div key={item.label} className="flex items-center gap-3 rounded-xl border border-border/25 bg-card/40 p-4">
             <item.icon className={`h-5 w-5 ${item.color}`} />
@@ -107,7 +109,7 @@ export const GerenciamentoAcessos = ({ usuarioAtualId }: GerenciamentoAcessosPro
       </div>
 
       <div className="flex items-center gap-1.5 px-6 pb-4">
-        {([['todos', 'Todos'], ['ATIVO', 'Ativos'], ['REVOGADO', 'Revogados']] as [FiltroAcesso, string][]).map(([valor, label]) => (
+        {([['todos', 'Todos'], ['ATIVO', 'Ativos'], ['REVOGADO', 'Revogados'], ['COMPLETAR_CADASTRO', 'Completar cadastro']] as [FiltroAcesso, string][]).map(([valor, label]) => (
           <button key={valor} onClick={() => setFiltro(valor)} className={`rounded-lg border px-3 py-1.5 text-[11px] font-medium ${filtro === valor ? "border-accent/25 bg-accent/15 text-accent" : "border-transparent text-muted-foreground hover:bg-muted/20"}`}>{label}</button>
         ))}
         <div className="ml-auto flex h-9 w-[300px] items-center gap-2 rounded-lg border border-border/25 bg-card/30 px-3">
@@ -128,13 +130,14 @@ export const GerenciamentoAcessos = ({ usuarioAtualId }: GerenciamentoAcessosPro
                   <tr key={usuario.id} className="border-b border-border/10 hover:bg-muted/10">
                     <td className="px-5 py-3"><p className="text-[12px] font-medium">{usuario.nomeCompleto}</p><p className="text-[10px] text-muted-foreground">{usuario.email}</p></td>
                     <td className="px-4 py-3 text-[11px] text-foreground/70">{usuario.cargo}</td>
-                    <td className="px-4 py-3"><span className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-medium ${usuario.situacao === "ATIVO" ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-500" : "border-red-400/20 bg-red-400/10 text-red-500"}`}>{usuario.situacao === "ATIVO" ? <CheckCircle2 className="h-2.5 w-2.5" /> : <Ban className="h-2.5 w-2.5" />}{usuario.situacao === "ATIVO" ? "Ativo" : "Revogado"}</span></td>
+                    <td className="px-4 py-3"><span className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-medium ${usuario.situacao === "ATIVO" ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-500" : usuario.situacao === "COMPLETAR_CADASTRO" ? "border-yellow-400/20 bg-yellow-400/10 text-yellow-500" : "border-red-400/20 bg-red-400/10 text-red-500"}`}>{usuario.situacao === "ATIVO" ? <CheckCircle2 className="h-2.5 w-2.5" /> : usuario.situacao === "COMPLETAR_CADASTRO" ? <Clock className="h-2.5 w-2.5" /> : <Ban className="h-2.5 w-2.5" />}{usuario.situacao === "ATIVO" ? "Ativo" : usuario.situacao === "COMPLETAR_CADASTRO" ? "Completar cadastro" : "Revogado"}</span></td>
                     <td className="px-5 py-3">
                       <div className="flex items-center justify-end gap-2">
                         <button onClick={() => abrirEdicaoCargo(usuario)} className="inline-flex items-center gap-1 rounded-lg border border-border/30 bg-muted/15 px-2.5 py-1.5 text-[11px] font-medium text-foreground/70 hover:bg-muted/30"><Pencil className="h-3 w-3" />Cargo</button>
                         {usuario.id === usuarioAtualId ? <span className="text-[10px] italic text-muted-foreground">Sessão atual</span>
                           : usuario.situacao === "ATIVO" ? <button onClick={() => setConfirmacao({ usuario, acao: "revogar" })} className="inline-flex items-center gap-1 rounded-lg border border-red-400/20 bg-red-400/10 px-2.5 py-1.5 text-[11px] font-medium text-red-500 hover:bg-red-400/20"><Ban className="h-3 w-3" />Revogar</button>
-                          : <button onClick={() => setConfirmacao({ usuario, acao: "reativar" })} className="inline-flex items-center gap-1 rounded-lg border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-1.5 text-[11px] font-medium text-emerald-500 hover:bg-emerald-400/20"><RotateCcw className="h-3 w-3" />Reativar</button>}
+                          : usuario.situacao === "REVOGADO" ? <button onClick={() => setConfirmacao({ usuario, acao: "reativar" })} className="inline-flex items-center gap-1 rounded-lg border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-1.5 text-[11px] font-medium text-emerald-500 hover:bg-emerald-400/20"><RotateCcw className="h-3 w-3" />Reativar</button>
+                          : <span className="text-[10px] text-muted-foreground">Primeiro acesso pendente</span>}
                       </div>
                     </td>
                   </tr>

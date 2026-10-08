@@ -10,6 +10,7 @@ import { QueryProvider } from "@/context/QueryProvider";
 import { AuthProvider } from "@/context";
 import { PrivateRoute } from "@/guards/PrivateRoute";
 import { PublicRoute } from "@/guards/PublicRoute";
+import { PendingRegistrationRoute } from "@/guards/PendingRegistrationRoute";
 import { RouteLoading } from "@/components/layout/RouteLoading";
 import {
   Agenda,
@@ -110,9 +111,9 @@ const App = () => (
             <Route
               path="/first-access"
               element={
-                <PrivateRoute>
+                <PendingRegistrationRoute>
                   <FirstAccess />
-                </PrivateRoute>
+                </PendingRegistrationRoute>
               }
             />
             <Route

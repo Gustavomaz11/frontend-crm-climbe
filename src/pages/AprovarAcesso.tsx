@@ -573,7 +573,7 @@ const AprovarAcesso = () => {
                               <p className="text-[11px] text-foreground">
                                 {formatDate(solicitacao.dataSolicitacao)}
                               </p>
-                              {solicitacao.expiraEm && (
+                              {solicitacao.expiraEm && solicitacao.status === "pendente" && (
                                 <p className="text-[10px] text-muted-foreground">
                                   Expira em {formatDate(solicitacao.expiraEm)}
                                 </p>

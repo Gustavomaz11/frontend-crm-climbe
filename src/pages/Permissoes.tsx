@@ -351,6 +351,9 @@ const Permissoes = () => {
                           <div className="min-w-0">
                             <h2 className="truncate text-[16px] font-semibold text-foreground">{selectedUser?.nomeCompleto || "Selecione um usuário"}</h2>
                             <p className="truncate text-[11px] text-muted-foreground">{selectedUser?.email || "—"}</p>
+                            {selectedUser?.situacao === "COMPLETAR_CADASTRO" && (
+                              <p className="mt-1 text-[11px] text-yellow-500">Aprovado. Aguardando completar o cadastro no primeiro acesso.</p>
+                            )}
                           </div>
                         </div>
                       </div>
