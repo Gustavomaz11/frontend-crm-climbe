@@ -31,10 +31,18 @@ describe("PipelineTarefaDialog", () => {
 
     fireEvent.change(screen.getByLabelText(/título/i), { target: { value: "Ligar para cliente" } });
     const saveButton = screen.getByRole("button", { name: /salvar tarefa/i });
-    expect(saveButton).toBeDisabled();
+    expect(saveButton).toBeEnabled();
+    fireEvent.click(saveButton);
+    expect(onSave).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert")).toHaveTextContent("Prazo");
+    expect(screen.getByLabelText(/prazo/i)).toHaveAttribute("data-field-error", "true");
 
     fireEvent.change(screen.getByLabelText(/prazo/i), { target: { value: "2026-08-10" } });
     expect(screen.getByLabelText(/data de início/i)).toHaveValue("");
     expect(saveButton).toBeEnabled();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.getByLabelText(/prazo/i)).not.toHaveAttribute("data-field-error");
+    fireEvent.click(saveButton);
+    expect(onSave).toHaveBeenCalledOnce();
   });
 });

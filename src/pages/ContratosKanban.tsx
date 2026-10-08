@@ -1,3 +1,4 @@
+import { FormValidation } from "@/components/ui/form-validation";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
@@ -488,18 +489,18 @@ const ContratosKanban = () => {
                   </p>
                 </div>
                 {board?.gestor && (
-                  <form
+                  <FormValidation as="form"
                     className="flex items-center gap-2"
                     onSubmit={(event) => {
                       event.preventDefault();
                       void handleCreateRaia();
                     }}
                   >
-                    <input value={newRaiaTitle} onChange={(e) => setNewRaiaTitle(e.target.value)} placeholder="Nova raia" className="h-9 w-40 rounded-lg border border-border/25 bg-background/60 px-3 text-[12px] outline-none transition-colors focus:border-accent/40" />
+                    <label className="text-[11px]">Nome da raia *<input required aria-label="Nome da raia" value={newRaiaTitle} onChange={(e) => setNewRaiaTitle(e.target.value)} placeholder="Nova raia" className="h-9 w-40 rounded-lg border border-border/25 bg-background/60 px-3 text-[12px] outline-none transition-colors focus:border-accent/40" /></label>
                     <button type="submit" disabled={createRaia.isPending} className="flex h-9 items-center gap-2 rounded-lg bg-accent px-3 text-[12px] font-semibold text-accent-foreground shadow-[0_2px_10px_-2px_hsl(var(--accent)/0.3)] transition-colors hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-50">
                       <Plus className="h-3.5 w-3.5" /> {createRaia.isPending ? "Criando..." : "Raia"}
                     </button>
-                  </form>
+                  </FormValidation>
                 )}
               </div>
 

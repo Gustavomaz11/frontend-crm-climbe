@@ -1,3 +1,4 @@
+import { FormValidation } from "@/components/ui/form-validation";
 import { useEffect, useRef, useState } from "react";
 import { useTheme } from "@/hooks/use-theme";
 import { useSidebarState } from "@/hooks/useSidebarState";
@@ -39,6 +40,8 @@ function InputField({
       </label>
       <input
         {...props}
+        required={required}
+        aria-label={label}
         className="h-9 rounded-lg border border-border/30 bg-background/50 px-3 text-[13px] text-foreground placeholder:text-muted-foreground outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all"
       />
     </div>
@@ -58,6 +61,8 @@ function SelectField({
       </label>
       <select
         {...props}
+        required={required}
+        aria-label={label}
         className="h-9 rounded-lg border border-border/30 bg-background/50 px-3 text-[13px] text-foreground outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all"
       >
         {children}
@@ -236,21 +241,6 @@ const CadastroEmpresa = () => {
     createEmpresa(form, mutationOptions);
   }
 
-  const requiredFilled =
-    form.razaoSocial &&
-    form.cnpj &&
-    form.logradouro &&
-    form.numero &&
-    form.bairro &&
-    form.cidade &&
-    form.uf &&
-    form.cep &&
-    form.telefone &&
-    form.email &&
-    form.representanteNome &&
-    form.representanteCpf &&
-    form.representanteContato;
-
   return (
     <div className="relative min-h-screen bg-background text-foreground transition-colors duration-500 overflow-hidden">
       <div className="fixed inset-0 pointer-events-none">
@@ -348,7 +338,7 @@ const CadastroEmpresa = () => {
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <FormValidation as="form" onSubmit={handleSubmit} className="space-y-5">
               <AnimatePresence>
                 {errorMessage && (
                   <motion.div
@@ -563,7 +553,7 @@ const CadastroEmpresa = () => {
                 </motion.button>
                 <motion.button
                   type="submit"
-                  disabled={!requiredFilled || isPending || (isEditing && isEmpresaLoading)}
+                  disabled={isPending || (isEditing && isEmpresaLoading)}
                   className="h-9 px-6 rounded-lg bg-accent text-white text-[13px] font-medium hover:bg-accent/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                   whileTap={{ scale: 0.97 }}
                 >
@@ -574,7 +564,7 @@ const CadastroEmpresa = () => {
                       : "Cadastrar Empresa"}
                 </motion.button>
               </motion.div>
-            </form>
+            </FormValidation>
           </div>
         </main>
       </div>

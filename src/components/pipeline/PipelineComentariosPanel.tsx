@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { FormValidation } from "@/components/ui/form-validation";
 import { MessageSquareText, Send } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -76,8 +77,11 @@ export const PipelineComentariosPanel = ({
       </div>
 
       {canCreate && (
-        <div className="rounded-xl border border-border/25 bg-background/35 p-3">
+        <FormValidation className="rounded-xl border border-border/25 bg-background/35 p-3">
+          <label htmlFor={`comentario-${negocioId}`} className="mb-1 block text-[11px] font-medium">Comentário *</label>
           <textarea
+            required
+            id={`comentario-${negocioId}`}
             value={content}
             onChange={(event) => setContent(event.target.value)}
             placeholder="Escreva um comentário..."
@@ -85,16 +89,17 @@ export const PipelineComentariosPanel = ({
           />
           <div className="mt-2 flex justify-end">
             <button
+              data-validate-submit
               type="button"
               onClick={() => void submit(content)}
-              disabled={!content.trim() || createComment.isPending}
+              disabled={createComment.isPending}
               className="flex h-8 items-center gap-2 rounded-lg bg-accent px-3 text-[10px] font-semibold text-accent-foreground disabled:opacity-50"
             >
               <Send className="h-3 w-3" />
               {createComment.isPending ? "Enviando..." : "Comentar"}
             </button>
           </div>
-        </div>
+        </FormValidation>
       )}
 
       {isLoading ? (

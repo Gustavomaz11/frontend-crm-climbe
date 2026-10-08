@@ -1,3 +1,4 @@
+import { FormValidation } from "@/components/ui/form-validation";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Moon, Sun } from "lucide-react";
@@ -100,7 +101,7 @@ const RecuperarSenha = () => {
                       Informe o e-mail corporativo associado à sua conta para receber o link de redefinição.
                     </p>
 
-                    <form
+                    <FormValidation as="form"
                       onSubmit={(e) => {
                         e.preventDefault();
                         setSubmitted(true);
@@ -109,10 +110,10 @@ const RecuperarSenha = () => {
                     >
                       <div>
                         <label className="text-[11px] font-medium text-muted-foreground mb-1.5 block tracking-wide">
-                          E-mail corporativo
+                          E-mail corporativo *
                         </label>
                         <div className="relative">
-                          <input
+                          <input required
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
@@ -141,7 +142,7 @@ const RecuperarSenha = () => {
                           <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
                         </span>
                       </motion.button>
-                    </form>
+                    </FormValidation>
                   </motion.div>
                 ) : (
                   <motion.div

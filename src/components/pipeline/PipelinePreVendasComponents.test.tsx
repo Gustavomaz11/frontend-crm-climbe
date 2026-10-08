@@ -28,8 +28,13 @@ describe("Pré-vendas", () => {
   it("exige motivo e envia cancelamento separado de conclusão", async () => {
     const close = vi.fn();
     render(<QueryClientProvider client={new QueryClient()}><PipelineCancelarTarefaDialog tarefa={{ id: 10, titulo: "Ligação" } as PipelineTarefa} onClose={close} /></QueryClientProvider>);
-    expect(screen.getByText("Confirmar cancelamento")).toBeDisabled();
-    fireEvent.change(screen.getByLabelText("Motivo obrigatório"), { target: { value: "SEM_CANAL_CONTATO" } });
+    expect(screen.getByText("Confirmar cancelamento")).toBeEnabled();
+    fireEvent.click(screen.getByText("Confirmar cancelamento"));
+    expect(close).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert")).toHaveTextContent("Motivo obrigatório");
+    expect(screen.getByLabelText(/Motivo obrigatório/)).toHaveAttribute("data-field-error", "true");
+    fireEvent.change(screen.getByLabelText(/Motivo obrigatório/), { target: { value: "SEM_CANAL_CONTATO" } });
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
     fireEvent.change(screen.getByLabelText("Comentário"), { target: { value: "Telefone ausente" } });
     fireEvent.click(screen.getByText("Confirmar cancelamento"));
     await waitFor(() => expect(close).toHaveBeenCalledOnce());

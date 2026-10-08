@@ -1,3 +1,4 @@
+import { FormValidation } from "@/components/ui/form-validation";
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { useTheme } from "@/hooks/use-theme";
 import { useSidebarState } from "@/hooks/useSidebarState";
@@ -534,7 +535,7 @@ const Contratos = () => {
                         )}
                       </div>
                       <div>
-                        <label className="text-[9px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Responsável</label>
+                        <label className="text-[9px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Responsável *</label>
                         <UserSelect
                           users={usuariosAtivos}
                           value={selectedResponsavelId}
@@ -757,7 +758,7 @@ const Contratos = () => {
                         <p className="text-[12px] font-semibold text-foreground/80">{selectedContrato.responsavelNome || "Não definido"}</p>
                       </div>
                       <div>
-                        <p className="mb-1 text-[10px] text-muted-foreground">Atores</p>
+                        <p className="mb-1 text-[10px] text-muted-foreground">Atores *</p>
                         {selectedContrato.participantes.length === 0 ? (
                           <p className="text-[12px] text-muted-foreground">Nenhum ator vinculado</p>
                         ) : (
@@ -772,7 +773,7 @@ const Contratos = () => {
                       </div>
                     </div>
                   ) : (
-                    <div className="space-y-3">
+                    <FormValidation className="space-y-3">
                       <div>
                         <label className="mb-1 block text-[10px] text-muted-foreground">Responsável</label>
                         <UserSelect
@@ -790,12 +791,12 @@ const Contratos = () => {
                           }}
                           placeholder="Selecione o responsável"
                           emptyLabel="Selecione o responsável"
-                          ariaLabel="Editar responsável pelo contrato"
+                          required ariaLabel="Editar responsável pelo contrato"
                         />
                       </div>
                       <div>
                         <p className="mb-1 text-[10px] text-muted-foreground">Atores</p>
-                        <div className="max-h-[130px] overflow-y-auto rounded-lg border border-border/25 bg-background/50 p-2">
+                        <div tabIndex={-1} role="group" aria-required="true" data-field-label="Atores" data-required-value={editParticipanteIds.length ? "selected" : ""} className="max-h-[130px] overflow-y-auto rounded-lg border border-border/25 bg-background/50 p-2">
                           {usuariosAtivos.map((usuario) => {
                             const checked = editParticipanteIds.includes(usuario.id);
                             return (
@@ -819,7 +820,7 @@ const Contratos = () => {
                           })}
                         </div>
                       </div>
-                      <button
+                      <button data-validate-submit
                         type="button"
                         onClick={handleSaveResponsaveis}
                         disabled={updateContratoResponsaveis.isPending}
@@ -827,7 +828,7 @@ const Contratos = () => {
                       >
                         {updateContratoResponsaveis.isPending ? "Salvando..." : "Salvar responsável e atores"}
                       </button>
-                    </div>
+                    </FormValidation>
                   )}
                 </div>
                 <div className="flex gap-2">

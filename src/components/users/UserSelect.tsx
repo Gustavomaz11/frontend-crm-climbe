@@ -33,6 +33,7 @@ interface UserSelectProps {
   disabled?: boolean;
   className?: string;
   ariaLabel?: string;
+  required?: boolean;
 }
 
 function getInitials(name: string) {
@@ -91,6 +92,7 @@ export function UserSelect({
   disabled = false,
   className,
   ariaLabel,
+  required = false,
 }: UserSelectProps) {
   const normalizedValue = value === null || value === undefined || value === ""
     ? EMPTY_VALUE
@@ -105,6 +107,9 @@ export function UserSelect({
     >
       <SelectTrigger
         aria-label={ariaLabel}
+        aria-required={required || undefined}
+        data-field-label={ariaLabel}
+        data-required-value={required && !disabled ? (normalizedValue !== EMPTY_VALUE ? normalizedValue : "") : undefined}
         className={cn(
           "h-12 border-border/30 bg-background/60 px-2.5 py-1 text-foreground focus:ring-accent/30 [&>span]:line-clamp-none",
           className,

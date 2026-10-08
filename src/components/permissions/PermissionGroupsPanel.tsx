@@ -1,3 +1,4 @@
+import { FormValidation } from "@/components/ui/form-validation";
 import { useState } from "react";
 import { Layers3, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 
@@ -79,15 +80,16 @@ export function PermissionGroupsPanel({ permissoes }: PermissionGroupsPanelProps
       </div>
 
       {aberto && (
-        <form onSubmit={salvar} className="mt-4 rounded-xl border border-border/20 bg-background/35 p-4">
+        <FormValidation as="form" onSubmit={salvar} className="mt-4 rounded-xl border border-border/20 bg-background/35 p-4">
           <h3 className="mb-3 text-[12px] font-semibold">
             {editandoId ? "Editar grupo de permissões" : "Criar grupo de permissões"}
           </h3>
           <div className="grid gap-3 sm:grid-cols-2">
-            <input required value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome do grupo" className="h-9 rounded-lg border border-border/30 bg-background/55 px-3 text-[12px] outline-none focus:border-accent/50" />
+            <label className="flex min-w-0 flex-col gap-1 text-[11px]"><span>Nome do grupo *</span><input required value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Nome do grupo" className="h-9 rounded-lg border border-border/30 bg-background/55 px-3 text-[12px] outline-none focus:border-accent/50" /></label>
             <input value={descricao} onChange={(e) => setDescricao(e.target.value)} placeholder="Descrição (opcional)" className="h-9 rounded-lg border border-border/30 bg-background/55 px-3 text-[12px] outline-none focus:border-accent/50" />
           </div>
-          <div className="mt-3 grid max-h-52 gap-2 overflow-y-auto sm:grid-cols-2">
+          <p className="mt-3 text-[11px] font-medium">Permissões *</p>
+          <div tabIndex={-1} role="group" aria-required="true" data-field-label="Permissões" data-required-value={selecionadas.size ? "selected" : ""} className="mt-3 grid max-h-52 gap-2 overflow-y-auto sm:grid-cols-2">
             {permissoes.map((permissao) => (
               <label key={permissao.id} className="flex cursor-pointer items-start gap-2 rounded-lg border border-border/15 p-2.5 text-[11px] hover:bg-muted/20">
                 <input
@@ -109,11 +111,11 @@ export function PermissionGroupsPanel({ permissoes }: PermissionGroupsPanelProps
           </div>
           <div className="mt-4 flex justify-end gap-2">
             <button type="button" onClick={fecharFormulario} className="h-9 rounded-lg border border-border/25 px-3 text-[11px]">Cancelar</button>
-            <button disabled={isSaving || !nome.trim() || selecionadas.size === 0} className="h-9 rounded-lg bg-accent px-4 text-[11px] font-semibold text-accent-foreground disabled:opacity-50">
+            <button disabled={isSaving} className="h-9 rounded-lg bg-accent px-4 text-[11px] font-semibold text-accent-foreground disabled:opacity-50">
               {isSaving ? "Salvando..." : editandoId ? "Salvar alterações" : "Criar grupo"}
             </button>
           </div>
-        </form>
+        </FormValidation>
       )}
 
       <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">

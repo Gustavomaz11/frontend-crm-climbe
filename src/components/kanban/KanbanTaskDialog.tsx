@@ -1,3 +1,4 @@
+import { FormValidation } from "@/components/ui/form-validation";
 import { CalendarDays, X } from "lucide-react";
 import type { KanbanTaskPrioridade, UsuarioResumo } from "@/services";
 import { UserSelect } from "@/components/users/UserSelect";
@@ -44,7 +45,7 @@ export const KanbanTaskDialog = ({
         </button>
       </div>
 
-      <form
+      <FormValidation as="form"
         className="space-y-3 p-5"
         onSubmit={(event) => {
           event.preventDefault();
@@ -52,7 +53,7 @@ export const KanbanTaskDialog = ({
         }}
       >
         <label className="block">
-          <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground">Título</span>
+          <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground">Título *</span>
           <input required value={draft.titulo} onChange={(event) => onChange({ ...draft, titulo: event.target.value })} placeholder="Nome da tarefa" className="h-9 w-full rounded-lg border border-border/25 bg-background/60 px-3 text-[12px] text-foreground outline-none transition-colors focus:border-accent/40" />
         </label>
 
@@ -63,8 +64,8 @@ export const KanbanTaskDialog = ({
 
         <div className="grid grid-cols-2 gap-3">
           <label>
-            <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground">Prioridade</span>
-            <select value={draft.prioridade} onChange={(event) => onChange({ ...draft, prioridade: event.target.value as KanbanTaskPrioridade })} className="h-9 w-full rounded-lg border border-border/25 bg-background/60 px-3 text-[12px] text-foreground outline-none transition-colors focus:border-accent/40">
+            <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground">Prioridade *</span>
+            <select required value={draft.prioridade} onChange={(event) => onChange({ ...draft, prioridade: event.target.value as KanbanTaskPrioridade })} className="h-9 w-full rounded-lg border border-border/25 bg-background/60 px-3 text-[12px] text-foreground outline-none transition-colors focus:border-accent/40">
               {kanbanPriorityOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
             </select>
           </label>
@@ -101,7 +102,7 @@ export const KanbanTaskDialog = ({
             {isSaving ? "Criando..." : "Criar tarefa"}
           </button>
         </div>
-      </form>
+      </FormValidation>
     </div>
   </div>
 );

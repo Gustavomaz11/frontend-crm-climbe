@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { FormValidation } from "@/components/ui/form-validation";
 import { Ban, CheckCircle2, Clock, Pencil, RotateCcw, Search, ShieldCheck, User } from "lucide-react";
 
 import {
@@ -156,18 +157,21 @@ export const GerenciamentoAcessos = ({ usuarioAtualId }: GerenciamentoAcessosPro
 
       <AlertDialog open={Boolean(edicaoCargo)} onOpenChange={(aberto) => !aberto && !alterarCargo.isPending && setEdicaoCargo(null)}>
         <AlertDialogContent>
+          <FormValidation className="contents">
           <AlertDialogHeader>
             <AlertDialogTitle>Alterar cargo</AlertDialogTitle>
             <AlertDialogDescription>Selecione o novo cargo de {edicaoCargo?.usuario.nomeCompleto}. As permissões atuais não serão modificadas.</AlertDialogDescription>
           </AlertDialogHeader>
-          <select value={edicaoCargo?.cargoId || ""} onChange={(event) => setEdicaoCargo((atual) => atual ? { ...atual, cargoId: Number(event.target.value) } : null)} className="h-10 w-full rounded-lg border border-border/30 bg-background px-3 text-[12px] outline-none focus:border-accent/50">
+          <label htmlFor="alterar-cargo" className="text-[11px] font-medium">Cargo *</label>
+          <select required id="alterar-cargo" value={edicaoCargo?.cargoId || ""} onChange={(event) => setEdicaoCargo((atual) => atual ? { ...atual, cargoId: Number(event.target.value) } : null)} className="h-10 w-full rounded-lg border border-border/30 bg-background px-3 text-[12px] outline-none focus:border-accent/50">
             <option value="">Selecione o cargo</option>
             {cargos.map((cargo) => <option key={cargo.id} value={cargo.id}>{cargo.nome}</option>)}
           </select>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={alterarCargo.isPending}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction disabled={alterarCargo.isPending || !edicaoCargo?.cargoId} onClick={(event) => { event.preventDefault(); void salvarCargo(); }}> {alterarCargo.isPending ? "Salvando..." : "Salvar cargo"}</AlertDialogAction>
+            <AlertDialogAction data-validate-submit disabled={alterarCargo.isPending} onClick={(event) => { event.preventDefault(); void salvarCargo(); }}> {alterarCargo.isPending ? "Salvando..." : "Salvar cargo"}</AlertDialogAction>
           </AlertDialogFooter>
+          </FormValidation>
         </AlertDialogContent>
       </AlertDialog>
     </>

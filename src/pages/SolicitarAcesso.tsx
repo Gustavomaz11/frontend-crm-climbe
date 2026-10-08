@@ -1,3 +1,4 @@
+import { FormValidation } from "@/components/ui/form-validation";
 import { useState, useCallback, useEffect, type FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowLeft, ArrowRight, Moon, Sun, Loader2 } from "lucide-react";
@@ -326,7 +327,7 @@ const SolicitarAcesso = () => {
                       ambiente interno.
                     </p>
 
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                    <FormValidation as="form" onSubmit={handleSubmit} className="space-y-4">
                       {[
                         {
                           id: "nome",
@@ -367,10 +368,10 @@ const SolicitarAcesso = () => {
                       ].map((field) => (
                         <div key={field.id}>
                           <label className="text-[11px] font-medium text-muted-foreground mb-1.5 block tracking-wide">
-                            {field.label}
+                            {field.label} *
                           </label>
                           <div className="relative">
-                            <input
+                            <input required
                               type={field.type}
                               value={form[field.id as keyof typeof form]}
                               onChange={(e) =>
@@ -405,10 +406,10 @@ const SolicitarAcesso = () => {
 
                       <div>
                         <label className="text-[11px] font-medium text-muted-foreground mb-1.5 block tracking-wide">
-                          Cargo
+                          Cargo *
                         </label>
                         <div className="relative">
-                          <select
+                          <select required
                             value={form.cargoId}
                             onChange={(e) => handleFormChange("cargoId", e.target.value)}
                             onFocus={() => setFocusedField("cargoId")}
@@ -524,7 +525,7 @@ const SolicitarAcesso = () => {
                       <p className="text-center text-[11px] text-muted-foreground">
                         O login aceita qualquer conta Google. A sincronização da agenda é exclusiva para contas @climbe.com.br.
                       </p>
-                    </form>
+                    </FormValidation>
                   </motion.div>
                 ) : (
                   <motion.div

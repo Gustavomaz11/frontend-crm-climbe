@@ -1,3 +1,4 @@
+import { FormValidation } from "@/components/ui/form-validation";
 import { useEffect, useRef, useState } from "react";
 import { Camera, Check, Loader2, Mail, Phone, Save, ShieldCheck, UserRound } from "lucide-react";
 
@@ -104,22 +105,22 @@ export default function Perfil() {
               </div>
             </section>
 
-            <form onSubmit={salvar} className="rounded-xl border border-border/25 bg-card/45 p-6">
+            <FormValidation as="form" onSubmit={salvar} className="rounded-xl border border-border/25 bg-card/45 p-6">
               <div className="grid gap-5 sm:grid-cols-2">
                 <label className="space-y-2 sm:col-span-2">
-                  <span className="flex items-center gap-2 text-[11px] font-medium text-muted-foreground"><UserRound className="h-3.5 w-3.5" /> Nome completo</span>
+                  <span className="flex items-center gap-2 text-[11px] font-medium text-muted-foreground"><UserRound className="h-3.5 w-3.5" /> Nome completo *</span>
                   <input required className={inputClass} value={form.nomeCompleto} onChange={(e) => setForm({ ...form, nomeCompleto: e.target.value })} />
                 </label>
                 <label className="space-y-2 sm:col-span-2">
-                  <span className="flex items-center gap-2 text-[11px] font-medium text-muted-foreground"><Mail className="h-3.5 w-3.5" /> E-mail</span>
+                  <span className="flex items-center gap-2 text-[11px] font-medium text-muted-foreground"><Mail className="h-3.5 w-3.5" /> E-mail *</span>
                   <input required type="email" className={inputClass} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
                 </label>
                 <label className="space-y-2">
-                  <span className="text-[11px] font-medium text-muted-foreground">CPF</span>
+                  <span className="text-[11px] font-medium text-muted-foreground">CPF *</span>
                   <input required className={inputClass} value={form.cpf} onChange={(e) => setForm({ ...form, cpf: e.target.value })} />
                 </label>
                 <label className="space-y-2">
-                  <span className="flex items-center gap-2 text-[11px] font-medium text-muted-foreground"><Phone className="h-3.5 w-3.5" /> Telefone para contato</span>
+                  <span className="flex items-center gap-2 text-[11px] font-medium text-muted-foreground"><Phone className="h-3.5 w-3.5" /> Telefone para contato *</span>
                   <input required className={inputClass} value={form.contato} onChange={(e) => setForm({ ...form, contato: e.target.value })} />
                 </label>
                 <label className="space-y-2 sm:col-span-2">
@@ -134,7 +135,7 @@ export default function Perfil() {
                   Salvar alterações
                 </button>
               </div>
-            </form>
+            </FormValidation>
           </div>
         )}
       </div>

@@ -1,3 +1,4 @@
+import { FormValidation } from "@/components/ui/form-validation";
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { useTheme } from "@/hooks/use-theme";
 import { useSidebarState } from "@/hooks/useSidebarState";
@@ -401,7 +402,7 @@ const Propostas = () => {
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.22 }}
                 >
-                  <div className="p-4">
+                  <FormValidation as="div" className="p-4">
                     <input
                       ref={inputRef}
                       type="file"
@@ -431,7 +432,7 @@ const Propostas = () => {
                       onClick={() => inputRef.current?.click()}
                       onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
                       onDragLeave={() => setDragOver(false)}
-                      onDrop={handleDrop}
+                      tabIndex={0} role="button" aria-label="Arquivo da proposta" aria-required="true" data-field-label="Arquivo da proposta" data-required-value={files.length ? "selected" : ""} data-required-message="Por favor, escolha um arquivo para enviar a proposta." onDrop={handleDrop}
                       animate={dragOver ? { scale: 1.01 } : { scale: 1 }}
                       className={`relative flex flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed py-7 cursor-pointer transition-colors select-none ${
                         dragOver
@@ -450,11 +451,12 @@ const Propostas = () => {
                       </div>
                     </motion.div>
 
+                    <p className="mt-1 text-[11px] font-medium">Arquivo da proposta *</p>
                     {/* Empresa select */}
                     <div className="mt-3 grid gap-3 md:grid-cols-2">
                       <div>
-                        <label className="text-[9px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Empresa</label>
-                      <select
+                        <label className="text-[9px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Empresa *</label>
+                      <select required
                         value={selectedEmpresaId}
                         onChange={(e) => { setSelectedEmpresaId(e.target.value); setUploadError(""); }}
                         disabled={contextualNegocioId > 0}
@@ -467,13 +469,13 @@ const Propostas = () => {
                       </select>
                       </div>
                       <div>
-                        <label className="text-[9px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Valor total da proposta</label>
+                        <label className="text-[9px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Valor total da proposta *</label>
                         <div className="flex h-9 items-center gap-2 rounded-lg border border-border/25 bg-background/50 px-2.5 transition-colors focus-within:border-accent/40">
                           <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
-                          <input
+                          <input required
                             type="text"
                             inputMode="numeric"
-                            value={valuationInput}
+                            aria-label="Valor total da proposta" data-validation-message={valuationInput.trim() && parseCurrencyInput(valuationInput) <= 0 ? "Informe um valor maior que zero para a proposta." : undefined} value={valuationInput}
                             onChange={(e) => { setValuationInput(formatCurrencyInput(e.target.value)); setUploadError(""); }}
                             placeholder="R$ 0,00"
                             className="min-w-0 flex-1 bg-transparent text-[12px] text-foreground outline-none placeholder:text-muted-foreground"
@@ -531,16 +533,16 @@ const Propostas = () => {
                       >
                         Cancelar
                       </motion.button>
-                      <motion.button
+                      <motion.button data-validate-submit
                         onClick={handleUpload}
-                        disabled={files.length === 0 || uploading}
+                        disabled={uploading}
                         className="h-8 px-5 rounded-lg bg-accent text-white text-[12px] font-medium hover:bg-accent/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                         whileTap={{ scale: 0.97 }}
                       >
                         {uploading ? "Enviando..." : "Enviar"}
                       </motion.button>
                     </div>
-                  </div>
+                  </FormValidation>
                 </motion.div>
               )}
             </AnimatePresence>

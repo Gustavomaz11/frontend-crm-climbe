@@ -1,3 +1,4 @@
+import { FormValidation } from "@/components/ui/form-validation";
 import { useState } from "react";
 import { BriefcaseBusiness, Check, Loader2, LockKeyhole, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 import { useLocation } from "react-router-dom";
@@ -88,16 +89,16 @@ export default function Cargos() {
             <h1 className="text-[24px] font-bold tracking-tight">{hierarchyMode ? "Hierarquia de cargos" : "Cargos"}</h1>
             <p className="mt-1 text-[12px] text-muted-foreground">{hierarchyMode ? "Organize os níveis e segmentos que definem a visibilidade das tarefas." : "Cadastre e mantenha os cargos disponíveis no sistema."}</p>
           </div>
-          {!hierarchyMode && canManageCatalog && <form onSubmit={criarCargo} className="flex flex-wrap gap-2">
-            <input value={novoNome} onChange={(e) => setNovoNome(e.target.value)} placeholder="Nome do novo cargo" className="h-10 w-64 rounded-lg border border-border/30 bg-card/45 px-3 text-[13px] outline-none focus:border-accent/50" />
+          {!hierarchyMode && canManageCatalog && <FormValidation as="form" onSubmit={criarCargo} className="flex flex-wrap gap-2">
+            <label className="flex min-w-0 flex-col gap-1 text-[11px]"><span>Nome do novo cargo *</span><input required value={novoNome} onChange={(e) => setNovoNome(e.target.value)} placeholder="Nome do novo cargo" className="h-10 w-64 rounded-lg border border-border/30 bg-card/45 px-3 text-[13px] outline-none focus:border-accent/50" /></label>
             <select value={novoGrupoId ?? ""} onChange={(event) => setNovoGrupoId(event.target.value ? Number(event.target.value) : null)} className="h-10 w-52 rounded-lg border border-border/30 bg-card px-3 text-[12px] outline-none focus:border-accent/50">
               <option value="">Sem grupo</option>
               {grupos.map((grupo) => <option key={grupo.id} value={grupo.id}>{grupo.nome}</option>)}
             </select>
-            <button disabled={criar.isPending || !novoNome.trim()} className="inline-flex h-10 items-center gap-2 rounded-lg bg-accent px-4 text-[12px] font-semibold text-accent-foreground disabled:opacity-50">
+            <button disabled={criar.isPending} className="inline-flex h-10 items-center gap-2 rounded-lg bg-accent px-4 text-[12px] font-semibold text-accent-foreground disabled:opacity-50">
               {criar.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />} Criar
             </button>
-          </form>}
+          </FormValidation>}
         </div>
 
         {feedback && <div className="mb-4 flex items-center gap-2 rounded-lg border border-accent/20 bg-accent/10 px-3 py-2 text-[12px] text-accent"><Check className="h-4 w-4" />{feedback}</div>}

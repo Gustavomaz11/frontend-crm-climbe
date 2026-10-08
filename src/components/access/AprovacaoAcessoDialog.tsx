@@ -1,3 +1,4 @@
+import { FormValidation } from "@/components/ui/form-validation";
 import { motion } from "framer-motion";
 import { Check, X } from "lucide-react";
 
@@ -42,7 +43,7 @@ export const AprovacaoAcessoDialog = ({
 }: AprovacaoAcessoDialogProps) => {
   const isApproval = acao === "aprovar";
   const canConfirm = !isProcessing
-    && (!isApproval || (!isLoadingOptions && cargoId !== null && permissaoIds.size > 0));
+    && (!isApproval || !isLoadingOptions);
 
   return (
     <>
@@ -61,7 +62,7 @@ export const AprovacaoAcessoDialog = ({
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
           transition={{ duration: 0.2, ease: "easeOut" }}
         >
-          <div className="max-h-[90vh] overflow-y-auto rounded-2xl border border-border/30 bg-card/95 p-6 shadow-2xl backdrop-blur-xl">
+          <FormValidation as="div" className="max-h-[90vh] overflow-y-auto rounded-2xl border border-border/30 bg-card/95 p-6 shadow-2xl backdrop-blur-xl">
           <div className="flex items-center gap-3">
             <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${isApproval ? "bg-emerald-400/10" : "bg-red-400/10"}`}>
               {isApproval
@@ -82,7 +83,7 @@ export const AprovacaoAcessoDialog = ({
                 <label className="mb-1.5 block text-[11px] font-medium text-foreground/75">
                   Cargo <span className="text-red-500">*</span>
                 </label>
-                <select
+                <select required
                   value={cargoId ?? ""}
                   onChange={(event) => onCargoChange(event.target.value ? Number(event.target.value) : null)}
                   disabled={isLoadingOptions || isProcessing}
@@ -121,7 +122,7 @@ export const AprovacaoAcessoDialog = ({
                     {permissaoIds.size} selecionada(s)
                   </span>
                 </div>
-                <div className="max-h-60 space-y-2 overflow-y-auto rounded-xl border border-border/25 bg-background/45 p-3">
+                <div tabIndex={-1} role="group" aria-required="true" data-field-label="Permissões" data-required-value={permissaoIds.size ? "selected" : ""} className="max-h-60 space-y-2 overflow-y-auto rounded-xl border border-border/25 bg-background/45 p-3">
                   {isLoadingOptions ? (
                     <p className="py-6 text-center text-[11px] text-muted-foreground">Carregando opções...</p>
                   ) : permissoes.length === 0 ? (
@@ -162,7 +163,7 @@ export const AprovacaoAcessoDialog = ({
             <Button variant="outline" size="sm" className="flex-1 text-[12px]" onClick={onCancel} disabled={isProcessing}>
               Cancelar
             </Button>
-            <Button
+            <Button data-validate-submit
               size="sm"
               className={`flex-1 border-0 text-[12px] text-white ${isApproval ? "bg-emerald-500 hover:bg-emerald-600" : "bg-red-500 hover:bg-red-600"}`}
               onClick={onConfirm}
@@ -171,7 +172,7 @@ export const AprovacaoAcessoDialog = ({
               {isProcessing ? "Processando..." : isApproval ? "Aprovar acesso" : "Recusar acesso"}
             </Button>
           </div>
-          </div>
+          </FormValidation>
         </motion.div>
       </div>
     </>

@@ -4,6 +4,43 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Required fields only pulse after an attempted submission. */
+[data-field-error="true"] {
+  border-color: #f43f5e !important;
+  outline: 2px solid #f43f5e !important;
+  outline-offset: 1px;
+  animation: required-field-pulse 1.4s ease-in-out infinite;
+}
+
+.form-validation-summary {
+  flex-shrink: 0;
+  width: 100%;
+  grid-column: 1 / -1;
+  max-height: 10rem;
+  overflow-y: auto;
+  margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid hsl(var(--destructive) / 0.45);
+  border-radius: 0.5rem;
+  background: hsl(var(--destructive) / 0.08);
+  color: hsl(var(--foreground));
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+[data-form-validation].flex:not(.flex-col):has(> .form-validation-summary) {
+  flex-wrap: wrap;
+}
+
+@keyframes required-field-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(244 63 94 / 0.2); }
+  50% { box-shadow: 0 0 0 5px rgb(244 63 94 / 0.3); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-field-error="true"] { animation: none; }
+}
+
 @layer base {
   :root {
     --background: 210 20% 98%;

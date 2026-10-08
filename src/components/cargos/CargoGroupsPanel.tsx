@@ -1,3 +1,4 @@
+import { FormValidation } from "@/components/ui/form-validation";
 import { useState } from "react";
 import { FolderKanban, Loader2, Pencil, Plus, Save, Trash2, X } from "lucide-react";
 
@@ -78,14 +79,14 @@ export function CargoGroupsPanel({
             Organize o catálogo por área ou segmento sem alterar a hierarquia.
           </p>
         </div>
-        <form onSubmit={criarGrupo} className="grid w-full gap-2 sm:w-auto sm:grid-cols-[190px_250px_auto]">
-          <input
+        <FormValidation as="form" onSubmit={criarGrupo} className="grid w-full gap-2 sm:w-auto sm:grid-cols-[190px_250px_auto]">
+          <label className="flex min-w-0 flex-col gap-1 text-[11px]"><span>Nome do grupo *</span><input required
             value={novoNome}
             onChange={(event) => setNovoNome(event.target.value)}
             placeholder="Nome do grupo"
             maxLength={120}
             className="h-10 rounded-lg border border-border/35 bg-background/55 px-3 text-[12px] outline-none focus:border-accent/60"
-          />
+          /></label>
           <input
             value={novaDescricao}
             onChange={(event) => setNovaDescricao(event.target.value)}
@@ -94,13 +95,13 @@ export function CargoGroupsPanel({
             className="h-10 rounded-lg border border-border/35 bg-background/55 px-3 text-[12px] outline-none focus:border-accent/60"
           />
           <button
-            disabled={isProcessing || !novoNome.trim()}
+            disabled={isProcessing}
             className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-accent/30 bg-accent/15 px-4 text-[12px] font-semibold text-accent hover:bg-accent/25 disabled:opacity-50"
           >
             {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
             Criar grupo
           </button>
-        </form>
+        </FormValidation>
       </div>
 
       {isLoading ? (
@@ -115,10 +116,13 @@ export function CargoGroupsPanel({
             const quantidade = cargos.filter((cargo) => cargo.grupoId === grupo.id).length;
             const editing = editandoId === grupo.id;
             return (
-              <article key={grupo.id} className="rounded-lg border border-border/25 bg-background/30 p-4">
+              <article key={grupo.id} className="rounded-lg border border-border/25 bg-background/30 p-4"><FormValidation className="contents">
                 {editing ? (
                   <div className="space-y-2">
+                    <label htmlFor={`grupo-${grupo.id}`} className="block text-[11px]">Nome do grupo *</label>
                     <input
+                      required
+                      id={`grupo-${grupo.id}`}
                       autoFocus
                       value={editandoNome}
                       onChange={(event) => setEditandoNome(event.target.value)}
@@ -149,7 +153,7 @@ export function CargoGroupsPanel({
                 <div className="mt-3 flex justify-end gap-1 border-t border-border/15 pt-2">
                   {editing ? (
                     <>
-                      <button type="button" disabled={isProcessing || !editandoNome.trim()} onClick={() => void salvarGrupo()} className="rounded-lg p-2 text-accent hover:bg-accent/10 disabled:opacity-40" aria-label="Salvar grupo"><Save className="h-4 w-4" /></button>
+                      <button data-validate-submit type="button" disabled={isProcessing} onClick={() => void salvarGrupo()} className="rounded-lg p-2 text-accent hover:bg-accent/10 disabled:opacity-40" aria-label="Salvar grupo"><Save className="h-4 w-4" /></button>
                       <button type="button" disabled={isProcessing} onClick={() => setEditandoId(null)} className="rounded-lg p-2 text-muted-foreground hover:bg-muted/30" aria-label="Cancelar edição"><X className="h-4 w-4" /></button>
                     </>
                   ) : (
@@ -159,7 +163,7 @@ export function CargoGroupsPanel({
                     </>
                   )}
                 </div>
-              </article>
+              </FormValidation></article>
             );
           })}
         </div>

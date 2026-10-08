@@ -1,3 +1,4 @@
+import { FormValidation } from "@/components/ui/form-validation";
 import { useEffect, useMemo, useState } from "react";
 import { useTheme } from "@/hooks/use-theme";
 import { useSidebarState } from "@/hooks/useSidebarState";
@@ -342,10 +343,10 @@ const Documentos = () => {
                 </div>
                 <button onClick={() => setRequestOpen(false)} className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/20"><X className="w-4 h-4" /></button>
               </div>
-              <div className="p-5 space-y-4">
+              <FormValidation as="div" className="p-5 space-y-4">
                 <div>
-                  <label className="text-[9px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Empresa</label>
-                  <select value={selectedEmpresaId} onChange={(e) => handleEmpresaChange(e.target.value)} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[12px] outline-none focus:border-accent/40 transition-colors text-foreground">
+                  <label className="text-[9px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Empresa *</label>
+                  <select required value={selectedEmpresaId} onChange={(e) => handleEmpresaChange(e.target.value)} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[12px] outline-none focus:border-accent/40 transition-colors text-foreground">
                     <option value="">Selecione a empresa</option>
                     {empresas.filter((empresa) => Number(empresa.id) > 0).map((empresa) => (
                       <option key={empresa.id} value={empresa.id}>{empresa.nome}</option>
@@ -355,10 +356,10 @@ const Documentos = () => {
 
                 <div>
                   <div className="mb-2 flex items-center justify-between">
-                    <label className="text-[9px] text-muted-foreground font-medium uppercase tracking-wider">Documentos</label>
+                    <label className="text-[9px] text-muted-foreground font-medium uppercase tracking-wider">Documentos *</label>
                     <span className="text-[10px] text-accent">{selectedDocumentTypes.length} selecionado(s)</span>
                   </div>
-                  <div className="grid max-h-56 grid-cols-2 gap-2 overflow-y-auto pr-1">
+                  <div tabIndex={-1} role="group" aria-required="true" data-field-label="Documentos" data-required-value={selectedDocumentTypes.length ? "selected" : ""} className="grid max-h-56 grid-cols-2 gap-2 overflow-y-auto pr-1">
                     {REQUESTABLE_DOCUMENTS.map((documento) => {
                       const checked = selectedDocumentTypes.includes(documento);
                       return (
@@ -377,18 +378,18 @@ const Documentos = () => {
                 </div>
 
                 <div>
-                  <label className="text-[9px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">E-mail para anexo</label>
+                  <label className="text-[9px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">E-mail para anexo *</label>
                   <div className="flex items-center gap-2 h-10 px-3 rounded-lg border border-border/25 bg-background/50 focus-within:border-accent/40 transition-colors">
                     <Mail className="w-3.5 h-3.5 text-muted-foreground" />
-                    <input value={emailDestinatario} onChange={(e) => setEmailDestinatario(e.target.value)} placeholder={selectedEmpresa?.email || "email@empresa.com"} className="flex-1 bg-transparent text-[12px] outline-none text-foreground placeholder:text-muted-foreground" />
+                    <input required type="email" aria-label="E-mail para anexo" value={emailDestinatario} onChange={(e) => setEmailDestinatario(e.target.value)} placeholder={selectedEmpresa?.email || "email@empresa.com"} className="flex-1 bg-transparent text-[12px] outline-none text-foreground placeholder:text-muted-foreground" />
                   </div>
                 </div>
 
-                <button onClick={handleSolicitarDocumento} disabled={solicitarDocumentos.isPending} className="w-full h-10 rounded-lg bg-accent text-accent-foreground text-[12px] font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                <button data-validate-submit onClick={handleSolicitarDocumento} disabled={solicitarDocumentos.isPending} className="w-full h-10 rounded-lg bg-accent text-accent-foreground text-[12px] font-semibold flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
                   <Send className="w-4 h-4" />
                   {solicitarDocumentos.isPending ? "Enviando..." : "Enviar solicitação em lote"}
                 </button>
-              </div>
+              </FormValidation>
             </motion.div>
           </motion.div>
         )}

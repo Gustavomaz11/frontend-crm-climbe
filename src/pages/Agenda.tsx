@@ -1,3 +1,4 @@
+import { FormValidation } from "@/components/ui/form-validation";
 import { useState, useMemo } from "react";
 import { useTheme } from "@/hooks/use-theme";
 import { useSidebarState } from "@/hooks/useSidebarState";
@@ -937,14 +938,14 @@ const Agenda = () => {
                 <h2 className="text-[16px] font-semibold text-foreground">Agendar Reunião</h2>
                 <motion.button onClick={closeEventModal} className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/20 transition-colors" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}><X className="w-4 h-4" /></motion.button>
               </div>
-              <div className="p-5 space-y-4 max-h-[calc(100vh-130px)] overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-muted-foreground/20 [&::-webkit-scrollbar-thumb]:rounded-full">
+              <FormValidation as="div" className="p-5 space-y-4 max-h-[calc(100vh-130px)] overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-muted-foreground/20 [&::-webkit-scrollbar-thumb]:rounded-full">
                 <div>
-                  <label className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Pauta</label>
-                  <input type="text" placeholder="Pauta da reunião..." value={eventForm.titulo} onChange={(e) => setEventForm((prev) => ({ ...prev, titulo: e.target.value }))} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 transition-colors placeholder:text-muted-foreground" />
+                  <label className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Pauta *</label>
+                  <input required type="text" placeholder="Pauta da reunião..." value={eventForm.titulo} onChange={(e) => setEventForm((prev) => ({ ...prev, titulo: e.target.value }))} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 transition-colors placeholder:text-muted-foreground" />
                 </div>
                 <div>
-                  <label className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Empresa</label>
-                  <select value={eventForm.empresaId} onChange={(e) => setEventForm((prev) => ({ ...prev, empresaId: e.target.value }))} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 transition-colors">
+                  <label className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Empresa *</label>
+                  <select required value={eventForm.empresaId} onChange={(e) => setEventForm((prev) => ({ ...prev, empresaId: e.target.value }))} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 transition-colors">
                     <option value="">Selecione</option>
                     {empresas.map((empresa) => <option key={empresa.id} value={empresa.id}>{empresa.nome}</option>)}
                   </select>
@@ -1005,8 +1006,8 @@ const Agenda = () => {
                   </p>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
-                  <div><label className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Data</label><input type="date" value={eventForm.data} onChange={(e) => setEventForm((prev) => ({ ...prev, data: e.target.value }))} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 text-foreground" /></div>
-                  <div><label className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Horário</label><input type="time" value={eventForm.hora} onChange={(e) => setEventForm((prev) => ({ ...prev, hora: e.target.value }))} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 text-foreground" /></div>
+                  <div><label className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Data *</label><input required type="date" value={eventForm.data} onChange={(e) => setEventForm((prev) => ({ ...prev, data: e.target.value }))} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 text-foreground" /></div>
+                  <div><label className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Horário *</label><input required type="time" value={eventForm.hora} onChange={(e) => setEventForm((prev) => ({ ...prev, hora: e.target.value }))} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 text-foreground" /></div>
                 </div>
                 <div>
                   <label className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Local</label>
@@ -1017,8 +1018,8 @@ const Agenda = () => {
                   <label className="flex items-center gap-2 cursor-pointer"><input type="radio" name="tipo-modal" checked={eventForm.presencial} onChange={() => setEventForm((prev) => ({ ...prev, presencial: true }))} className="accent-[hsl(var(--accent))]" /><span className="text-[12px] text-foreground/70">Presencial</span></label>
                 </div>
                 {eventError && <p className="text-[11px] text-destructive">{eventError}</p>}
-                <motion.button onClick={handleCreateEvent} disabled={isSavingEvent} className="w-full h-10 rounded-lg bg-accent text-accent-foreground text-[13px] font-semibold shadow-[0_2px_10px_-2px_hsl(var(--accent)/0.3)]" whileHover={{ scale: 1.01, y: -1 }} whileTap={{ scale: 0.98 }}>{isSavingEvent ? "Salvando..." : "Confirmar Agendamento"}</motion.button>
-              </div>
+                <motion.button data-validate-submit onClick={handleCreateEvent} disabled={isSavingEvent} className="w-full h-10 rounded-lg bg-accent text-accent-foreground text-[13px] font-semibold shadow-[0_2px_10px_-2px_hsl(var(--accent)/0.3)]" whileHover={{ scale: 1.01, y: -1 }} whileTap={{ scale: 0.98 }}>{isSavingEvent ? "Salvando..." : "Confirmar Agendamento"}</motion.button>
+              </FormValidation>
               <div className="hidden">
                 <div><label className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Pauta</label><input type="text" placeholder="Pauta da reunião..." className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 transition-colors placeholder:text-muted-foreground" /></div>
                 <div><label className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Empresa</label><input type="text" placeholder="Nome da empresa" className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 transition-colors placeholder:text-muted-foreground" /></div>

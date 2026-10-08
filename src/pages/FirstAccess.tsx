@@ -1,3 +1,4 @@
+import { FormValidation } from "@/components/ui/form-validation";
 import { useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -244,7 +245,7 @@ const FirstAccess = () => {
             </motion.div>
 
             {/* Form */}
-            <motion.form
+            <FormValidation className="contents"><motion.form noValidate
               onSubmit={handleSubmit}
               className="space-y-5"
               initial={{ opacity: 0 }}
@@ -257,7 +258,7 @@ const FirstAccess = () => {
                   htmlFor="cpf"
                   className="text-sm font-medium text-foreground"
                 >
-                  CPF
+                  CPF *
                 </label>
                 <div
                   className={`relative overflow-hidden rounded-lg border transition-all duration-300 ${
@@ -266,7 +267,7 @@ const FirstAccess = () => {
                       : "border-border"
                   } ${errors.cpf ? "border-red-500" : ""}`}
                 >
-                  <input
+                  <input required
                     type="text"
                     id="cpf"
                     name="cpf"
@@ -290,7 +291,7 @@ const FirstAccess = () => {
                   htmlFor="contato"
                   className="text-sm font-medium text-foreground"
                 >
-                  Email ou Telefone
+                  Email ou Telefone *
                 </label>
                 <div
                   className={`relative overflow-hidden rounded-lg border transition-all duration-300 ${
@@ -299,7 +300,7 @@ const FirstAccess = () => {
                       : "border-border"
                   } ${errors.contato ? "border-red-500" : ""}`}
                 >
-                  <input
+                  <input required
                     type="text"
                     id="contato"
                     name="contato"
@@ -322,7 +323,7 @@ const FirstAccess = () => {
                   htmlFor="senha"
                   className="text-sm font-medium text-foreground"
                 >
-                  Senha
+                  Senha *
                 </label>
                 <div
                   className={`relative overflow-hidden rounded-lg border transition-all duration-300 ${
@@ -331,7 +332,7 @@ const FirstAccess = () => {
                       : "border-border"
                   } ${errors.senha ? "border-red-500" : ""}`}
                 >
-                  <input
+                  <input required
                     type={showPassword ? "text" : "password"}
                     id="senha"
                     name="senha"
@@ -365,7 +366,7 @@ const FirstAccess = () => {
                   htmlFor="confirmPassword"
                   className="text-sm font-medium text-foreground"
                 >
-                  Confirmar Senha
+                  Confirmar Senha *
                 </label>
                 <div
                   className={`relative overflow-hidden rounded-lg border transition-all duration-300 ${
@@ -374,7 +375,7 @@ const FirstAccess = () => {
                       : "border-border"
                   } ${errors.confirmPassword ? "border-red-500" : ""}`}
                 >
-                  <input
+                  <input required
                     type={showConfirmPassword ? "text" : "password"}
                     id="confirmPassword"
                     name="confirmPassword"
@@ -424,7 +425,7 @@ const FirstAccess = () => {
                   </>
                 )}
               </motion.button>
-            </motion.form>
+            </motion.form></FormValidation>
 
             {/* Info Box */}
             <motion.div

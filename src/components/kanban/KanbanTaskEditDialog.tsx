@@ -1,3 +1,4 @@
+import { FormValidation } from "@/components/ui/form-validation";
 import { useEffect, useState } from "react";
 import { CalendarDays, Check, Edit3, Plus, Save, Trash2, X } from "lucide-react";
 import type {
@@ -102,10 +103,10 @@ export const KanbanTaskEditDialog = ({
           </button>
         </div>
 
-        <form className="min-h-0 flex-1 overflow-y-auto p-5" onSubmit={(event) => { event.preventDefault(); void saveTask(); }}>
+        <FormValidation as="form" className="min-h-0 flex-1 overflow-y-auto p-5" onSubmit={(event) => { event.preventDefault(); void saveTask(); }}>
           <div className="space-y-3">
             <label className="block">
-              <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground">Título</span>
+              <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground">Título *</span>
               <input autoFocus required value={draft.titulo} onChange={(event) => setDraft({ ...draft, titulo: event.target.value })} className="h-9 w-full rounded-lg border border-border/25 bg-background/60 px-3 text-[12px] text-foreground outline-none transition-colors focus:border-accent/40" />
             </label>
 
@@ -116,8 +117,8 @@ export const KanbanTaskEditDialog = ({
 
             <div className="grid gap-3 sm:grid-cols-2">
               <label>
-                <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground">Prioridade</span>
-                <select value={draft.prioridade} onChange={(event) => setDraft({ ...draft, prioridade: event.target.value as KanbanTaskPrioridade })} className="h-9 w-full rounded-lg border border-border/25 bg-background/60 px-3 text-[12px] text-foreground outline-none transition-colors focus:border-accent/40">
+                <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground">Prioridade *</span>
+                <select required value={draft.prioridade} onChange={(event) => setDraft({ ...draft, prioridade: event.target.value as KanbanTaskPrioridade })} className="h-9 w-full rounded-lg border border-border/25 bg-background/60 px-3 text-[12px] text-foreground outline-none transition-colors focus:border-accent/40">
                   {kanbanPriorityOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
                 </select>
               </label>
@@ -161,40 +162,40 @@ export const KanbanTaskEditDialog = ({
             <div className="space-y-2">
               {task.subtarefas.length === 0 && <p className="rounded-lg border border-dashed border-border/20 py-4 text-center text-[11px] text-muted-foreground">Nenhuma subtarefa criada</p>}
               {task.subtarefas.map((subtarefa) => (
-                <div key={subtarefa.id} className="flex items-center gap-2 rounded-lg border border-border/15 bg-card/40 px-2.5 py-2">
+                <FormValidation key={subtarefa.id} className="flex items-center gap-2 rounded-lg border border-border/15 bg-card/40 px-2.5 py-2">
                   <button type="button" disabled={subtaskPending} onClick={() => onToggleSubtask(task.id, subtarefa)} className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${subtarefa.concluida ? "border-accent bg-accent text-accent-foreground" : "border-border/50 text-transparent"}`}>
                     <Check className="h-3 w-3" />
                   </button>
                   {editingSubtaskId === subtarefa.id ? (
-                    <input autoFocus value={editingSubtaskTitle} onChange={(event) => setEditingSubtaskTitle(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); void saveSubtask(subtarefa); } }} className="h-7 min-w-0 flex-1 rounded border border-border/25 bg-background px-2 text-[11px] outline-none focus:border-accent/40" />
+                    <label className="min-w-0 flex-1 text-[10px]">Título da subtarefa *<input required aria-label="Título da subtarefa" autoFocus value={editingSubtaskTitle} onChange={(event) => setEditingSubtaskTitle(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); event.currentTarget.closest("[data-form-validation]")?.querySelector<HTMLButtonElement>("[data-validate-submit]")?.click(); } }} className="h-7 min-w-0 flex-1 rounded border border-border/25 bg-background px-2 text-[11px] outline-none focus:border-accent/40" /></label>
                   ) : (
                     <span className={`min-w-0 flex-1 text-[11px] ${subtarefa.concluida ? "text-muted-foreground line-through" : "text-foreground/70"}`}>{subtarefa.titulo}</span>
                   )}
                   {editingSubtaskId === subtarefa.id ? (
-                    <button type="button" title="Salvar subtarefa" disabled={subtaskPending} onClick={() => void saveSubtask(subtarefa)} className="text-accent disabled:opacity-40"><Save className="h-3.5 w-3.5" /></button>
+                    <button data-validate-submit type="button" title="Salvar subtarefa" disabled={subtaskPending} onClick={() => void saveSubtask(subtarefa)} className="text-accent disabled:opacity-40"><Save className="h-3.5 w-3.5" /></button>
                   ) : (
                     <button type="button" title="Editar subtarefa" onClick={() => { setEditingSubtaskId(subtarefa.id); setEditingSubtaskTitle(subtarefa.titulo); }} className="text-muted-foreground hover:text-accent"><Edit3 className="h-3.5 w-3.5" /></button>
                   )}
                   <button type="button" title="Remover subtarefa" disabled={subtaskPending} onClick={() => onDeleteSubtask(task.id, subtarefa.id)} className="text-muted-foreground hover:text-destructive disabled:opacity-40"><Trash2 className="h-3.5 w-3.5" /></button>
-                </div>
+                </FormValidation>
               ))}
 
-              <div className="flex gap-2 pt-1">
-                <input value={newSubtaskTitle} onChange={(event) => setNewSubtaskTitle(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); void createSubtask(); } }} placeholder="Nova subtarefa" className="h-8 min-w-0 flex-1 rounded-lg border border-border/25 bg-background/60 px-3 text-[11px] outline-none focus:border-accent/40" />
-                <button type="button" disabled={subtaskPending || !newSubtaskTitle.trim()} onClick={() => void createSubtask()} className="flex h-8 items-center gap-1.5 rounded-lg bg-accent px-3 text-[11px] font-semibold text-accent-foreground disabled:opacity-40">
+              <FormValidation className="flex gap-2 pt-1">
+                <label className="min-w-0 flex-1 text-[10px]">Nova subtarefa *<input required aria-label="Nova subtarefa" value={newSubtaskTitle} onChange={(event) => setNewSubtaskTitle(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); event.currentTarget.closest("[data-form-validation]")?.querySelector<HTMLButtonElement>("[data-validate-submit]")?.click(); } }} placeholder="Nova subtarefa" className="h-8 min-w-0 flex-1 rounded-lg border border-border/25 bg-background/60 px-3 text-[11px] outline-none focus:border-accent/40" /></label>
+                <button data-validate-submit type="button" disabled={subtaskPending} onClick={() => void createSubtask()} className="flex h-8 items-center gap-1.5 rounded-lg bg-accent px-3 text-[11px] font-semibold text-accent-foreground disabled:opacity-40">
                   <Plus className="h-3.5 w-3.5" /> Adicionar
                 </button>
-              </div>
+              </FormValidation>
             </div>
           </section>
 
           <div className="sticky bottom-0 mt-5 flex justify-end gap-2 border-t border-border/15 bg-card/95 pt-4">
             <button type="button" onClick={onClose} disabled={isSaving} className="h-9 rounded-lg border border-border/30 px-4 text-[12px] font-semibold text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40">Cancelar</button>
-            <button type="submit" disabled={isSaving || !draft.titulo.trim()} className="flex h-9 items-center gap-2 rounded-lg bg-accent px-4 text-[12px] font-semibold text-accent-foreground transition-colors hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-50">
+            <button type="submit" disabled={isSaving} className="flex h-9 items-center gap-2 rounded-lg bg-accent px-4 text-[12px] font-semibold text-accent-foreground transition-colors hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-50">
               <Save className="h-3.5 w-3.5" /> {isSaving ? "Salvando..." : "Salvar alterações"}
             </button>
           </div>
-        </form>
+        </FormValidation>
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+import { FormValidation } from "@/components/ui/form-validation";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { AlertCircle, CheckCircle2, FileCheck, UploadCloud } from "lucide-react";
@@ -59,7 +60,7 @@ const EnviarDocumentosLote = () => {
           <h1 className="text-xl font-semibold">Envio de documentos</h1>
           <p className="mt-1 text-xs text-muted-foreground">Anexe os documentos solicitados pela equipe Climbe no mesmo formulário.</p>
         </header>
-        <section className="space-y-4 p-6">
+        <FormValidation as="section" className="space-y-4 p-6">
           {loading && <p className="py-10 text-center text-xs text-muted-foreground">Carregando solicitação...</p>}
           {!loading && error && !lote && (
             <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-5 text-center text-sm text-destructive">
@@ -72,7 +73,8 @@ const EnviarDocumentosLote = () => {
                 <strong>{lote.nomeEmpresa}</strong>
                 <span className="ml-2 text-muted-foreground">· {lote.documentos.length} documento(s) solicitado(s)</span>
               </div>
-              <div className="space-y-3">
+              <p className="text-[11px] font-medium">Selecione ao menos um arquivo *</p>
+              <div tabIndex={-1} role="group" aria-required="true" data-field-label="Arquivos para envio" data-required-value={Object.keys(files).length ? "selected" : ""} data-required-message="Por favor, escolha pelo menos um arquivo para enviar." className="space-y-3">
                 {lote.documentos.map((documento) => {
                   const enviado = documento.validado !== "PENDENTE";
                   return (
@@ -103,12 +105,12 @@ const EnviarDocumentosLote = () => {
                 })}
               </div>
               {error && <p className="text-xs text-destructive">{error}</p>}
-              <button onClick={handleSubmit} disabled={sending || Object.keys(files).length === 0} className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-accent text-xs font-semibold text-accent-foreground disabled:opacity-50">
+              <button data-validate-submit onClick={handleSubmit} disabled={sending} className="flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-accent text-xs font-semibold text-accent-foreground disabled:opacity-50">
                 <FileCheck className="h-4 w-4" />{sending ? "Enviando..." : "Enviar documentos selecionados"}
               </button>
             </>
           )}
-        </section>
+        </FormValidation>
       </main>
     </div>
   );

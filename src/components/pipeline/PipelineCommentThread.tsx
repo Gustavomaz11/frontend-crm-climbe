@@ -1,4 +1,5 @@
 import { Reply, Send, X } from "lucide-react";
+import { FormValidation } from "@/components/ui/form-validation";
 import type { PipelineCommentNode } from "./pipelineCommentThreads";
 
 interface PipelineCommentThreadProps {
@@ -61,8 +62,11 @@ export const PipelineCommentThread = ({
         )}
 
         {isReplying && (
-          <div className="mt-3 rounded-lg border border-accent/25 bg-card/60 p-2.5">
+          <FormValidation className="mt-3 rounded-lg border border-accent/25 bg-card/60 p-2.5">
+            <label htmlFor={`resposta-${comment.id}`} className="mb-1 block text-[10px] font-medium">Resposta *</label>
             <textarea
+              required
+              id={`resposta-${comment.id}`}
               autoFocus
               value={replyContent}
               onChange={(event) => onReplyContentChange(event.target.value)}
@@ -82,15 +86,16 @@ export const PipelineCommentThread = ({
               <button
                 type="button"
                 aria-label="Enviar resposta"
+                data-validate-submit
                 onClick={() => onSubmitReply(comment)}
-                disabled={!replyContent.trim() || isSubmitting}
+                disabled={isSubmitting}
                 className="flex h-7 items-center gap-1.5 rounded-md bg-accent px-2.5 text-[9px] font-semibold text-accent-foreground disabled:opacity-50"
               >
                 <Send className="h-3 w-3" />
                 {isSubmitting ? "Enviando..." : "Responder"}
               </button>
             </div>
-          </div>
+          </FormValidation>
         )}
       </article>
 

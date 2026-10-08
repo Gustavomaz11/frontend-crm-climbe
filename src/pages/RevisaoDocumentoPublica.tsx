@@ -1,3 +1,4 @@
+import { FormValidation } from "@/components/ui/form-validation";
 import { useEffect, useMemo, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { useParams } from "react-router-dom";
@@ -263,7 +264,7 @@ const RevisaoDocumentoPublica = () => {
           </div>
         </div>
 
-        <aside className="space-y-4 lg:sticky lg:top-[78px] lg:max-h-[calc(100vh-96px)] lg:overflow-y-auto lg:pr-1">
+        <aside className="space-y-4 lg:sticky lg:top-[78px] lg:max-h-[calc(100vh-96px)] lg:overflow-y-auto lg:pr-1"><FormValidation className="contents">
           {podeResponder && info.tipo === "CONTRATO" && info.assinaturaUrl && (
             <div className="rounded-xl border border-primary/25 bg-primary/10 p-4">
               <Clock3 className="mb-2 h-6 w-6 text-primary" />
@@ -287,15 +288,15 @@ const RevisaoDocumentoPublica = () => {
                 {anotacoes.map((item, index) => {
                   const id = reviewAnnotationKey(item.id, item.localId);
                   const active = selecionada === id;
-                  return <button key={id} id={reviewAnnotationCommentId(id)} type="button" aria-pressed={active} onClick={() => selecionarAnotacao(id, "comment")} className={`w-full rounded-lg border p-3 text-left transition-all duration-200 ${active ? "scale-[1.01] border-accent bg-accent/10 shadow-[0_0_0_2px_hsl(var(--accent)/.2)]" : "border-border/20 bg-background/40 hover:border-border/40"}`}><div className="flex items-center gap-2"><span className="h-3 w-3 rounded-sm" style={{ backgroundColor: item.cor }} /><span className="text-[11px] font-semibold">Marcação {index + 1} · página {item.pagina}</span></div><p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">{item.comentario || "Comentário pendente"}</p></button>;
+                  return <button data-validation-message={podeEditar && !active && !item.comentario.trim() ? `Por favor, preencha o comentário da marcação ${index + 1} para continuar.` : undefined} key={id} id={reviewAnnotationCommentId(id)} type="button" aria-pressed={active} onClick={() => selecionarAnotacao(id, "comment")} className={`w-full rounded-lg border p-3 text-left transition-all duration-200 ${active ? "scale-[1.01] border-accent bg-accent/10 shadow-[0_0_0_2px_hsl(var(--accent)/.2)]" : "border-border/20 bg-background/40 hover:border-border/40"}`}><div className="flex items-center gap-2"><span className="h-3 w-3 rounded-sm" style={{ backgroundColor: item.cor }} /><span className="text-[11px] font-semibold">Marcação {index + 1} · página {item.pagina}</span></div><p className="mt-1 line-clamp-2 text-[11px] text-muted-foreground">{item.comentario || "Comentário pendente"}</p></button>;
                 })}
               </div>
             )}
 
             {anotacaoSelecionada && podeEditar && (
               <div className="mt-3 rounded-lg border border-accent/25 bg-accent/5 p-3">
-                <label className="mb-1.5 block text-[11px] font-semibold">Comentário da marcação</label>
-                <textarea id={`comentario-${anotacaoSelecionada.localId}`} value={anotacaoSelecionada.comentario} onChange={(event) => alterarComentario(event.target.value)} rows={4} placeholder="Explique o ajuste desejado..." className="w-full resize-none rounded-lg border border-border/30 bg-background px-3 py-2 text-[12px] outline-none focus:border-accent/60" />
+                <label className="mb-1.5 block text-[11px] font-semibold">Comentário da marcação *</label>
+                <textarea required aria-label="Comentário da marcação" id={`comentario-${anotacaoSelecionada.localId}`} value={anotacaoSelecionada.comentario} onChange={(event) => alterarComentario(event.target.value)} rows={4} placeholder="Explique o ajuste desejado..." className="w-full resize-none rounded-lg border border-border/30 bg-background px-3 py-2 text-[12px] outline-none focus:border-accent/60" />
                 <button onClick={removerSelecionada} className="mt-2 flex items-center gap-1.5 text-[11px] font-medium text-destructive"><Trash2 className="h-3.5 w-3.5" />Remover marcação</button>
               </div>
             )}
@@ -305,14 +306,14 @@ const RevisaoDocumentoPublica = () => {
             <div className="rounded-xl border border-border/25 bg-card p-4 space-y-3">
               <div><label className="mb-1.5 block text-[11px] font-semibold">Comentário geral <span className="font-normal text-muted-foreground">(opcional)</span></label><textarea value={comentarioGeral} onChange={(event) => setComentarioGeral(event.target.value)} disabled={assinaturaPendente} rows={3} className="w-full resize-none rounded-lg border border-border/30 bg-background px-3 py-2 text-[12px] outline-none focus:border-accent/60 disabled:cursor-not-allowed disabled:opacity-50" placeholder="Observações sobre o documento..." /></div>
               {error && <p className="rounded-lg border border-destructive/20 bg-destructive/5 p-2.5 text-[11px] text-destructive">{error}</p>}
-              <button onClick={enviarRevisao} disabled={sending || assinaturaPendente} className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-primary text-[12px] font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"><Send className="h-4 w-4" />Enviar para revisão</button>
+              <button data-validate-submit onClick={enviarRevisao} disabled={sending || assinaturaPendente} className="flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-primary text-[12px] font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"><Send className="h-4 w-4" />Enviar para revisão</button>
               {possuiMarcacoes && <p className="rounded-lg border border-amber-500/25 bg-amber-500/10 p-2.5 text-[10px] font-medium text-amber-600 dark:text-amber-400">Envie as marcações para revisão antes de aprovar ou reprovar esta versão.</p>}
               <div className="grid grid-cols-2 gap-2"><button title={possuiMarcacoes ? "Envie as marcações para revisão antes de aprovar" : undefined} onClick={() => window.confirm(info.tipo === "CONTRATO" ? "Você será direcionado à ZapSign para assinar e aprovar o contrato. Deseja continuar?" : "Confirma a aprovação desta versão?") && executar(() => aprovarRevisaoPublica(token))} disabled={sending || possuiMarcacoes} className="flex h-10 items-center justify-center gap-1.5 rounded-lg bg-accent text-[12px] font-semibold text-accent-foreground disabled:cursor-not-allowed disabled:opacity-40"><Check className="h-4 w-4" />{info.tipo === "CONTRATO" && info.assinaturaUrl ? "Continuar assinatura" : "Aprovar"}</button><button title={assinaturaPendente ? "Conclua a assinatura iniciada na ZapSign" : possuiMarcacoes ? "Envie as marcações para revisão antes de reprovar" : undefined} onClick={() => setReprovando((current) => !current)} disabled={sending || possuiMarcacoes || assinaturaPendente} className="flex h-10 items-center justify-center gap-1.5 rounded-lg border border-destructive/30 text-[12px] font-semibold text-destructive disabled:cursor-not-allowed disabled:opacity-40"><XCircle className="h-4 w-4" />Reprovar</button></div>
-              {reprovando && <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="space-y-2 overflow-hidden"><label className="block text-[11px] font-semibold text-destructive">Justificativa obrigatória</label><textarea value={justificativa} onChange={(event) => setJustificativa(event.target.value)} rows={4} className="w-full resize-none rounded-lg border border-destructive/30 bg-background px-3 py-2 text-[12px] outline-none focus:border-destructive" placeholder="Informe o motivo da reprovação..." /><button onClick={() => justificativa.trim() ? executar(() => reprovarRevisaoPublica(token, justificativa)) : setError("Informe a justificativa da reprovação.")} disabled={sending || possuiMarcacoes} className="h-9 w-full rounded-lg bg-destructive text-[11px] font-semibold text-destructive-foreground disabled:opacity-50">Confirmar reprovação</button></motion.div>}
+              {reprovando && <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="space-y-2 overflow-hidden"><FormValidation className="contents"><label className="block text-[11px] font-semibold text-destructive">Justificativa obrigatória *</label><textarea required value={justificativa} onChange={(event) => setJustificativa(event.target.value)} rows={4} className="w-full resize-none rounded-lg border border-destructive/30 bg-background px-3 py-2 text-[12px] outline-none focus:border-destructive" placeholder="Informe o motivo da reprovação..." /><button data-validate-submit onClick={() => justificativa.trim() ? executar(() => reprovarRevisaoPublica(token, justificativa)) : setError("Informe a justificativa da reprovação.")} disabled={sending || possuiMarcacoes} className="h-9 w-full rounded-lg bg-destructive text-[11px] font-semibold text-destructive-foreground disabled:opacity-50">Confirmar reprovação</button></FormValidation></motion.div>}
             </div>
           )}
           <p className="px-2 text-center text-[10px] leading-4 text-muted-foreground">Versão {versaoAtual?.numero} enviada em {formatDate(versaoAtual?.criadoEm)}. Suas ações ficam registradas no histórico.</p>
-        </aside>
+        </FormValidation></aside>
       </main>
     </div>
   );

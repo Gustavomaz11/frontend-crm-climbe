@@ -1,3 +1,4 @@
+import { FormValidation } from "@/components/ui/form-validation";
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Eye, EyeOff, ArrowRight, Moon, Sun, Loader2 } from "lucide-react";
@@ -295,7 +296,7 @@ const Index = () => {
                 </p>
               </motion.div>
 
-              <motion.form
+              <FormValidation className="contents"><motion.form noValidate
                 onSubmit={handleLogin}
                 className="space-y-5"
                 initial={{ opacity: 0, y: 16 }}
@@ -304,11 +305,11 @@ const Index = () => {
               >
                 <div>
                   <label className="mb-1.5 block text-[11px] font-medium tracking-wide text-muted-foreground">
-                    E-mail
+                    E-mail *
                   </label>
 
                   <div className="group relative">
-                    <input
+                    <input required
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
@@ -329,11 +330,11 @@ const Index = () => {
 
                 <div>
                   <label className="mb-1.5 block text-[11px] font-medium tracking-wide text-muted-foreground">
-                    Senha
+                    Senha *
                   </label>
 
                   <div className="group relative">
-                    <input
+                    <input required
                       type={showPassword ? "text" : "password"}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
@@ -481,7 +482,7 @@ const Index = () => {
                 <p className="text-center text-[11px] text-muted-foreground">
                   O login aceita qualquer conta Google. A sincronização da agenda é exclusiva para contas @climbe.com.br.
                 </p>
-              </motion.form>
+              </motion.form></FormValidation>
             </div>
 
             <div className="my-16 hidden w-px self-stretch bg-border/40 lg:block" />

@@ -1,3 +1,4 @@
+import { FormValidation } from "@/components/ui/form-validation";
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -111,7 +112,7 @@ const EnviarDocumento = () => {
           </div>
         </div>
 
-        <div className="p-6 space-y-5">
+        <FormValidation as="div" className="p-6 space-y-5">
           {loading ? (
             <div className="py-10 text-center text-[12px] text-muted-foreground">Carregando solicitação...</div>
           ) : success ? (
@@ -145,6 +146,7 @@ const EnviarDocumento = () => {
                 </div>
               </div>
 
+              <p className="text-[11px] font-medium">Arquivo do documento *</p>
               <input
                 ref={inputRef}
                 type="file"
@@ -163,7 +165,7 @@ const EnviarDocumento = () => {
                 onClick={() => inputRef.current?.click()}
                 onDragOver={(event) => { event.preventDefault(); setDragOver(true); }}
                 onDragLeave={() => setDragOver(false)}
-                onDrop={handleDrop}
+                tabIndex={0} role="button" aria-label="Arquivo do documento" aria-required="true" data-field-label="Arquivo do documento" data-required-value={file ? "selected" : ""} data-required-message="Por favor, escolha um arquivo para enviar o documento." onDrop={handleDrop}
                 className={`cursor-pointer rounded-xl border-2 border-dashed px-4 py-8 text-center transition-colors ${dragOver ? "border-accent/60 bg-accent/5" : "border-border/30 hover:border-accent/40 hover:bg-muted/10"}`}
               >
                 <UploadCloud className={`w-8 h-8 mx-auto mb-3 ${dragOver ? "text-accent" : "text-muted-foreground"}`} />
@@ -184,12 +186,12 @@ const EnviarDocumento = () => {
 
               {error && <p className="text-[12px] text-destructive">{error}</p>}
 
-              <button onClick={handleSubmit} disabled={sending || !file} className="w-full h-10 rounded-lg bg-accent text-accent-foreground text-[12px] font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
+              <button data-validate-submit onClick={handleSubmit} disabled={sending} className="w-full h-10 rounded-lg bg-accent text-accent-foreground text-[12px] font-semibold disabled:opacity-50 disabled:cursor-not-allowed">
                 {sending ? "Enviando..." : "Enviar documento"}
               </button>
             </>
           )}
-        </div>
+        </FormValidation>
       </motion.main>
     </div>
   );
