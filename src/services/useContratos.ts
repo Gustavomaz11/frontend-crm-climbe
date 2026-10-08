@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import { api } from "@/api";
 import { getPropostaFileNameFromUrl } from "./usePropostas";
+import type { PropostaServicoConfig } from "./usePropostas";
 import type { CommercialService } from "./commercialProposal";
 
 interface ApiEnvelope<T> {
@@ -21,6 +22,7 @@ interface ContratoApi {
     idProposta?: number;
     url?: string;
     servico?: CommercialService | null;
+    servicos?: PropostaServicoConfig[];
   } | null;
   usuario?: {
     id?: number;
@@ -53,6 +55,7 @@ interface ContratoApi {
 }
 
 export interface Contrato {
+  servicos?: PropostaServicoConfig[];
   id: number;
   titulo: string;
   descricao: string;
@@ -179,6 +182,7 @@ function normalizeContrato(contrato: ContratoApi): Contrato {
     dataCriacao: contrato.dataInicio ?? "",
     dataAtualizacao: "",
     servico: contrato.servico ?? contrato.proposta?.servico ?? null,
+    servicos: contrato.proposta?.servicos ?? [],
     dataAprovacao: contrato.dataAprovacao ?? null,
     parcelas: (contrato.parcelas ?? []).map((item) => ({
       id: item.id ?? 0,

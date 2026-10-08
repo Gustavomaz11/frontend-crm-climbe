@@ -12,7 +12,8 @@ import ClimbLogo from "@/components/login/ClimbLogo";
 import { UserAvatar } from "@/components/UserAvatar";
 import { AppSidebarNav } from "@/components/layout/AppSidebarNav";
 import { useAuthStore } from "@/store/useAuthStore";
-import { getServiceLabel, useAlterarVencimentoParcela, useDeleteEmpresa, useEmpresaFinanceiro, useEmpresas, Empresa } from "@/services";
+import { useAlterarVencimentoParcela, useDeleteEmpresa, useEmpresaFinanceiro, useEmpresas, Empresa } from "@/services";
+import { getProposalServicesLabel } from "@/services/proposalPayments";
 import { toast } from "sonner";
 
 const Empresas = () => {
@@ -262,7 +263,7 @@ const Empresas = () => {
                         <div key={item.contratoId} className="rounded-lg border border-border/20 bg-card/50 p-4">
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <div className="flex items-center gap-2">
-                              <strong className="text-[13px]">{getServiceLabel(item.servico)}</strong>
+                              <strong className="text-[13px]">{getProposalServicesLabel({ servico: item.servico, servicos: item.servicosProposta })}</strong>
                               <span className={`rounded-full px-2 py-0.5 text-[9px] font-semibold ${item.situacao === "ATIVO" ? "bg-accent/10 text-accent" : "bg-muted text-muted-foreground"}`}>{item.situacao}</span>
                             </div>
                             <span className="text-[12px] font-semibold">{Number(item.valorTotal || 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>

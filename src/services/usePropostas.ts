@@ -9,7 +9,21 @@ export interface PropostaReajuste {
   valor: number;
 }
 
+export interface PropostaServicoConfig {
+  servico: CommercialService;
+  valor: number;
+  comissaoTecnicoPercentual?: number | null;
+  comissaoComercialPercentual?: number | null;
+}
+
+export interface PropostaRecebimento {
+  numero: number;
+  valor: number;
+}
+
 export interface PropostaCommercialConfig {
+  servicos: PropostaServicoConfig[];
+  recebimentos: PropostaRecebimento[];
   servico: CommercialService;
   mesInicio?: string | null;
   recorrenciaMeses?: number | null;
@@ -32,6 +46,8 @@ interface ApiEnvelope<T> {
 export type PropostaStatus = "PENDENTE" | "APROVADA" | "REJEITADA";
 
 export interface PropostaApi {
+  servicos?: PropostaServicoConfig[];
+  recebimentos?: PropostaRecebimento[];
   idProposta: number;
   empresaId: number;
   negocioId?: number | null;

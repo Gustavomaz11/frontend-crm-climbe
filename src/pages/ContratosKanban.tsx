@@ -46,7 +46,7 @@ import {
   type ContratoKanbanTask,
   type KanbanTaskDTO,
 } from "@/services";
-import { getServiceLabel } from "@/services/commercialProposal";
+import { getProposalServicesLabel } from "@/services/proposalPayments";
 
 interface PendingRaiaRemoval {
   id: number;
@@ -64,7 +64,7 @@ const emptyDraft: KanbanTaskDraft = {
 };
 
 function getContratoLabel(contrato: Contrato) {
-  return `${contrato.empresaNome} - ${getServiceLabel(contrato.servico)}`;
+  return `${contrato.empresaNome} - ${getProposalServicesLabel(contrato)}`;
 }
 
 const ContratosKanban = () => {
@@ -146,7 +146,7 @@ const ContratosKanban = () => {
     const query = searchQuery.trim().toLowerCase();
     if (!query) return contratosAprovados;
     return contratosAprovados.filter((contrato) =>
-      `${contrato.id} ${contrato.empresaNome} ${getServiceLabel(contrato.servico)} ${contrato.titulo}`.toLowerCase().includes(query),
+      `${contrato.id} ${contrato.empresaNome} ${getProposalServicesLabel(contrato)} ${contrato.titulo}`.toLowerCase().includes(query),
     );
   }, [contratosAprovados, searchQuery]);
 

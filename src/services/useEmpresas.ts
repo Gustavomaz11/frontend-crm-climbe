@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import { api } from "@/api";
 import type { CommercialService } from "./commercialProposal";
+import type { PropostaServicoConfig } from "./usePropostas";
 
 export interface Empresa {
   id: number;
@@ -36,6 +37,7 @@ export interface EmpresaParcela {
 }
 
 export interface EmpresaServicoContratado {
+  servicosProposta?: PropostaServicoConfig[];
   contratoId: number;
   servico: CommercialService;
   situacao: string;

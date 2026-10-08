@@ -15,6 +15,9 @@ import { UserAvatar } from "@/components/UserAvatar";
 import { AppSidebarNav } from "@/components/layout/AppSidebarNav";
 import { RevisaoDocumentoDialog } from "@/components/revisoes/RevisaoDocumentoDialog";
 import { createEmptyProposalConfig, PropostaCommercialFields } from "@/components/propostas/PropostaCommercialFields";
+import { PropostaFinancialSummary } from "@/components/propostas/PropostaFinancialSummary";
+import { buildProposalCommercialConfig, getProposalServicesLabel } from "@/services/proposalPayments";
+import type { PropostaServicoConfig, PropostaRecebimento } from "@/services/usePropostas";
 import { useAuthStore } from "@/store/useAuthStore";
 import {
   getPropostaDownloadUrl,
@@ -24,8 +27,6 @@ import {
   usePropostas,
   useUpdatePropostaStatus,
   useUsuarios,
-  getServiceLabel,
-  getProposalBillingCount,
   type CommercialService,
   type HistoricoAprovacaoProposta,
   type PropostaStatus,
@@ -38,6 +39,8 @@ const statusStyles: Record<string, string> = {
 };
 
 interface Proposta {
+  servicos?: PropostaServicoConfig[];
+  recebimentos?: PropostaRecebimento[];
   id: number;
   nomeDocumento: string;
   empresaNome: string;
@@ -123,13 +126,7 @@ const Propostas = () => {
   const [selectedEmpresaId, setSelectedEmpresaId] = useState("");
   const [valuationInput, setValuationInput] = useState("");
   const [commercialConfig, setCommercialConfig] = useState(createEmptyProposalConfig);
-  const billingCount = getProposalBillingCount(
-    commercialConfig.servico,
-    commercialConfig.recorrenciaMeses,
-    commercialConfig.quantidadeParcelas,
-  );
   const proposalTotal = parseCurrencyInput(valuationInput);
-  const installmentPreview = proposalTotal > 0 ? proposalTotal / billingCount : 0;
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -180,6 +177,8 @@ const Propostas = () => {
         status: proposta.status,
         url: proposta.url,
         servico: proposta.servico,
+        servicos: proposta.servicos,
+        recebimentos: proposta.recebimentos,
       })),
     [empresasById, propostas],
   );
@@ -243,8 +242,11 @@ const Propostas = () => {
       setUploadError("Selecione o serviço e o mês de início da proposta.");
       return;
     }
-    if (commercialConfig.reajustes.some((item) => item.mesVigencia < 1 || item.mesVigencia > 24 || item.valor <= 0)) {
-      setUploadError("Confira o mês e o valor dos reajustes informados.");
+    let configuracao;
+    try {
+      configuracao = buildProposalCommercialConfig(commercialConfig, valuation);
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : "Confira os valores da proposta.");
       return;
     }
 
@@ -259,7 +261,7 @@ const Propostas = () => {
           negocioId: contextualNegocioId || null,
           valuation,
           configuracao: {
-            ...commercialConfig,
+            ...configuracao,
             mesInicio: `${commercialConfig.mesInicio}-01`,
           },
         });
@@ -452,45 +454,6 @@ const Propostas = () => {
                     </motion.div>
 
                     <p className="mt-1 text-[11px] font-medium">Arquivo da proposta *</p>
-                    {/* Empresa select */}
-                    <div className="mt-3 grid gap-3 md:grid-cols-2">
-                      <div>
-                        <label className="text-[9px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Empresa *</label>
-                      <select required
-                        value={selectedEmpresaId}
-                        onChange={(e) => { setSelectedEmpresaId(e.target.value); setUploadError(""); }}
-                        disabled={contextualNegocioId > 0}
-                        className="w-full h-9 px-2.5 rounded-lg border border-border/25 bg-background/50 text-[12px] outline-none focus:border-accent/40 transition-colors text-foreground disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        <option value="">Selecione a empresa</option>
-                        {empresas.filter((empresa) => Number(empresa.id) > 0).map((empresa) => (
-                          <option key={empresa.id} value={empresa.id}>{empresa.nome}</option>
-                        ))}
-                      </select>
-                      </div>
-                      <div>
-                        <label className="text-[9px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Valor total da proposta *</label>
-                        <div className="flex h-9 items-center gap-2 rounded-lg border border-border/25 bg-background/50 px-2.5 transition-colors focus-within:border-accent/40">
-                          <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
-                          <input required
-                            type="text"
-                            inputMode="numeric"
-                            aria-label="Valor total da proposta" data-validation-message={valuationInput.trim() && parseCurrencyInput(valuationInput) <= 0 ? "Informe um valor maior que zero para a proposta." : undefined} value={valuationInput}
-                            onChange={(e) => { setValuationInput(formatCurrencyInput(e.target.value)); setUploadError(""); }}
-                            placeholder="R$ 0,00"
-                            className="min-w-0 flex-1 bg-transparent text-[12px] text-foreground outline-none placeholder:text-muted-foreground"
-                          />
-                        </div>
-                        {installmentPreview > 0 && (
-                          <p className="mt-1.5 text-[10px] text-accent/80">
-                            Previsão de recebimento: {billingCount}x de {formatCurrency(installmentPreview)}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    <PropostaCommercialFields value={commercialConfig} usuarios={usuarios} onChange={(next) => { setCommercialConfig(next); setUploadError(""); }} />
-
                     {/* File list */}
                     <AnimatePresence>
                       {files.length > 0 && (
@@ -523,6 +486,40 @@ const Propostas = () => {
                         </motion.div>
                       )}
                     </AnimatePresence>
+
+                    {/* Empresa select */}
+                    <div className="mt-3 grid gap-3 md:grid-cols-2">
+                      <div>
+                        <label className="text-[9px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Empresa *</label>
+                      <select required
+                        value={selectedEmpresaId}
+                        onChange={(e) => { setSelectedEmpresaId(e.target.value); setUploadError(""); }}
+                        disabled={contextualNegocioId > 0}
+                        className="w-full h-9 px-2.5 rounded-lg border border-border/25 bg-background/50 text-[12px] outline-none focus:border-accent/40 transition-colors text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        <option value="">Selecione a empresa</option>
+                        {empresas.filter((empresa) => Number(empresa.id) > 0).map((empresa) => (
+                          <option key={empresa.id} value={empresa.id}>{empresa.nome}</option>
+                        ))}
+                      </select>
+                      </div>
+                      <div>
+                        <label className="text-[9px] text-muted-foreground font-medium uppercase tracking-wider mb-1 block">Valor total da proposta *</label>
+                        <div className="flex h-9 items-center gap-2 rounded-lg border border-border/25 bg-background/50 px-2.5 transition-colors focus-within:border-accent/40">
+                          <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
+                          <input required
+                            type="text"
+                            inputMode="numeric"
+                            aria-label="Valor total da proposta" data-validation-message={valuationInput.trim() && parseCurrencyInput(valuationInput) <= 0 ? "Informe um valor maior que zero para a proposta." : undefined} value={valuationInput}
+                            onChange={(e) => { setValuationInput(formatCurrencyInput(e.target.value)); setUploadError(""); }}
+                            placeholder="R$ 0,00"
+                            className="min-w-0 flex-1 bg-transparent text-[12px] text-foreground outline-none placeholder:text-muted-foreground"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <PropostaCommercialFields value={commercialConfig} valorTotal={proposalTotal} usuarios={usuarios} onChange={(next) => { setCommercialConfig(next); setUploadError(""); }} />
 
                     {/* Actions */}
                     <div className="mt-3 flex items-center justify-end gap-2">
@@ -662,7 +659,7 @@ const Propostas = () => {
         {selectedProposta && (
           <motion.div className="fixed inset-0 z-50 flex items-center justify-center p-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <motion.div className="absolute inset-0 bg-background/80 backdrop-blur-md" onClick={() => setSelectedProposta(null)} />
-            <motion.div className="relative z-10 w-full max-w-lg rounded-2xl border border-border/30 bg-card/95 backdrop-blur-xl shadow-2xl overflow-hidden" initial={{ scale: 0.92, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.92, opacity: 0, y: 20 }}>
+            <motion.div className="relative z-10 flex max-h-[90vh] w-full max-w-lg flex-col rounded-2xl border border-border/30 bg-card/95 backdrop-blur-xl shadow-2xl overflow-hidden" initial={{ scale: 0.92, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.92, opacity: 0, y: 20 }}>
               <div className="flex items-center justify-between p-5 border-b border-border/20">
                 <div>
                   <h2 className="text-[16px] font-semibold text-foreground">{selectedProposta.nomeDocumento}</h2>
@@ -670,7 +667,7 @@ const Propostas = () => {
                 </div>
                 <motion.button onClick={() => setSelectedProposta(null)} className="w-8 h-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/20" whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}><X className="w-4 h-4" /></motion.button>
               </div>
-              <div className="p-5 space-y-4">
+              <div className="min-h-0 overflow-y-auto p-5 space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="rounded-lg border border-border/20 bg-background/50 p-4">
                     <p className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wider">Empresa</p>
@@ -687,8 +684,9 @@ const Propostas = () => {
                 </div>
                 <div className="rounded-lg border border-border/20 bg-background/50 p-4">
                   <p className="text-[10px] text-muted-foreground mb-1 uppercase tracking-wider">Serviço</p>
-                  <p className="text-[13px] font-semibold text-foreground/85">{getServiceLabel(selectedProposta.servico)}</p>
+                  <p className="text-[13px] font-semibold text-foreground/85">{getProposalServicesLabel(selectedProposta)}</p>
                 </div>
+                <PropostaFinancialSummary servicos={selectedProposta.servicos} recebimentos={selectedProposta.recebimentos} />
                 <div className="flex gap-2">
                   <motion.button
                     onClick={() => handleOpenProposta(selectedProposta)}

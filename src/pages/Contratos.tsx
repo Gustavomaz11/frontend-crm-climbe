@@ -1,4 +1,5 @@
 import { FormValidation } from "@/components/ui/form-validation";
+import { getProposalServicesLabel } from "@/services/proposalPayments";
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { useTheme } from "@/hooks/use-theme";
 import { useSidebarState } from "@/hooks/useSidebarState";
@@ -26,7 +27,6 @@ import {
   useEmpresas,
   usePropostas,
   useUsuarios,
-  getServiceLabel,
   useUpdateContratoResponsaveis,
   useUpdateContratoStatus,
   type Contrato,
@@ -530,7 +530,7 @@ const Contratos = () => {
                         </select>
                         {selectedProposal && (
                           <p className="mt-1.5 rounded-md border border-accent/20 bg-accent/5 px-2 py-1.5 text-[11px] text-accent">
-                            Serviço da proposta: <strong>{getServiceLabel(selectedProposal.servico)}</strong>
+                            Serviços da proposta: <strong>{getProposalServicesLabel(selectedProposal)}</strong>
                           </p>
                         )}
                       </div>

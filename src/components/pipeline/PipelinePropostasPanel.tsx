@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ExternalLink, FileText, Loader2, MessageSquareWarning, Plus } from "lucide-react";
 import { RevisaoDocumentoDialog } from "@/components/revisoes/RevisaoDocumentoDialog";
-import { getServiceLabel } from "@/services/commercialProposal";
+import { getProposalServicesLabel } from "@/services/proposalPayments";
 import {
   getPropostaDownloadUrl,
   getPropostaFileNameFromUrl,
@@ -119,7 +119,7 @@ export const PipelinePropostasPanel = ({
                     {belongsToBusiness && <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-accent">Deste negócio</span>}
                     {needsReview && <span className="rounded-full border border-amber-500/30 bg-amber-500/15 px-2 py-0.5 text-[8px] font-semibold uppercase tracking-wide text-amber-500">Ajustes solicitados</span>}
                   </div>
-                  <p className="mt-1 text-[10px] text-muted-foreground">{getServiceLabel(proposta.servico)} · {formatCurrency(proposta.valuation)} · {formatDate(proposta.dataCriacao)}</p>
+                  <p className="mt-1 text-[10px] text-muted-foreground">{getProposalServicesLabel(proposta)} · {formatCurrency(proposta.valuation)} · {formatDate(proposta.dataCriacao)}</p>
                 </div>
                 <span className={`rounded-full border px-2.5 py-1 text-[9px] font-semibold ${statusClasses[proposta.status]}`}>{proposta.status}</span>
                 {hasReview && (
