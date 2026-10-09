@@ -11,6 +11,14 @@ export interface TarefaAnexo {
   tamanho: number;
   autor: UsuarioResumo;
   criadoEm: string;
+  pastaId?: number | null;
+}
+export interface TarefaPasta {
+  id: number;
+  nome: string;
+  pastaPaiId?: number | null;
+  autor: UsuarioResumo;
+  criadoEm: string;
 }
 export interface TarefaComentario {
   id: number;
@@ -20,7 +28,7 @@ export interface TarefaComentario {
   criadoEm: string;
   anexos: TarefaAnexo[];
 }
-interface Colaboracao { anexos: TarefaAnexo[]; comentarios: TarefaComentario[] }
+interface Colaboracao { anexos: TarefaAnexo[]; comentarios: TarefaComentario[]; pastas?: TarefaPasta[] }
 interface Envelope<T> { success: boolean; data: T; message?: string }
 const unwrap = <T,>(response: Envelope<T>) => {
   if (!response.success) throw new Error(response.message || "Não foi possível carregar a tarefa.");
@@ -45,11 +53,20 @@ export const useTarefaColaboracao = (tipo: TarefaTipo, id: number) => useQuery({
 export const useAnexarTarefa = (tipo: TarefaTipo, id: number) => {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: (files: File[]) => request(async () => {
+    mutationFn: ({ files, pastaId }: { files: File[]; pastaId?: number | null }) => request(async () => {
       const form = new FormData(); addFiles(form, files);
+      if (pastaId != null) form.append("pastaId", String(pastaId));
       return unwrap((await api.post<Envelope<TarefaAnexo[]>>(`${path(tipo, id)}/anexos`, form,
         { headers: { "Content-Type": "multipart/form-data" } })).data);
     }),
+    onSuccess: () => client.invalidateQueries({ queryKey: ["tarefa-colaboracao", tipo, id] }),
+  });
+};
+export const useCriarPastaTarefa = (tipo: TarefaTipo, id: number) => {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { nome: string; pastaPaiId: number | null }) => request(async () =>
+      unwrap((await api.post<Envelope<TarefaPasta>>(`${path(tipo, id)}/pastas`, input)).data)),
     onSuccess: () => client.invalidateQueries({ queryKey: ["tarefa-colaboracao", tipo, id] }),
   });
 };

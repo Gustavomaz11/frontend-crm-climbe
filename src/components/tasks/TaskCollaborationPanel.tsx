@@ -1,24 +1,19 @@
 import { useState } from "react";
-import { MessageSquare, Reply, Send, Upload, X } from "lucide-react";
+import { MessageSquare, Reply, Send, X } from "lucide-react";
 import { toast } from "sonner";
 import { FormValidation } from "@/components/ui/form-validation";
-import { useAnexarTarefa, useComentarTarefa, useTarefaColaboracao, type TarefaComentario, type TarefaTipo } from "@/services/useTarefaColaboracao";
+import { useComentarTarefa, useTarefaColaboracao, type TarefaComentario, type TarefaTipo } from "@/services/useTarefaColaboracao";
 import { TaskAttachmentList } from "./TaskAttachmentList";
 import { TaskFilePicker } from "./TaskFilePicker";
+import { TaskFileBrowser } from "./TaskFileBrowser";
 
 export const TaskCollaborationPanel = ({ tipo, taskId }: { tipo: TarefaTipo; taskId: number }) => {
   const { data, isLoading, error, refetch } = useTarefaColaboracao(tipo, taskId);
-  const upload = useAnexarTarefa(tipo, taskId);
   const comment = useComentarTarefa(tipo, taskId);
-  const [files, setFiles] = useState<File[]>([]);
   const [commentFiles, setCommentFiles] = useState<File[]>([]);
   const [message, setMessage] = useState("");
   const [reply, setReply] = useState<TarefaComentario | null>(null);
   const [actionError, setActionError] = useState("");
-  const sendFiles = async () => {
-    try { setActionError(""); await upload.mutateAsync(files); setFiles([]); toast.success("Arquivos anexados à tarefa."); }
-    catch (failure) { setActionError(failure instanceof Error ? failure.message : "Não foi possível anexar os arquivos."); }
-  };
   const sendMessage = async () => {
     try {
       setActionError(""); await comment.mutateAsync({ conteudo: message, comentarioPaiId: reply?.id, files: commentFiles });
@@ -36,12 +31,7 @@ export const TaskCollaborationPanel = ({ tipo, taskId }: { tipo: TarefaTipo; tas
     {comments.filter((child) => child.comentarioPaiId === item.id).map((child) => renderComment(child, level + 1))}
   </div>;
   return <section className="mt-5 space-y-5 border-t border-border/25 pt-4" aria-label="Arquivos e comentários da tarefa">
-    <div className="space-y-3"><h3 className="text-[12px] font-semibold">Arquivos da tarefa</h3><p className="text-[10px] text-muted-foreground">Os arquivos ficam disponíveis para todas as pessoas que podem visualizar esta tarefa.</p>
-      <TaskAttachmentList tipo={tipo} taskId={taskId} files={data?.anexos || []} />
-      {!data?.anexos.length && <p className="text-[11px] text-muted-foreground">Nenhum arquivo anexado.</p>}
-      <TaskFilePicker label="Selecionar arquivos para a tarefa" files={files} onChange={setFiles} disabled={upload.isPending} />
-      {!!files.length && <button type="button" disabled={upload.isPending} onClick={() => void sendFiles()} className="flex items-center gap-2 rounded-lg bg-accent px-3 py-2 text-[11px] font-semibold text-accent-foreground disabled:opacity-50"><Upload className="h-3.5 w-3.5" />{upload.isPending ? "Enviando..." : "Anexar arquivos"}</button>}
-    </div>
+    <TaskFileBrowser tipo={tipo} taskId={taskId} files={data?.anexos || []} folders={data?.pastas || []} />
     <div className="space-y-3"><h3 className="flex items-center gap-2 text-[12px] font-semibold"><MessageSquare className="h-4 w-4 text-accent" />Comentários ({comments.length})</h3>
       {comments.filter((item) => !item.comentarioPaiId).map((item) => renderComment(item, 0))}
       {!comments.length && <p className="text-[11px] text-muted-foreground">Comece a conversa sobre esta tarefa.</p>}
