@@ -3,6 +3,7 @@ import { Save, X } from "lucide-react";
 import { FormValidation } from "@/components/ui/form-validation";
 import { UserMultiSelect } from "@/components/users/UserMultiSelect";
 import { TaskCollaborationPanel } from "@/components/tasks/TaskCollaborationPanel";
+import { TaskDialogShell } from "@/components/tasks/TaskDialogShell";
 import type { ContratoKanbanTask, KanbanTaskPrioridade, UsuarioResumo } from "@/services/useContratoKanban";
 import { KanbanSubtasks, type KanbanSubtasksProps } from "./KanbanSubtasks";
 import type { KanbanTaskDraft } from "./KanbanTaskDialog";
@@ -36,10 +37,8 @@ export const KanbanTaskEditDialog = (props: Props) => {
     if (await onSave({ ...task, titulo: draft.titulo.trim(), descricao: draft.descricao.trim(), prioridade: draft.prioridade,
       responsaveis, responsavel: responsaveis[0] || null, dataInicio: draft.dataInicio || null, dataFim: draft.dataFim || null })) onClose();
   };
-  return <div role="dialog" aria-modal="true" aria-labelledby="edit-task-title" className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-    <button type="button" aria-label="Fechar edição" onClick={onClose} className="absolute inset-0 bg-background/80 backdrop-blur-md" />
-    <div className="relative z-10 flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border/30 bg-card shadow-2xl">
-      <header className="flex items-center justify-between border-b border-border/25 p-5"><div><h2 id="edit-task-title" className="text-[16px] font-semibold">{canEdit ? "Editar tarefa" : task.titulo}</h2><p className="mt-1 text-[11px] text-muted-foreground">Detalhes, subtarefas, arquivos e comentários.</p></div><button type="button" aria-label="Fechar modal" disabled={isSaving} onClick={onClose}><X className="h-4 w-4" /></button></header>
+  return <TaskDialogShell labelledBy="edit-task-title" onClose={onClose} closeDisabled={isSaving}>
+      <header className="flex shrink-0 items-center justify-between border-b border-border/25 p-5"><div><h2 id="edit-task-title" className="text-[16px] font-semibold">{canEdit ? "Editar tarefa" : task.titulo}</h2><p className="mt-1 text-[11px] text-muted-foreground">Detalhes, subtarefas, arquivos e comentários.</p></div><button type="button" aria-label="Fechar modal" disabled={isSaving} onClick={onClose}><X className="h-4 w-4" /></button></header>
       <div className="min-h-0 flex-1 overflow-y-auto p-5">
         <FormValidation as="form" onSubmit={(event) => { event.preventDefault(); void save(); }}>
           <fieldset disabled={!canEdit || isSaving} className="space-y-3">
@@ -55,7 +54,6 @@ export const KanbanTaskEditDialog = (props: Props) => {
         <KanbanSubtasks {...props} />
         {contratoId && <TaskCollaborationPanel tipo="CONTRATO" taskId={task.id} />}
       </div>
-      <footer className="flex justify-end border-t border-border/25 p-4"><button type="button" onClick={onClose} disabled={isSaving} className="rounded-lg border border-border/30 px-4 py-2 text-[12px]">Fechar</button></footer>
-    </div>
-  </div>;
+      <footer className="flex shrink-0 justify-end border-t border-border/25 p-4"><button type="button" onClick={onClose} disabled={isSaving} className="rounded-lg border border-border/30 px-4 py-2 text-[12px]">Fechar</button></footer>
+  </TaskDialogShell>;
 };

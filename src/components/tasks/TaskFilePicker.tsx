@@ -3,9 +3,9 @@ import { Paperclip, X } from "lucide-react";
 export const TaskFilePicker = ({ files, onChange, label, disabled }: {
   files: File[]; onChange: (files: File[]) => void; label: string; disabled?: boolean;
 }) => <div className="space-y-2">
-  <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-border/40 px-3 py-2 text-[11px] hover:border-accent/50">
+  <label className="relative flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-border/40 px-3 py-2 text-[11px] hover:border-accent/50 focus-within:border-accent/50 focus-within:ring-2 focus-within:ring-accent/30">
     <Paperclip className="h-4 w-4 text-accent" />{label}
-    <input type="file" multiple disabled={disabled} aria-label={label} className="sr-only"
+    <input type="file" multiple disabled={disabled} aria-label={label} className="absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
       accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png,.gif,.bmp"
       onChange={(event) => { onChange([...files, ...Array.from(event.target.files || [])]); event.target.value = ""; }} />
   </label>

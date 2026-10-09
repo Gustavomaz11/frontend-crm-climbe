@@ -2,6 +2,7 @@ import { FormValidation } from "@/components/ui/form-validation";
 import { CalendarDays, X } from "lucide-react";
 import type { KanbanTaskPrioridade, UsuarioResumo } from "@/services";
 import { UserMultiSelect } from "@/components/users/UserMultiSelect";
+import { TaskDialogShell } from "@/components/tasks/TaskDialogShell";
 import { kanbanPriorityOptions } from "./kanbanPriority";
 
 export interface KanbanTaskDraft {
@@ -33,10 +34,8 @@ export const KanbanTaskDialog = ({
   onClose,
   onSubmit,
 }: KanbanTaskDialogProps) => (
-  <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
-    <button type="button" aria-label="Fechar formulário" className="absolute inset-0 bg-background/80 backdrop-blur-md" onClick={onClose} />
-    <div className="relative z-10 max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-border/30 bg-card/95 shadow-2xl backdrop-blur-xl">
-      <div className="flex items-center justify-between border-b border-border/20 p-5">
+  <TaskDialogShell label="Nova tarefa" onClose={onClose} closeDisabled={isSaving}>
+      <header className="flex shrink-0 items-center justify-between border-b border-border/20 p-5">
         <div>
           <h2 className="text-[16px] font-semibold text-foreground">Nova tarefa</h2>
           <p className="mt-0.5 text-[11px] text-muted-foreground">{raiaTitulo}</p>
@@ -44,15 +43,16 @@ export const KanbanTaskDialog = ({
         <button type="button" onClick={onClose} className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/20 hover:text-foreground">
           <X className="h-4 w-4" />
         </button>
-      </div>
+      </header>
 
       <FormValidation as="form"
-        className="space-y-3 p-5"
+        className="flex min-h-0 flex-1 flex-col"
         onSubmit={(event) => {
           event.preventDefault();
           onSubmit();
         }}
       >
+        <div className="min-h-0 flex-1 space-y-3 overflow-y-auto p-5">
         <label className="block">
           <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground">Título *</span>
           <input required value={draft.titulo} onChange={(event) => onChange({ ...draft, titulo: event.target.value })} placeholder="Nome da tarefa" className="h-9 w-full rounded-lg border border-border/25 bg-background/60 px-3 text-[12px] text-foreground outline-none transition-colors focus:border-accent/40" />
@@ -93,13 +93,13 @@ export const KanbanTaskDialog = ({
           </label>
         </div>
 
-        <div className="flex justify-end gap-2 pt-2">
+        </div>
+        <footer className="flex shrink-0 justify-end gap-2 border-t border-border/25 p-4">
           <button type="button" onClick={onClose} className="h-9 rounded-lg border border-border/30 px-4 text-[12px] font-semibold text-muted-foreground transition-colors hover:text-foreground">Cancelar</button>
           <button type="submit" disabled={isSaving} className="h-9 rounded-lg bg-accent px-4 text-[12px] font-semibold text-accent-foreground transition-colors hover:bg-accent/90 disabled:cursor-not-allowed disabled:opacity-50">
             {isSaving ? "Criando..." : "Criar tarefa"}
           </button>
-        </div>
+        </footer>
       </FormValidation>
-    </div>
-  </div>
+  </TaskDialogShell>
 );

@@ -6,6 +6,7 @@ import type { Usuario } from "@/services/useUsuarios";
 import { UserMultiSelect } from "@/components/users/UserMultiSelect";
 import { PipelineSubtaskFields } from "./PipelineSubtaskFields";
 import { TaskCollaborationPanel } from "@/components/tasks/TaskCollaborationPanel";
+import { TaskDialogShell } from "@/components/tasks/TaskDialogShell";
 
 interface PipelineTarefaDialogProps {
   tarefa?: PipelineTarefa | null;
@@ -46,14 +47,14 @@ export const PipelineTarefaDialog = ({
 
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/55 p-4 backdrop-blur-sm">
-      <FormValidation as="section" role="dialog" aria-modal="true" aria-label={tarefa ? "Editar tarefa" : "Nova tarefa"} className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-border/30 bg-card shadow-2xl">
-        <header className="flex items-center justify-between border-b border-border/20 px-5 py-4">
+    <TaskDialogShell label={tarefa ? "Editar tarefa" : "Nova tarefa"} onClose={onClose} closeDisabled={isProcessing}>
+      <FormValidation className="contents">
+        <header className="flex shrink-0 items-center justify-between border-b border-border/20 px-5 py-4">
           <div><h3 className="text-sm font-semibold">{tarefa ? "Editar tarefa" : "Nova tarefa"}</h3><p className="mt-0.5 text-[10px] text-muted-foreground">Organize a próxima ação desta negociação.</p></div>
           <button type="button" onClick={onClose} disabled={isProcessing} className="rounded-lg p-2 hover:bg-muted/30"><X className="h-4 w-4" /></button>
         </header>
 
-        <div className="space-y-4 overflow-y-auto p-5">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-5">
           <label className="block text-[10px] font-medium">Título *<input required className={`${inputClass} mt-1`} value={draft.titulo} onChange={(event) => setDraft({ ...draft, titulo: event.target.value })} placeholder="Ex.: Enviar proposta revisada" /></label>
           <label className="block text-[10px] font-medium">Descrição<textarea className={`${textAreaClass} mt-1 min-h-20`} value={draft.descricao || ""} onChange={(event) => setDraft({ ...draft, descricao: event.target.value })} /></label>
 
@@ -73,8 +74,8 @@ export const PipelineTarefaDialog = ({
           {tarefa && <TaskCollaborationPanel tipo="COMERCIAL" taskId={tarefa.id} />}
         </div>
 
-        <footer className="flex justify-end gap-2 border-t border-border/20 px-5 py-4"><button type="button" onClick={onClose} disabled={isProcessing} className="h-9 rounded-lg border border-border/30 px-4 text-[11px]">Cancelar</button><button data-validate-submit type="button" onClick={() => onSave({ ...draft, titulo: draft.titulo.trim(), tipo: draft.tipo.trim(), subtarefas: draft.subtarefas.filter((item) => item.titulo.trim()).map((item, index) => ({ ...item, titulo: item.titulo.trim(), posicao: index })) })} disabled={isProcessing} className="flex h-9 items-center gap-2 rounded-lg bg-accent px-4 text-[11px] font-semibold text-accent-foreground disabled:opacity-50"><Save className="h-3.5 w-3.5" />{isProcessing ? "Salvando..." : "Salvar tarefa"}</button></footer>
+        <footer className="flex shrink-0 justify-end gap-2 border-t border-border/20 px-5 py-4"><button type="button" onClick={onClose} disabled={isProcessing} className="h-9 rounded-lg border border-border/30 px-4 text-[11px]">Cancelar</button><button data-validate-submit type="button" onClick={() => onSave({ ...draft, titulo: draft.titulo.trim(), tipo: draft.tipo.trim(), subtarefas: draft.subtarefas.filter((item) => item.titulo.trim()).map((item, index) => ({ ...item, titulo: item.titulo.trim(), posicao: index })) })} disabled={isProcessing} className="flex h-9 items-center gap-2 rounded-lg bg-accent px-4 text-[11px] font-semibold text-accent-foreground disabled:opacity-50"><Save className="h-3.5 w-3.5" />{isProcessing ? "Salvando..." : "Salvar tarefa"}</button></footer>
       </FormValidation>
-    </div>
+    </TaskDialogShell>
   );
 };
