@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import { api } from "@/api";
+import type { UsuarioResumo } from "./useContratoKanban";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -13,6 +14,8 @@ export type PipelineTarefaStatus = "PENDENTE" | "EM_ANDAMENTO" | "CONCLUIDA" | "
 export type PipelineTarefaVisao = "TODAS" | "HOJE" | "ATRASADAS" | "FUTURAS" | "CONCLUIDAS";
 
 export interface PipelineSubtarefa {
+  responsavel?: UsuarioResumo | null;
+  responsavelId?: number | null;
   id?: number;
   titulo: string;
   concluida: boolean;
@@ -20,6 +23,7 @@ export interface PipelineSubtarefa {
 }
 
 export interface PipelineTarefa {
+  responsaveis?: UsuarioResumo[];
   campanhaId?: number; campanhaNome?: string; contato?: string; telefone?: string; email?: string; motivoCancelamento?: string; comentarioCancelamento?: string; canceladoEm?: string;
   id: number;
   negocioId: number;
@@ -41,6 +45,7 @@ export interface PipelineTarefa {
 }
 
 export interface PipelineTarefaInput {
+  responsavelIds?: number[];
   titulo: string;
   descricao?: string | null;
   responsavelId: number;
@@ -50,7 +55,7 @@ export interface PipelineTarefaInput {
   status: PipelineTarefaStatus;
   tipo: string;
   observacoes?: string | null;
-  subtarefas: Omit<PipelineSubtarefa, "id">[];
+  subtarefas: Pick<PipelineSubtarefa, "titulo" | "concluida" | "posicao" | "responsavelId">[];
 }
 
 export interface PipelineTarefaFiltros {

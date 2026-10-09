@@ -31,7 +31,9 @@ describe("componentes de tarefa do Kanban", () => {
     );
 
     expect(screen.getByDisplayValue("Validar os documentos")).toBeInTheDocument();
-    expect(screen.getByRole("combobox", { name: "Responsável" })).toBeInTheDocument();
+    expect(screen.getByRole("group", { name: "Responsáveis" })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("checkbox", { name: "Atribuir Ana Souza" }));
+    expect(onChange).toHaveBeenCalledWith({ ...draft, responsavelId: "7", responsavelIds: [7] });
 
     fireEvent.change(screen.getByLabelText(/Prioridade/), { target: { value: "ALTA" } });
     expect(onChange).toHaveBeenCalledWith({ ...draft, prioridade: "ALTA" });

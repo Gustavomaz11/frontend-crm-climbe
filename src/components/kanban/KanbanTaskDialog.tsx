@@ -1,7 +1,7 @@
 import { FormValidation } from "@/components/ui/form-validation";
 import { CalendarDays, X } from "lucide-react";
 import type { KanbanTaskPrioridade, UsuarioResumo } from "@/services";
-import { UserSelect } from "@/components/users/UserSelect";
+import { UserMultiSelect } from "@/components/users/UserMultiSelect";
 import { kanbanPriorityOptions } from "./kanbanPriority";
 
 export interface KanbanTaskDraft {
@@ -9,6 +9,7 @@ export interface KanbanTaskDraft {
   descricao: string;
   prioridade: KanbanTaskPrioridade;
   responsavelId: string;
+  responsavelIds?: number[];
   dataInicio: string;
   dataFim: string;
 }
@@ -34,7 +35,7 @@ export const KanbanTaskDialog = ({
 }: KanbanTaskDialogProps) => (
   <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
     <button type="button" aria-label="Fechar formulário" className="absolute inset-0 bg-background/80 backdrop-blur-md" onClick={onClose} />
-    <div className="relative z-10 w-full max-w-lg overflow-hidden rounded-2xl border border-border/30 bg-card/95 shadow-2xl backdrop-blur-xl">
+    <div className="relative z-10 max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-border/30 bg-card/95 shadow-2xl backdrop-blur-xl">
       <div className="flex items-center justify-between border-b border-border/20 p-5">
         <div>
           <h2 className="text-[16px] font-semibold text-foreground">Nova tarefa</h2>
@@ -70,14 +71,10 @@ export const KanbanTaskDialog = ({
             </select>
           </label>
           <div>
-            <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground">Responsável</span>
-            <UserSelect
+            <UserMultiSelect
               users={usuarios}
-              value={draft.responsavelId}
-              onValueChange={(responsavelId) => onChange({ ...draft, responsavelId })}
-              placeholder="Sem responsável"
-              emptyLabel="Sem responsável"
-              ariaLabel="Responsável"
+              value={draft.responsavelIds ?? (draft.responsavelId ? [Number(draft.responsavelId)] : [])}
+              onChange={(responsavelIds) => onChange({ ...draft, responsavelIds, responsavelId: String(responsavelIds[0] || "") })}
             />
           </div>
         </div>

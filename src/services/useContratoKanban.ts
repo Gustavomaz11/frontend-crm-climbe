@@ -22,6 +22,7 @@ export interface UsuarioResumo {
 export type KanbanTaskPrioridade = "BAIXA" | "MEDIA" | "ALTA";
 
 export interface ContratoKanbanSubtarefa {
+  responsavel?: UsuarioResumo | null;
   id: number;
   titulo: string;
   concluida: boolean;
@@ -31,6 +32,7 @@ export interface ContratoKanbanSubtarefa {
 }
 
 export interface ContratoKanbanTask {
+  responsaveis?: UsuarioResumo[];
   id: number;
   raiaId: number;
   titulo: string;
@@ -70,6 +72,7 @@ export interface KanbanRaiaDTO {
 }
 
 export interface KanbanTaskDTO {
+  responsavelIds?: number[];
   raiaId: number;
   titulo: string;
   descricao?: string;
@@ -85,6 +88,7 @@ export interface MoveKanbanTaskDTO {
 }
 
 export interface KanbanSubtarefaDTO {
+  responsavelId?: number | null;
   titulo: string;
   concluida?: boolean;
   posicao?: number;

@@ -269,6 +269,7 @@ const ContratosKanban = () => {
           descricao: taskDraft.descricao.trim(),
           prioridade: taskDraft.prioridade,
           responsavelId: taskDraft.responsavelId ? Number(taskDraft.responsavelId) : null,
+          responsavelIds: taskDraft.responsavelIds ?? (taskDraft.responsavelId ? [Number(taskDraft.responsavelId)] : []),
           dataInicio: taskDraft.dataInicio || undefined,
           dataFim: taskDraft.dataFim || undefined,
         },
@@ -289,6 +290,7 @@ const ContratosKanban = () => {
       descricao: task.descricao || "",
       prioridade: task.prioridade,
       responsavelId: task.responsavel?.id ?? null,
+      responsavelIds: (task.responsaveis ?? (task.responsavel ? [task.responsavel] : [])).map((usuario) => usuario.id),
       dataInicio: task.dataInicio || undefined,
       dataFim: task.dataFim || undefined,
       posicao: task.posicao,
@@ -358,10 +360,10 @@ const ContratosKanban = () => {
     }
   }
 
-  async function handleCreateSubtask(taskId: number, titulo: string) {
+  async function handleCreateSubtask(taskId: number, titulo: string, responsavelId?: number | null) {
     if (!selectedContratoId) return false;
     try {
-      await createSubtask.mutateAsync({ contratoId: selectedContratoId, taskId, data: { titulo } });
+      await createSubtask.mutateAsync({ contratoId: selectedContratoId, taskId, data: { titulo, responsavelId } });
       setMessage({ type: "success", text: "Subtarefa criada." });
       return true;
     } catch (error) {
@@ -379,6 +381,7 @@ const ContratosKanban = () => {
         subtarefaId: subtarefa.id,
         data: {
           titulo: subtarefa.titulo,
+          responsavelId: subtarefa.responsavel?.id ?? null,
           concluida: subtarefa.concluida,
           posicao: subtarefa.posicao,
         },
@@ -650,9 +653,12 @@ const ContratosKanban = () => {
         />
       )}
 
-      {editingTask && board?.gestor && (
+      {editingTask && board && (
         <KanbanTaskEditDialog
           key={editingTask.id}
+          contratoId={selectedContratoId}
+          canEdit={board.gestor}
+          canToggle={board.gestor || (editingTask.responsaveis ?? (editingTask.responsavel ? [editingTask.responsavel] : [])).some((usuario) => usuario.id === usuarioId)}
           task={editingTask}
           usuarios={usuariosKanban}
           isSaving={updateTask.isPending}

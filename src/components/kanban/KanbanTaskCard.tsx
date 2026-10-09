@@ -44,7 +44,8 @@ export const KanbanTaskCard = ({
   onDelete,
   onToggleSubtask,
 }: KanbanTaskCardProps) => {
-  const canMoveTask = gestor || task.responsavel?.id === usuarioId;
+  const responsaveis = task.responsaveis ?? (task.responsavel ? [task.responsavel] : []);
+  const canMoveTask = gestor || responsaveis.some((usuario) => usuario.id === usuarioId);
   const completedSubtasks = task.subtarefas.filter((subtarefa) => subtarefa.concluida).length;
 
   return (
@@ -55,7 +56,7 @@ export const KanbanTaskCard = ({
       className={`group rounded-lg border border-border/20 bg-background/60 p-3 transition-all ${canMoveTask ? "cursor-grab active:cursor-grabbing hover:border-accent/25 hover:shadow-[0_8px_18px_-12px_hsl(var(--accent)/0.45)]" : ""} ${isDragging ? "opacity-45 ring-1 ring-accent/30" : ""}`}
     >
       <div className="flex items-start justify-between gap-2">
-        <p className="text-[13px] font-semibold text-foreground/85">{task.titulo}</p>
+        <button type="button" aria-label={`Abrir tarefa ${task.titulo}`} onClick={() => onEdit(task)} className="text-left text-[13px] font-semibold text-foreground/85 hover:text-accent hover:underline">{task.titulo}</button>
         <div className="flex shrink-0 items-center gap-1">
           {gestor && (
             <button
@@ -92,14 +93,14 @@ export const KanbanTaskCard = ({
               <span className={`flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded border ${subtarefa.concluida ? "border-accent bg-accent text-accent-foreground" : "border-border/50 text-transparent"}`}>
                 <Check className="h-2.5 w-2.5" />
               </span>
-              <span className={`truncate text-[10px] ${subtarefa.concluida ? "text-muted-foreground line-through" : "text-foreground"}`}>{subtarefa.titulo}</span>
+              <span className={`truncate text-[10px] ${subtarefa.concluida ? "text-muted-foreground line-through" : "text-foreground"}`}>{subtarefa.titulo}{subtarefa.responsavel && <span className="ml-1 text-muted-foreground">· {subtarefa.responsavel.nomeCompleto}</span>}</span>
             </button>
           ))}
         </div>
       )}
 
       <div className="mt-3 space-y-1 text-[10px] text-muted-foreground">
-        <div className="flex items-center gap-1.5"><UserRound className="h-3 w-3" /> {task.responsavel?.nomeCompleto || "Sem responsável"}</div>
+        <div className="flex items-center gap-1.5"><UserRound className="h-3 w-3 shrink-0" /> {responsaveis.map((usuario) => usuario.nomeCompleto).join(", ") || "Sem responsável"}</div>
         <div className="flex items-center gap-1.5"><Clock3 className="h-3 w-3" /> {formatDate(task.dataInicio)} até {formatDate(task.dataFim)}</div>
       </div>
 

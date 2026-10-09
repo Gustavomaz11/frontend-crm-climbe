@@ -5,6 +5,7 @@ import { PipelineCancelarTarefaDialog } from "./PipelineCancelarTarefaDialog";
 import { CalendarClock, CheckCircle2, Circle, ListChecks, Pencil, UserRound } from "lucide-react";
 import type { PipelineTarefa } from "@/services/usePipelineAtividades";
 import { classifyTaskDeadline, formatTaskDate, priorityClasses, taskPriorityLabels, taskStatusLabels } from "./pipelineTaskUtils";
+import { TaskCollaborationDialog } from "@/components/tasks/TaskCollaborationDialog";
 
 interface PipelineTaskCardProps {
   task: PipelineTarefa;
@@ -28,6 +29,8 @@ export const PipelineTaskCard = ({
   onOpenBusiness,
 }: PipelineTaskCardProps) => {
   const [cancel, setCancel] = useState(false);
+  const [collaboration, setCollaboration] = useState(false);
+  const responsibleNames = task.responsaveis?.length ? task.responsaveis.map((user) => user.nomeCompleto).join(", ") : task.responsavelNome;
   const completedSubtasks = task.subtarefas.filter((item) => item.concluida).length;
   const deadline = classifyTaskDeadline(task);
   const deadlineClasses = {
@@ -56,9 +59,14 @@ export const PipelineTaskCard = ({
           {(task.contato || task.telefone || task.email) && <p className="mt-1 break-words text-xs text-muted-foreground">{task.contato} · {task.telefone || "Sem telefone"} · {task.email || "Sem e-mail"}</p>}
           {task.descricao && <details className="mt-2 text-xs"><summary className="cursor-pointer text-accent">Ver orientação e script</summary><p className="mt-2 whitespace-pre-wrap break-words">{task.descricao}</p><button type="button" className="mt-2 underline" onClick={() => void navigator.clipboard.writeText(task.descricao || "").then(() => toast.success("Conteúdo copiado"), () => toast.error("Não foi possível copiar"))}>Copiar conteúdo</button></details>}
           {task.motivoCancelamento && <p className="mt-2 text-xs text-muted-foreground">Cancelamento: {motivosCancelamento[task.motivoCancelamento] || task.motivoCancelamento}{task.comentarioCancelamento ? ` · ${task.comentarioCancelamento}` : ""}</p>}
+          <button type="button" onClick={() => setCollaboration(true)} className="mt-2 text-[11px] text-accent underline">Abrir tarefa: arquivos e comentários</button>
+          {collaboration && <TaskCollaborationDialog tipo="COMERCIAL" taskId={task.id} title={task.titulo} onClose={() => setCollaboration(false)}>
+            <p className="text-[11px] text-muted-foreground">Responsáveis: {responsibleNames}</p>
+            {task.subtarefas.length > 0 && <div className="mt-3 space-y-1"><h3 className="text-[12px] font-semibold">Subtarefas</h3>{task.subtarefas.map((item, index) => <p key={item.id ?? index} className="text-[11px]">{item.concluida ? "✓" : "○"} {item.titulo} · {item.responsavel?.nomeCompleto || "Sem responsável"}</p>)}</div>}
+          </TaskCollaborationDialog>}
           {canConclude && !["CONCLUIDA", "CANCELADA"].includes(task.status) && <button type="button" onClick={() => setCancel(true)} className="mt-2 text-xs text-destructive underline">Cancelar tarefa</button>}
           {cancel && <PipelineCancelarTarefaDialog tarefa={task} onClose={() => setCancel(false)} />}
-          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[9px] text-muted-foreground"><span className="flex items-center gap-1"><UserRound className="h-3 w-3" />{task.responsavelNome}</span><span className="flex items-center gap-1"><CalendarClock className="h-3 w-3" />{formatTaskDate(task.prazo)}</span>{deadline.status !== "INACTIVE" && <span className={`rounded-full border px-1.5 py-0.5 font-semibold ${deadlineBadgeClasses}`}>{deadline.label}</span>}<span className="rounded bg-muted/25 px-1.5 py-0.5">{task.tipo}</span><span>{taskStatusLabels[task.status]}</span>{task.subtarefas.length > 0 && <span className="flex items-center gap-1"><ListChecks className="h-3 w-3" />{completedSubtasks}/{task.subtarefas.length}</span>}</div>
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[9px] text-muted-foreground"><span className="flex items-center gap-1"><UserRound className="h-3 w-3" />{responsibleNames}</span><span className="flex items-center gap-1"><CalendarClock className="h-3 w-3" />{formatTaskDate(task.prazo)}</span>{deadline.status !== "INACTIVE" && <span className={`rounded-full border px-1.5 py-0.5 font-semibold ${deadlineBadgeClasses}`}>{deadline.label}</span>}<span className="rounded bg-muted/25 px-1.5 py-0.5">{task.tipo}</span><span>{taskStatusLabels[task.status]}</span>{task.subtarefas.length > 0 && <span className="flex items-center gap-1"><ListChecks className="h-3 w-3" />{completedSubtasks}/{task.subtarefas.length}</span>}</div>
         </div>
       </div>
     </article>

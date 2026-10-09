@@ -1,9 +1,11 @@
 import { FormValidation } from "@/components/ui/form-validation";
 import { useMemo, useState } from "react";
-import { Check, Plus, Save, Trash2, X } from "lucide-react";
+import { Save, X } from "lucide-react";
 import type { PipelineTarefa, PipelineTarefaInput } from "@/services/usePipelineAtividades";
 import type { Usuario } from "@/services/useUsuarios";
-import { UserSelect } from "@/components/users/UserSelect";
+import { UserMultiSelect } from "@/components/users/UserMultiSelect";
+import { PipelineSubtaskFields } from "./PipelineSubtaskFields";
+import { TaskCollaborationPanel } from "@/components/tasks/TaskCollaborationPanel";
 
 interface PipelineTarefaDialogProps {
   tarefa?: PipelineTarefa | null;
@@ -30,26 +32,17 @@ export const PipelineTarefaDialog = ({
     titulo: tarefa?.titulo || "",
     descricao: tarefa?.descricao || "",
     responsavelId: tarefa?.responsavelId || defaultResponsavelId,
+    responsavelIds: tarefa?.responsaveis?.length ? tarefa.responsaveis.map((user) => user.id) : [tarefa?.responsavelId || defaultResponsavelId].filter(Boolean),
     dataInicio: tarefa?.dataInicio || "",
     prazo: tarefa?.prazo || "",
     prioridade: tarefa?.prioridade || "MEDIA",
     status: tarefa?.status || "PENDENTE",
     tipo: tarefa?.tipo || "Follow-up",
     observacoes: tarefa?.observacoes || "",
-    subtarefas: (tarefa?.subtarefas || []).map(({ titulo, concluida, posicao }) => ({ titulo, concluida, posicao })),
+    subtarefas: (tarefa?.subtarefas || []).map(({ titulo, concluida, posicao, responsavel }) => ({ titulo, concluida, posicao, responsavelId: responsavel?.id ?? null })),
   }), [defaultResponsavelId, tarefa]);
   const [draft, setDraft] = useState(initialDraft);
-  const [newSubtask, setNewSubtask] = useState("");
-
-  const addSubtask = () => {
-    const title = newSubtask.trim();
-    if (!title) return;
-    setDraft((current) => ({
-      ...current,
-      subtarefas: [...current.subtarefas, { titulo: title, concluida: false, posicao: current.subtarefas.length }],
-    }));
-    setNewSubtask("");
-  };
+  const responsaveis = usuarios.filter((user) => draft.responsavelIds?.includes(user.id));
 
 
   return (
@@ -65,7 +58,7 @@ export const PipelineTarefaDialog = ({
           <label className="block text-[10px] font-medium">Descrição<textarea className={`${textAreaClass} mt-1 min-h-20`} value={draft.descricao || ""} onChange={(event) => setDraft({ ...draft, descricao: event.target.value })} /></label>
 
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="text-[10px] font-medium">Responsável *<UserSelect required className="mt-1" users={usuarios.filter((usuario) => !usuario.situacao || usuario.situacao === "ATIVO")} value={draft.responsavelId || ""} onValueChange={(next) => setDraft({ ...draft, responsavelId: Number(next) || 0 })} placeholder="Selecione" emptyLabel="Selecione" ariaLabel="Responsável *" /></div>
+            <div className="sm:col-span-2"><UserMultiSelect required users={usuarios.filter((usuario) => !usuario.situacao || usuario.situacao === "ATIVO")} value={draft.responsavelIds || []} onChange={(responsavelIds) => setDraft({ ...draft, responsavelIds, responsavelId: responsavelIds[0] || 0, subtarefas: draft.subtarefas.map((item) => ({ ...item, responsavelId: item.responsavelId && responsavelIds.includes(item.responsavelId) ? item.responsavelId : null })) })} /></div>
             <label className="text-[10px] font-medium">Tipo *<select required className={`${inputClass} mt-1`} value={draft.tipo} onChange={(event) => setDraft({ ...draft, tipo: event.target.value })}>{taskTypes.map((type) => <option key={type} value={type}>{type}</option>)}</select></label>
             <label className="text-[10px] font-medium">Data de início<input type="date" className={`${inputClass} mt-1`} value={draft.dataInicio || ""} onChange={(event) => setDraft({ ...draft, dataInicio: event.target.value })} /></label>
             <label className="text-[10px] font-medium">Prazo *<input type="date" required min={draft.dataInicio || undefined} className={`${inputClass} mt-1`} value={draft.prazo || ""} onChange={(event) => setDraft({ ...draft, prazo: event.target.value })} /></label>
@@ -73,14 +66,11 @@ export const PipelineTarefaDialog = ({
             <label className="text-[10px] font-medium">Status *<select required className={`${inputClass} mt-1`} disabled={!!tarefa?.campanhaId && ["CANCELADA", "CONCLUIDA"].includes(tarefa.status)} value={draft.status} onChange={(event) => setDraft({ ...draft, status: event.target.value as PipelineTarefaInput["status"] })}><option value="PENDENTE">Pendente</option><option value="EM_ANDAMENTO">Em andamento</option><option value="CONCLUIDA">Concluída</option>{tarefa?.status === "CANCELADA" && <option value="CANCELADA">Cancelada</option>}</select></label>
           </div>
 
-          <div>
-            <p className="text-[10px] font-medium">Subtarefas</p>
-            <div className="mt-2 space-y-2">{draft.subtarefas.map((subtask, index) => <div key={`${subtask.titulo}-${index}`} className="flex items-center gap-2 rounded-lg border border-border/20 bg-background/45 px-3 py-2"><button type="button" onClick={() => setDraft((current) => ({ ...current, subtarefas: current.subtarefas.map((item, itemIndex) => itemIndex === index ? { ...item, concluida: !item.concluida } : item) }))} className={`flex h-4 w-4 items-center justify-center rounded border ${subtask.concluida ? "border-accent bg-accent text-accent-foreground" : "border-border/50"}`}>{subtask.concluida && <Check className="h-3 w-3" />}</button><input value={subtask.titulo} onChange={(event) => setDraft((current) => ({ ...current, subtarefas: current.subtarefas.map((item, itemIndex) => itemIndex === index ? { ...item, titulo: event.target.value } : item) }))} className="flex-1 bg-transparent text-[11px] outline-none" /><button type="button" onClick={() => setDraft((current) => ({ ...current, subtarefas: current.subtarefas.filter((_, itemIndex) => itemIndex !== index) }))} className="text-muted-foreground hover:text-destructive"><Trash2 className="h-3.5 w-3.5" /></button></div>)}</div>
-            <FormValidation className="mt-2 flex gap-2"><label className="min-w-0 flex-1 text-[10px]">Nova subtarefa *<input required aria-label="Nova subtarefa" className={inputClass} value={newSubtask} onChange={(event) => setNewSubtask(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); event.currentTarget.closest("[data-form-validation]")?.querySelector<HTMLButtonElement>("[data-validate-submit]")?.click(); } }} placeholder="Adicionar subtarefa" /></label><button data-validate-submit type="button" onClick={addSubtask} className="flex h-9 w-10 items-center justify-center rounded-lg border border-border/30 hover:border-accent/40 hover:text-accent"><Plus className="h-4 w-4" /></button></FormValidation>
-          </div>
+          <PipelineSubtaskFields value={draft.subtarefas} onChange={(subtarefas) => setDraft({ ...draft, subtarefas })} responsaveis={responsaveis} />
 
           <label className="block text-[10px] font-medium">Observações<textarea className={`${textAreaClass} mt-1 min-h-16`} value={draft.observacoes || ""} onChange={(event) => setDraft({ ...draft, observacoes: event.target.value })} /></label>
           {draft.dataInicio && draft.prazo && draft.prazo < draft.dataInicio && <p className="text-[10px] text-destructive">O prazo não pode ser anterior à data de início.</p>}
+          {tarefa && <TaskCollaborationPanel tipo="COMERCIAL" taskId={tarefa.id} />}
         </div>
 
         <footer className="flex justify-end gap-2 border-t border-border/20 px-5 py-4"><button type="button" onClick={onClose} disabled={isProcessing} className="h-9 rounded-lg border border-border/30 px-4 text-[11px]">Cancelar</button><button data-validate-submit type="button" onClick={() => onSave({ ...draft, titulo: draft.titulo.trim(), tipo: draft.tipo.trim(), subtarefas: draft.subtarefas.filter((item) => item.titulo.trim()).map((item, index) => ({ ...item, titulo: item.titulo.trim(), posicao: index })) })} disabled={isProcessing} className="flex h-9 items-center gap-2 rounded-lg bg-accent px-4 text-[11px] font-semibold text-accent-foreground disabled:opacity-50"><Save className="h-3.5 w-3.5" />{isProcessing ? "Salvando..." : "Salvar tarefa"}</button></footer>
