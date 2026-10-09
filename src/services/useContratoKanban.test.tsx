@@ -33,6 +33,19 @@ afterEach(() => {
 });
 
 describe("criação de tarefas do Kanban", () => {
+  it("não reutiliza permissões do quadro de outro usuário", async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } });
+    clients.push(client);
+    client.setQueryData([...queryKey, 7], { ...board, podeEditar: true });
+    vi.mocked(api.get).mockImplementation(() => new Promise(() => {}));
+    const wrapper = ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+    const { result, rerender } = renderHook(({ usuarioId }) => useContratoKanban(1, usuarioId), { initialProps: { usuarioId: 7 }, wrapper });
+    expect(result.current.data?.podeEditar).toBe(true);
+    rerender({ usuarioId: 8 });
+    await waitFor(() => expect(result.current.isFetching).toBe(true));
+    expect(result.current.data).toBeUndefined();
+  });
+
   it("exibe a tarefa confirmada enquanto a atualização do quadro ainda está pendente", async () => {
     const createdBoard: ContratoKanbanBoard = {
       ...board,

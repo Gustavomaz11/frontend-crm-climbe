@@ -55,6 +55,7 @@ import {
 } from "@/services";
 
 import { useAuthStore } from "@/store/useAuthStore";
+import { getNotificacaoDestino, useLerNotificacao, useMinhasNotificacoes } from "@/services/useNotificacoes";
 import {
   calendarDateInput,
   shiftDashboardCalendarMonth,
@@ -102,6 +103,8 @@ interface Meeting {
 }
 
 interface NotificationItem {
+  id?: number;
+  destino?: string;
   text: string;
   time: string;
   icon: typeof Clock;
@@ -383,6 +386,9 @@ const Dashboard = () => {
 
   const basicUserData = useAuthStore((state) => state.basicUserData);
   const userData = useAuthStore((state) => state.userData);
+  const notificationUserId = basicUserData?.id ?? userData?.id;
+  const { data: notificacoesPessoais = [] } = useMinhasNotificacoes(notificationUserId);
+  const lerNotificacao = useLerNotificacao();
 
   const [sidebarCollapsed, setSidebarCollapsed] = useSidebarState();
 
@@ -784,6 +790,16 @@ const Dashboard = () => {
   }, [highlightedDays, meetingsData, today]);
 
   const allNotifications = useMemo<NotificationItem[]>(() => {
+    const pessoais: NotificationItem[] = notificacoesPessoais.map(n => ({
+      id: n.id,
+      destino: getNotificacaoDestino(n.mensagem),
+      text: n.mensagem.replace(/\. Acesse \/contratos\/kanban\?contrato=\d+ para trabalhar nas tarefas\./, "."),
+      time: getRelativeLabel(n.dataCriacao || n.dataEnvio),
+      icon: Bell,
+      type: "info",
+      status: n.lida ? undefined : "Nova",
+      statusClass: "bg-accent/10 text-accent border-accent/20",
+    }));
     const contractNotifications: NotificationItem[] = contratos
       .slice(0, 4)
       .map((contrato) => ({
@@ -865,12 +881,13 @@ const Dashboard = () => {
       }));
 
     return [
+      ...pessoais,
       ...contractNotifications,
       ...docNotifications,
       ...propostaNotifications,
       ...meetingNotifications,
     ].slice(0, 10);
-  }, [contratos, documentos, empresaById, propostas, reunioes]);
+  }, [notificacoesPessoais, contratos, documentos, empresaById, propostas, reunioes]);
 
   const stages = useMemo<StageItem[]>(() => {
     const propostaDocs = contratos
@@ -1069,6 +1086,19 @@ const Dashboard = () => {
       {items.map((notif, index) => (
         <motion.div
           key={`${notif.text}-${index}`}
+          role={notif.destino ? "button" : undefined}
+          tabIndex={notif.destino ? 0 : undefined}
+          onClick={() => {
+            if (!notif.destino) return;
+            if (notif.id) lerNotificacao.mutate(notif.id);
+            navigate(notif.destino);
+          }}
+          onKeyDown={event => {
+            if (!notif.destino || !["Enter", " "].includes(event.key)) return;
+            event.preventDefault();
+            if (notif.id) lerNotificacao.mutate(notif.id);
+            navigate(notif.destino);
+          }}
           className={`group flex cursor-pointer gap-3 px-5 py-4 transition-colors duration-200 hover:bg-muted/10 ${
             notif.type === "success"
               ? "bg-accent/[0.025]"

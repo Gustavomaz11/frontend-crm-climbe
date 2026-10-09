@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { useTheme } from "@/hooks/use-theme";
 import { useSidebarState } from "@/hooks/useSidebarState";
 import { motion, AnimatePresence } from "framer-motion";
+import { RateioTecnicoResumo } from "@/components/kanban/ContratoRateioTecnico";
 import {
   Home, FileText, Calendar as CalendarIcon, Shield, Building2, Settings,
   LogOut, Sun, Moon, ChevronLeft, ChevronRight, Search, Download, Eye, X, FileCheck, UserCheck, Plus, ScrollText,
@@ -271,6 +272,13 @@ const Empresas = () => {
                           <div className="mt-3 flex flex-wrap gap-1.5">
                             {item.funcionarios.length ? item.funcionarios.map((pessoa) => <span key={pessoa.id} title={pessoa.email} className="rounded-full bg-muted/40 px-2 py-1 text-[10px] text-foreground/70">{pessoa.nome}</span>) : <span className="text-[10px] text-muted-foreground">Sem funcionários vinculados</span>}
                           </div>
+                          {!!item.rateiosTecnicos?.length && <details className="mt-4 rounded-lg border border-border/20 p-3">
+                            <summary className="cursor-pointer text-xs font-semibold">Rateio técnico por mês</summary>
+                            <div className="mt-3 space-y-3">{item.rateiosTecnicos.map(rateio => <details key={rateio.competencia} className="rounded border border-border/20 p-3">
+                              <summary className="cursor-pointer text-xs font-medium">{rateio.competencia.split("-").reverse().join("/")} · {Number(rateio.comissaoTecnicaTotal).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</summary>
+                              <div className="mt-3"><RateioTecnicoResumo rateio={rateio} /></div>
+                            </details>)}</div>
+                          </details>}
                           <div className="mt-3 overflow-x-auto">
                             <table className="w-full min-w-[560px] text-left text-[10px]">
                               <thead className="text-muted-foreground"><tr><th className="py-1">Parcela</th><th>Vencimento</th><th>Valor</th><th>Status</th></tr></thead>

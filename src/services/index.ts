@@ -1,6 +1,7 @@
 // Auth Services
 export * from "./useContratos";
 export * from "./useContratoKanban";
+export * from "./useContratoEquipe";
 export * from "./useDocumentos";
 export * from "./useEmpresas";
 export * from "./usePessoas";

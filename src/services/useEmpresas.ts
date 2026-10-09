@@ -37,6 +37,7 @@ export interface EmpresaParcela {
 }
 
 export interface EmpresaServicoContratado {
+  rateiosTecnicos?: import("./useContratoEquipe").ContratoRateioTecnico[];
   servicosProposta?: PropostaServicoConfig[];
   contratoId: number;
   servico: CommercialService;

@@ -216,6 +216,15 @@ export function useContratos() {
   });
 }
 
+export function useContratosKanbanDisponiveis(usuarioId?: number | null) {
+  return useQuery<Contrato[]>({
+    queryKey: ["contratos", "kanban-disponiveis", usuarioId],
+    enabled: !!usuarioId,
+    refetchInterval: 60_000,
+    queryFn: async () => (await api.get<ContratoApi[]>("/contratos/kanban-disponiveis")).data.map(normalizeContrato),
+  });
+}
+
 export function useMoveContratoPreparacao() {
   const queryClient = useQueryClient();
   return useMutation({

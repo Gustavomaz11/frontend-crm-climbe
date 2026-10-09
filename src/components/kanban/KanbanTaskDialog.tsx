@@ -16,6 +16,7 @@ export interface KanbanTaskDraft {
 }
 
 interface KanbanTaskDialogProps {
+  assignmentHint?: string;
   raiaTitulo: string;
   draft: KanbanTaskDraft;
   usuarios: UsuarioResumo[];
@@ -26,6 +27,7 @@ interface KanbanTaskDialogProps {
 }
 
 export const KanbanTaskDialog = ({
+  assignmentHint,
   raiaTitulo,
   draft,
   usuarios,
@@ -76,6 +78,7 @@ export const KanbanTaskDialog = ({
               value={draft.responsavelIds ?? (draft.responsavelId ? [Number(draft.responsavelId)] : [])}
               onChange={(responsavelIds) => onChange({ ...draft, responsavelIds, responsavelId: String(responsavelIds[0] || "") })}
             />
+            {assignmentHint && <p className="mt-2 text-xs text-muted-foreground">{assignmentHint}</p>}
           </div>
         </div>
 

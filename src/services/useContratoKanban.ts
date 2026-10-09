@@ -1,6 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import { api } from "@/api";
+import { useAuthStore } from "@/store/useAuthStore";
+
+const usuarioAtualId = () => {
+  const { basicUserData, userData } = useAuthStore.getState();
+  return basicUserData?.id ?? userData?.id;
+};
+const boardQueryKey = (contratoId?: number, usuarioId = usuarioAtualId()) =>
+  usuarioId ? ["contratos", contratoId, "kanban", usuarioId] : ["contratos", contratoId, "kanban"];
 
 interface ApiEnvelope<T> {
   success: boolean;
@@ -48,6 +56,7 @@ export interface ContratoKanbanTask {
 }
 
 export interface ContratoKanbanRaia {
+  concluiTarefas?: boolean;
   id: number;
   titulo: string;
   posicao: number;
@@ -57,6 +66,7 @@ export interface ContratoKanbanRaia {
 }
 
 export interface ContratoKanbanBoard {
+  podeEditar?: boolean;
   contratoId: number;
   contratoTitulo?: string | null;
   gestor: boolean;
@@ -67,6 +77,7 @@ export interface ContratoKanbanBoard {
 }
 
 export interface KanbanRaiaDTO {
+  concluiTarefas?: boolean;
   titulo: string;
   posicao?: number;
 }
@@ -144,14 +155,15 @@ function getApiErrorMessage(error: unknown) {
   return "Erro na API";
 }
 
-export function useContratoKanban(contratoId?: number) {
+export function useContratoKanban(contratoId?: number, usuarioId?: number) {
   return useQuery<ContratoKanbanBoard>({
-    queryKey: ["contratos", contratoId, "kanban"],
+    queryKey: boardQueryKey(contratoId, usuarioId),
     queryFn: async () => {
       const response = await api.get<ApiEnvelope<ContratoKanbanBoard>>(`/contratos/${contratoId}/kanban`);
       return unwrap(response.data);
     },
     enabled: !!contratoId,
+    retry: false,
   });
 }
 
@@ -168,7 +180,8 @@ export function useCreateKanbanRaia() {
       }
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["contratos", variables.contratoId, "kanban"] });
+      queryClient.invalidateQueries({ queryKey: ["contratos"] });
+      queryClient.invalidateQueries({ queryKey: ["empresas"] });
     },
   });
 }
@@ -186,7 +199,8 @@ export function useUpdateKanbanRaia() {
       }
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["contratos", variables.contratoId, "kanban"] });
+      queryClient.invalidateQueries({ queryKey: ["contratos"] });
+      queryClient.invalidateQueries({ queryKey: ["empresas"] });
     },
   });
 }
@@ -204,7 +218,8 @@ export function useDeleteKanbanRaia() {
       }
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["contratos", variables.contratoId, "kanban"] });
+      queryClient.invalidateQueries({ queryKey: ["contratos"] });
+      queryClient.invalidateQueries({ queryKey: ["empresas"] });
     },
   });
 }
@@ -222,9 +237,10 @@ export function useCreateKanbanTask() {
       }
     },
     onSuccess: (board, variables) => {
-      const queryKey = ["contratos", variables.contratoId, "kanban"];
+      const queryKey = boardQueryKey(variables.contratoId);
       queryClient.setQueryData(queryKey, board);
-      queryClient.invalidateQueries({ queryKey });
+      queryClient.invalidateQueries({ queryKey: ["contratos"] });
+      queryClient.invalidateQueries({ queryKey: ["empresas"] });
     },
   });
 }
@@ -242,7 +258,8 @@ export function useUpdateKanbanTask() {
       }
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["contratos", variables.contratoId, "kanban"] });
+      queryClient.invalidateQueries({ queryKey: ["contratos"] });
+      queryClient.invalidateQueries({ queryKey: ["empresas"] });
     },
   });
 }
@@ -260,7 +277,7 @@ export function useMoveKanbanTask() {
       }
     },
     onMutate: async (variables) => {
-      const queryKey = ["contratos", variables.contratoId, "kanban"] as const;
+      const queryKey = boardQueryKey(variables.contratoId);
       await queryClient.cancelQueries({ queryKey });
       const previousBoard = queryClient.getQueryData<ContratoKanbanBoard>(queryKey);
 
@@ -279,8 +296,9 @@ export function useMoveKanbanTask() {
     },
     onSettled: (_data, _error, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ["contratos", variables.contratoId, "kanban"],
+        queryKey: ["contratos"],
       });
+      queryClient.invalidateQueries({ queryKey: ["empresas"] });
     },
   });
 }
@@ -298,7 +316,8 @@ export function useDeleteKanbanTask() {
       }
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["contratos", variables.contratoId, "kanban"] });
+      queryClient.invalidateQueries({ queryKey: ["contratos"] });
+      queryClient.invalidateQueries({ queryKey: ["empresas"] });
     },
   });
 }
@@ -327,7 +346,8 @@ export function useCreateKanbanSubtarefa() {
       }
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["contratos", variables.contratoId, "kanban"] });
+      queryClient.invalidateQueries({ queryKey: ["contratos"] });
+      queryClient.invalidateQueries({ queryKey: ["empresas"] });
     },
   });
 }
@@ -358,7 +378,8 @@ export function useUpdateKanbanSubtarefa() {
       }
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["contratos", variables.contratoId, "kanban"] });
+      queryClient.invalidateQueries({ queryKey: ["contratos"] });
+      queryClient.invalidateQueries({ queryKey: ["empresas"] });
     },
   });
 }
@@ -389,7 +410,8 @@ export function useToggleKanbanSubtarefa() {
       }
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["contratos", variables.contratoId, "kanban"] });
+      queryClient.invalidateQueries({ queryKey: ["contratos"] });
+      queryClient.invalidateQueries({ queryKey: ["empresas"] });
     },
   });
 }
@@ -417,7 +439,8 @@ export function useDeleteKanbanSubtarefa() {
       }
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["contratos", variables.contratoId, "kanban"] });
+      queryClient.invalidateQueries({ queryKey: ["contratos"] });
+      queryClient.invalidateQueries({ queryKey: ["empresas"] });
     },
   });
 }

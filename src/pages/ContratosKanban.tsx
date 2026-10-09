@@ -28,7 +28,8 @@ import { useTheme } from "@/hooks/use-theme";
 import { useAuthStore } from "@/store/useAuthStore";
 import {
   useContratoKanban,
-  useContratos,
+  useContratoEquipe,
+  useContratosKanbanDisponiveis,
   useUsuarios,
   useCreateKanbanSubtarefa,
   useCreateKanbanRaia,
@@ -46,6 +47,8 @@ import {
   type ContratoKanbanTask,
   type KanbanTaskDTO,
 } from "@/services";
+import { ContratoEquipeDialog } from "@/components/kanban/ContratoEquipeDialog";
+import { ContratoRateioTecnicoPanel } from "@/components/kanban/ContratoRateioTecnico";
 import { getProposalServicesLabel } from "@/services/proposalPayments";
 
 interface PendingRaiaRemoval {
@@ -78,13 +81,28 @@ const ContratosKanban = () => {
   const [taskDraft, setTaskDraft] = useState<KanbanTaskDraft>(emptyDraft);
   const [editingRaiaId, setEditingRaiaId] = useState<number | null>(null);
   const [editingRaiaTitle, setEditingRaiaTitle] = useState("");
+  const [editingRaiaConclui, setEditingRaiaConclui] = useState(false);
   const [draggedTask, setDraggedTask] = useState<{ task: ContratoKanbanTask; fromRaiaId: number } | null>(null);
   const [dragOverRaiaId, setDragOverRaiaId] = useState<number | null>(null);
   const [pendingRaiaRemoval, setPendingRaiaRemoval] = useState<PendingRaiaRemoval | null>(null);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const navigate = useNavigate();
 
-  const { data: contratos = [], isLoading: contratosLoading } = useContratos();
+  const basicUserData = useAuthStore((state) => state.basicUserData);
+  const userData = useAuthStore((state) => state.userData);
+  const userName =
+    basicUserData?.nomeCompleto ||
+    userData?.nomeCompleto ||
+    userData?.pessoa?.nomeCompleto ||
+    "Usuario";
+  const userPhoto =
+    basicUserData?.fotoPerfil ||
+    userData?.fotoPerfil ||
+    userData?.pessoa?.fotoPerfil ||
+    null;
+  const usuarioId = basicUserData?.id ?? userData?.id ?? null;
+
+  const { data: contratos = [], isLoading: contratosLoading } = useContratosKanbanDisponiveis(usuarioId);
   const contratosAprovados = useMemo(
     () => contratos.filter((contrato) => contrato.status === "APROVADO"),
     [contratos],
@@ -93,9 +111,11 @@ const ContratosKanban = () => {
   const selectedContratoId =
     contratosAprovados.some((contrato) => contrato.id === requestedContratoId)
       ? requestedContratoId
-      : contratosAprovados[0]?.id;
+      : undefined;
   const selectedContrato = contratosAprovados.find((contrato) => contrato.id === selectedContratoId);
-  const { data: board, isLoading: boardLoading, error: boardError } = useContratoKanban(selectedContratoId);
+  const { data: equipe, isLoading: equipeLoading, error: equipeError } = useContratoEquipe(selectedContratoId);
+  const [editingEquipe, setEditingEquipe] = useState(false);
+  const { data: board, isLoading: boardLoading, error: boardError } = useContratoKanban(equipe?.configurada ? selectedContratoId : undefined, usuarioId ?? undefined);
   const { data: usuariosComPerfil = [] } = useUsuarios();
   const editingTask = useMemo(
     () => board?.raias.flatMap((raia) => raia.tasks).find((task) => task.id === editingTaskId),
@@ -128,20 +148,6 @@ const ContratosKanban = () => {
   const toggleSubtask = useToggleKanbanSubtarefa();
   const deleteSubtask = useDeleteKanbanSubtarefa();
 
-  const basicUserData = useAuthStore((state) => state.basicUserData);
-  const userData = useAuthStore((state) => state.userData);
-  const userName =
-    basicUserData?.nomeCompleto ||
-    userData?.nomeCompleto ||
-    userData?.pessoa?.nomeCompleto ||
-    "Usuario";
-  const userPhoto =
-    basicUserData?.fotoPerfil ||
-    userData?.fotoPerfil ||
-    userData?.pessoa?.fotoPerfil ||
-    null;
-  const usuarioId = basicUserData?.id ?? userData?.id ?? null;
-
   const filteredContratos = useMemo(() => {
     const query = searchQuery.trim().toLowerCase();
     if (!query) return contratosAprovados;
@@ -163,6 +169,7 @@ const ContratosKanban = () => {
   }, [message]);
 
   function selectContrato(id: number) {
+    setEditingEquipe(false);
     setSearchParams({ contrato: String(id) });
     setEditingRaiaId(null);
     setDraggedTask(null);
@@ -214,7 +221,7 @@ const ContratosKanban = () => {
       await updateRaia.mutateAsync({
         contratoId: selectedContratoId,
         raiaId,
-        data: { titulo: editingRaiaTitle.trim() },
+        data: { titulo: editingRaiaTitle.trim(), concluiTarefas: editingRaiaConclui },
       });
       setEditingRaiaId(null);
       setEditingRaiaTitle("");
@@ -488,10 +495,10 @@ const ContratosKanban = () => {
                   </h2>
                   <p className="mt-0.5 text-[12px] text-muted-foreground">
                     {board?.responsavel ? `Gestor: ${board.responsavel.nomeCompleto}` : "Gestor não definido"}
-                    {board?.gestor ? " · Você pode editar este quadro" : ""}
+                    {board?.podeEditar ? " · Você pode editar este quadro" : ""}
                   </p>
                 </div>
-                {board?.gestor && (
+                {board?.podeEditar && (
                   <FormValidation as="form"
                     className="flex items-center gap-2"
                     onSubmit={(event) => {
@@ -507,6 +514,7 @@ const ContratosKanban = () => {
                 )}
               </div>
 
+              {equipe?.lider && equipe.configurada && <button type="button" onClick={() => setEditingEquipe(true)} className="mb-4 text-xs text-accent underline">Gerenciar equipe do contrato</button>}
               <AnimatePresence>
                 {message && (
                   <motion.div className={`mb-4 flex items-center gap-2 rounded-lg border px-3 py-2 text-[12px] ${message.type === "error" ? "border-destructive/20 bg-destructive/5 text-destructive" : "border-accent/20 bg-accent/5 text-accent"}`} initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}>
@@ -516,17 +524,19 @@ const ContratosKanban = () => {
                 )}
               </AnimatePresence>
 
-              {boardLoading ? (
+              {equipeLoading || (equipe?.configurada && boardLoading) ? (
                 <div className="py-16 text-center text-[12px] text-muted-foreground">Carregando quadro...</div>
-              ) : boardError ? (
+              ) : equipeError || boardError ? (
                 <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-[12px] text-destructive">Erro ao carregar Kanban do contrato.</div>
+              ) : equipe && !equipe.configurada ? (
+                <div className="rounded-lg border border-border/25 p-5 text-sm text-muted-foreground">{equipe.lider ? "Selecione a equipe para iniciar o kanban." : "Aguardando o líder técnico selecionar a equipe do contrato."}</div>
               ) : !board ? (
                 <div className="py-16 text-center text-[12px] text-muted-foreground">Nenhum contrato selecionado.</div>
               ) : board.raias.length === 0 ? (
                 <div className="flex min-h-[360px] flex-col items-center justify-center rounded-lg border border-dashed border-border/30 bg-card/25 text-center">
                   <LayoutDashboard className="mb-3 h-8 w-8 text-muted-foreground" />
                   <p className="text-[13px] font-semibold text-foreground/70">Este contrato ainda não tem raias</p>
-                  {board.gestor && (
+                  {!!board.podeEditar && (
                     <button type="button" onClick={handleCreateDefaultRaias} className="mt-4 rounded-lg bg-accent px-4 py-2 text-[12px] font-semibold text-accent-foreground">Criar quadro padrão</button>
                   )}
                 </div>
@@ -542,13 +552,16 @@ const ContratosKanban = () => {
                     >
                       <div className="flex items-center justify-between gap-2 border-b border-border/15 px-3 py-2">
                         {editingRaiaId === raia.id ? (
-                          <input value={editingRaiaTitle} onChange={(e) => setEditingRaiaTitle(e.target.value)} className="h-8 min-w-0 flex-1 rounded-md border border-border/25 bg-background/60 px-2 text-[12px] font-semibold outline-none focus:border-accent/40" />
+                          <div className="min-w-0 flex-1 space-y-2"><input aria-label="Título da raia" value={editingRaiaTitle} onChange={(e) => setEditingRaiaTitle(e.target.value)} className="h-8 w-full rounded-md border border-border/25 bg-background/60 px-2 text-[12px] font-semibold outline-none focus:border-accent/40" />
+                            <label className="flex items-center gap-2 text-[10px]"><input type="checkbox" checked={editingRaiaConclui} onChange={e => setEditingRaiaConclui(e.target.checked)} />Raia de tarefas concluídas</label>
+                            {editingRaiaConclui && <p className="text-[10px] text-muted-foreground">Ao salvar, as tarefas desta raia serão concluídas e o rateio técnico deste mês será atualizado.</p>}
+                          </div>
                         ) : (
-                          <button type="button" disabled={!board.gestor} onClick={() => { setEditingRaiaId(raia.id); setEditingRaiaTitle(raia.titulo); }} className="min-w-0 truncate text-left text-[13px] font-semibold text-foreground/80 disabled:cursor-default">
-                            {raia.titulo}
+                          <button type="button" disabled={!board.podeEditar} onClick={() => { setEditingRaiaId(raia.id); setEditingRaiaTitle(raia.titulo); setEditingRaiaConclui(!!raia.concluiTarefas); }} className="min-w-0 truncate text-left text-[13px] font-semibold text-foreground/80 disabled:cursor-default">
+                            {raia.titulo}{raia.concluiTarefas && <span className="ml-2 text-[10px] text-accent">Concluídas</span>}
                           </button>
                         )}
-                        {board.gestor && (
+                        {!!board.podeEditar && (
                           <div className="flex items-center gap-1">
                             {editingRaiaId === raia.id && (
                               <button type="button" title="Salvar raia" onClick={() => handleSaveRaia(raia.id)} className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent/10 hover:text-accent">
@@ -572,7 +585,7 @@ const ContratosKanban = () => {
                             <KanbanTaskCard
                               key={task.id}
                               task={task}
-                              gestor={board.gestor}
+                              gestor={!!board.podeEditar}
                               usuarioId={usuarioId}
                               isDragging={draggedTask?.task.id === task.id}
                               movePending={moveTask.isPending}
@@ -587,7 +600,7 @@ const ContratosKanban = () => {
                         )}
                       </div>
 
-                      {board.gestor && (
+                      {!!board.podeEditar && (
                         <div className="border-t border-border/15 p-3">
                           <button type="button" onClick={() => openTaskModal(raia.id)} className="flex h-8 w-full items-center justify-center gap-2 rounded-md bg-accent text-[12px] font-semibold text-accent-foreground transition-colors hover:bg-accent/90">
                             <Plus className="h-3.5 w-3.5" /> Adicionar tarefa
@@ -598,6 +611,7 @@ const ContratosKanban = () => {
                   ))}
                 </div>
               )}
+              {board && selectedContratoId && <ContratoRateioTecnicoPanel key={selectedContratoId} contratoId={selectedContratoId} />}
             </section>
           </div>
         </main>
@@ -641,8 +655,9 @@ const ContratosKanban = () => {
         )}
       </AnimatePresence>
 
-      {taskModalRaiaId && board?.gestor && (
+      {taskModalRaiaId && board?.podeEditar && (
         <KanbanTaskDialog
+          assignmentHint={equipe?.lider ? "Pessoas de fora da equipe terão acesso até concluir as tarefas atribuídas e participarão do rateio técnico de cada mês em atuação, com pagamento no mês seguinte." : undefined}
           raiaTitulo={board.raias.find((raia) => raia.id === taskModalRaiaId)?.titulo || "Raia selecionada"}
           draft={taskDraft}
           usuarios={usuariosKanban}
@@ -657,8 +672,8 @@ const ContratosKanban = () => {
         <KanbanTaskEditDialog
           key={editingTask.id}
           contratoId={selectedContratoId}
-          canEdit={board.gestor}
-          canToggle={board.gestor || (editingTask.responsaveis ?? (editingTask.responsavel ? [editingTask.responsavel] : [])).some((usuario) => usuario.id === usuarioId)}
+          canEdit={!!board.podeEditar}
+          canToggle={!!board.podeEditar || (editingTask.responsaveis ?? (editingTask.responsavel ? [editingTask.responsavel] : [])).some((usuario) => usuario.id === usuarioId)}
           task={editingTask}
           usuarios={usuariosKanban}
           isSaving={updateTask.isPending}
@@ -671,6 +686,11 @@ const ContratosKanban = () => {
           onDeleteSubtask={handleDeleteSubtask}
         />
       )}
+      {selectedContrato && equipe?.lider && (editingEquipe || !equipe.configurada) && <ContratoEquipeDialog
+        key={selectedContrato.id} equipe={equipe} titulo={getContratoLabel(selectedContrato)}
+        usuarios={equipe.usuariosDisponiveis.map(u => ({ ...u, ...usuariosComPerfil.find(p => p.id === u.id) }))}
+        onClose={() => { setEditingEquipe(false); if (!equipe.configurada) setSearchParams({}); }}
+        onSaved={() => setEditingEquipe(false)} />}
     </div>
   );
 };
