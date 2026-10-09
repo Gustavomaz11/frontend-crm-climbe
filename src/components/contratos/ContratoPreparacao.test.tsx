@@ -24,7 +24,7 @@ describe("preparação de contratos", () => {
     render(<ContratoPreparacaoBoard contratos={[contrato, { ...contrato, id: 11, status: "APROVADO" }]} canEdit onOpen={vi.fn()} />);
     expect(screen.getByRole("region", { name: "À fazer" })).toHaveTextContent("Criação de Contrato - Empresa - Contabilidade + Valuation");
     expect(screen.getByRole("region", { name: "Concluído" })).toHaveTextContent("CT-11");
-    expect(getContratoPreparacaoEtapa({ ...contrato, etapaPreparacao: null, urlPdf: "arquivo.pdf" })).toBe("REVISAO");
+    expect(getContratoPreparacaoEtapa({ ...contrato, etapaPreparacao: null, urlPdf: "arquivo.pdf" })).toBe("EM_ANDAMENTO");
   });
 
   it("mostra os valores por serviço e salva a etapa pelo botão no rodapé", async () => {
@@ -33,9 +33,21 @@ describe("preparação de contratos", () => {
     expect(screen.getByText(/Valuation · R\$ 20.000,00/)).toBeInTheDocument();
     expect(screen.getByText("Comercial")).toBeInTheDocument();
     expect(screen.getByText("Técnico")).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Revisão" })).toBeDisabled();
     fireEvent.change(screen.getByLabelText("Coluna do contrato"), { target: { value: "EM_ANDAMENTO" } });
     fireEvent.click(screen.getByRole("button", { name: "Salvar alterações" }));
     await waitFor(() => expect(mocks.move).toHaveBeenCalledWith({ id: 10, etapa: "EM_ANDAMENTO" }));
+  });
+
+  it("mostra solicitações do cliente em Revisão e impede arrastar outros contratos para essa coluna", () => {
+    render(<ContratoPreparacaoBoard contratos={[contrato, { ...contrato, id: 11, etapaPreparacao: "REVISAO" }]} canEdit onOpen={vi.fn()} />);
+    const revisao = screen.getByRole("region", { name: "Revisão" });
+    expect(revisao).toHaveTextContent("CT-11");
+    const card = screen.getAllByRole("button", { name: /Criação de Contrato/ })[0];
+    fireEvent.dragStart(card, { dataTransfer: { setData: vi.fn(), effectAllowed: "" } });
+    fireEvent.drop(revisao);
+    expect(mocks.move).not.toHaveBeenCalled();
+    expect(revisao).not.toHaveTextContent("CT-10");
   });
 
   it("exige um arquivo e envia o PDF selecionado no contrato existente", async () => {
@@ -56,7 +68,7 @@ describe("preparação de contratos", () => {
     fireEvent.click(screen.getByRole("button", { name: "Enviar contrato ao cliente" }));
     await waitFor(() => expect(toast.error).toHaveBeenCalledWith(expect.stringContaining("e-mail não foi enviado")));
     expect(toast.success).not.toHaveBeenCalled();
-    rerender(<ContratoPreparacaoDialog {...props} contrato={{ ...contrato, urlPdf: "contrato.pdf", etapaPreparacao: "REVISAO" }} />);
+    rerender(<ContratoPreparacaoDialog {...props} contrato={{ ...contrato, urlPdf: "contrato.pdf", etapaPreparacao: "EM_ANDAMENTO" }} />);
     expect(screen.getByRole("button", { name: "Revisão do cliente, versões e reenvio" })).toBeInTheDocument();
     expect(screen.getByRole("alert")).toHaveTextContent("O e-mail não foi enviado");
   });
