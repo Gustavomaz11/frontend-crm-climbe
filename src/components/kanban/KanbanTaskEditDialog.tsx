@@ -10,6 +10,7 @@ import type { KanbanTaskDraft } from "./KanbanTaskDialog";
 import { kanbanPriorityOptions } from "./kanbanPriority";
 
 interface Props extends KanbanSubtasksProps {
+  canEditDeadline?: boolean;
   contratoId?: number;
   usuarios: UsuarioResumo[];
   isSaving: boolean;
@@ -25,7 +26,7 @@ const taskToDraft = (task: ContratoKanbanTask): KanbanTaskDraft => ({
 });
 
 export const KanbanTaskEditDialog = (props: Props) => {
-  const { task, contratoId, usuarios, canEdit = true, isSaving, onClose, onSave } = props;
+  const { task, contratoId, usuarios, canEdit = true, canEditDeadline = false, isSaving, onClose, onSave } = props;
   const formId = useId();
   const [draft, setDraft] = useState(() => taskToDraft(task));
   useEffect(() => {
@@ -49,7 +50,9 @@ export const KanbanTaskEditDialog = (props: Props) => {
               <label className="block text-[10px]">Prioridade *<select required value={draft.prioridade} onChange={(event) => setDraft({ ...draft, prioridade: event.target.value as KanbanTaskPrioridade })} className={inputClass}>{kanbanPriorityOptions.map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
               <UserMultiSelect users={usuarios} value={draft.responsavelIds || []} disabled={!canEdit || isSaving} onChange={(responsavelIds) => setDraft({ ...draft, responsavelIds, responsavelId: String(responsavelIds[0] || "") })} />
               {canEdit && <p className="text-[10px] text-muted-foreground">Ao remover uma pessoa da tarefa, suas subtarefas ficam sem responsável.</p>}
-              <div className="grid gap-3 sm:grid-cols-2"><label className="text-[10px]">Início<input type="date" value={draft.dataInicio} onChange={(event) => setDraft({ ...draft, dataInicio: event.target.value })} className={inputClass} /></label><label className="text-[10px]">Fim<input type="date" min={draft.dataInicio || undefined} value={draft.dataFim} onChange={(event) => setDraft({ ...draft, dataFim: event.target.value })} className={inputClass} /></label></div>
+              <div className="grid gap-3 sm:grid-cols-2"><label className="text-[10px]">Início<input type="date" value={draft.dataInicio} onChange={(event) => setDraft({ ...draft, dataInicio: event.target.value })} className={inputClass} /></label><label className="text-[10px]">Fim (prazo) *<input type="date" required disabled={!canEditDeadline} min={draft.dataInicio || undefined} value={draft.dataFim} onChange={(event) => setDraft({ ...draft, dataFim: event.target.value })} className={`${inputClass} disabled:opacity-60`} /></label></div>
+              {!canEditDeadline && <p className="text-xs text-muted-foreground">Somente o responsável técnico do contrato pode alterar o prazo.</p>}
+              {task.justificativaAtraso && <div className="rounded-lg border border-border/25 p-3 text-xs"><strong>Justificativa do atraso</strong><p className="mt-1 whitespace-pre-wrap">{task.justificativaAtraso}</p></div>}
             </fieldset>
           </FormValidation>
           <div className="min-w-0 [&>section:first-child]:mt-0">

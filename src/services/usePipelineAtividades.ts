@@ -23,6 +23,7 @@ export interface PipelineSubtarefa {
 }
 
 export interface PipelineTarefa {
+  justificativaAtraso?: string | null;
   responsaveis?: UsuarioResumo[];
   campanhaId?: number; campanhaNome?: string; contato?: string; telefone?: string; email?: string; motivoCancelamento?: string; comentarioCancelamento?: string; canceladoEm?: string;
   id: number;
@@ -45,6 +46,7 @@ export interface PipelineTarefa {
 }
 
 export interface PipelineTarefaInput {
+  justificativaAtraso?: string;
   responsavelIds?: number[];
   titulo: string;
   descricao?: string | null;
@@ -165,10 +167,10 @@ export const useUpdatePipelineTarefa = () => {
 export const useSetPipelineTarefaStatus = () => {
   const invalidate = useInvalidateAtividades();
   return useMutation({
-    mutationFn: async ({ tarefaId, status }: { tarefaId: number; status: PipelineTarefaStatus }) => {
+    mutationFn: async ({ tarefaId, status, justificativaAtraso }: { tarefaId: number; status: PipelineTarefaStatus; justificativaAtraso?: string }) => {
       try {
         return unwrap((await api.patch<ApiResponse<PipelineTarefa>>(
-          `/pipeline-vendas/tarefas/${tarefaId}/status`, { status },
+          `/pipeline-vendas/tarefas/${tarefaId}/status`, { status, justificativaAtraso },
         )).data);
       } catch (error) {
         throw new Error(getErrorMessage(error));

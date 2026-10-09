@@ -1,9 +1,9 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import ContratosKanban from "./ContratosKanban";
 
-const mocks = vi.hoisted(() => ({ equipe: {} as Record<string, unknown>, board: {} as Record<string, unknown>, buscarBoard: vi.fn() }));
+const mocks = vi.hoisted(() => ({ equipe: {} as Record<string, unknown>, board: {} as Record<string, unknown>, buscarBoard: vi.fn(), move: vi.fn() }));
 vi.mock("@/services", async importOriginal => {
   const original = await importOriginal<typeof import("@/services")>();
   const mutation = () => ({ mutateAsync: vi.fn(), isPending: false });
@@ -13,6 +13,7 @@ vi.mock("@/services", async importOriginal => {
     useContratoKanban: (id?: number) => { mocks.buscarBoard(id); return { data: id ? mocks.board : undefined }; },
     useUsuarios: () => ({ data: [] }),
     ...Object.fromEntries(["useCreateKanbanSubtarefa", "useCreateKanbanRaia", "useCreateKanbanTask", "useDeleteKanbanSubtarefa", "useDeleteKanbanRaia", "useDeleteKanbanTask", "useMoveKanbanTask", "useToggleKanbanSubtarefa", "useUpdateKanbanSubtarefa", "useUpdateKanbanRaia", "useUpdateKanbanTask"].map(name => [name, mutation])),
+    useMoveKanbanTask: () => ({ mutateAsync: mocks.move, isPending: false }),
   };
 });
 vi.mock("@/components/kanban/ContratoEquipeDialog", () => ({ ContratoEquipeDialog: () => <div role="dialog">Selecionar equipe</div> }));
@@ -23,6 +24,7 @@ vi.mock("@/hooks/use-theme", () => ({ useTheme: () => ({ isDark: true, setIsDark
 vi.mock("@/hooks/useSidebarState", () => ({ useSidebarState: () => [false, vi.fn()] }));
 beforeEach(() => {
   vi.clearAllMocks();
+  mocks.move.mockResolvedValue({});
   mocks.equipe = { contratoId: 12, configurada: false, lider: true, membros: [], temporarios: [], usuariosDisponiveis: [] };
   mocks.board = { contratoId: 12, gestor: false, podeEditar: true, participantes: [], usuariosDisponiveis: [], raias: [{ id: 1, titulo: "A fazer", tasks: [] }] };
 });
@@ -52,5 +54,23 @@ describe("abertura do kanban do contrato", () => {
     abrir("/contratos/kanban?contrato=12");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Adicionar tarefa" })).not.toBeInTheDocument();
+  });
+
+  it("arrastar uma tarefa atrasada para concluído pede justificativa antes de enviar", async () => {
+    mocks.equipe = { ...mocks.equipe, configurada: true, lider: false };
+    mocks.board = { ...mocks.board, raias: [
+      { id: 1, titulo: "A fazer", concluiTarefas: false, tasks: [{ id: 30, raiaId: 1, titulo: "Entrega atrasada", prioridade: "MEDIA", dataFim: "2020-01-01", posicao: 0, subtarefas: [] }] },
+      { id: 2, titulo: "Concluído", concluiTarefas: true, tasks: [] },
+    ] };
+    abrir("/contratos/kanban?contrato=12");
+    const card = screen.getByRole("button", { name: "Abrir tarefa Entrega atrasada" }).closest("[draggable]")!;
+    fireEvent.dragStart(card, { dataTransfer: { setData: vi.fn(), effectAllowed: "move" } });
+    const column = screen.getByRole("button", { name: /Concluído/ }).parentElement!.parentElement!;
+    fireEvent.drop(column);
+    expect(mocks.move).not.toHaveBeenCalled(); expect(screen.getByRole("dialog")).toHaveTextContent("Justificar atraso");
+    fireEvent.change(screen.getByLabelText(/Justificativa do atraso/), { target: { value: "Cliente enviou documentos após o prazo." } });
+    fireEvent.click(screen.getByRole("button", { name: "Justificar e concluir" }));
+    await waitFor(() => expect(mocks.move).toHaveBeenCalledWith({ contratoId: 12, taskId: 30, data: { raiaId: 2, justificativaAtraso: "Cliente enviou documentos após o prazo." } }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   });
 });

@@ -15,7 +15,7 @@ describe("componentes de tarefa do Kanban", () => {
       prioridade: "MEDIA",
       responsavelId: "",
       dataInicio: "",
-      dataFim: "",
+      dataFim: "2026-11-10",
     };
 
     render(
@@ -133,9 +133,19 @@ describe("componentes de tarefa do Kanban", () => {
 
     expect(screen.getByRole("dialog", { name: "Editar tarefa" })).toBeInTheDocument();
     expect(screen.getByDisplayValue("Conferir os anexos enviados")).toBeInTheDocument();
+    expect(screen.getByLabelText(/Fim \(prazo\)/)).toBeDisabled();
+    expect(screen.getByText(/Somente o responsável técnico do contrato/)).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Salvar alterações" }));
     await waitFor(() => expect(onSave).toHaveBeenCalledOnce());
     expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it("o responsável do contrato pode alterar o prazo", () => {
+    render(<KanbanTaskEditDialog task={{ id: 30, raiaId: 20, titulo: "Análise", prioridade: "MEDIA", dataFim: "2026-11-10", posicao: 0, subtarefas: [] }}
+      canEditDeadline usuarios={[]} isSaving={false} subtaskPending={false} onClose={vi.fn()} onSave={vi.fn()}
+      onCreateSubtask={vi.fn()} onUpdateSubtask={vi.fn()} onToggleSubtask={vi.fn()} onDeleteSubtask={vi.fn()} />);
+    const field = screen.getByLabelText(/Fim \(prazo\)/); expect(field).toBeEnabled(); expect(field).toBeRequired();
+    fireEvent.change(field, { target: { value: "2026-11-15" } }); expect(field).toHaveValue("2026-11-15");
   });
 });

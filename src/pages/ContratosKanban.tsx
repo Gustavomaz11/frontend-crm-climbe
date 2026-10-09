@@ -50,6 +50,8 @@ import {
 import { ContratoEquipeDialog } from "@/components/kanban/ContratoEquipeDialog";
 import { ContratoRateioTecnicoPanel } from "@/components/kanban/ContratoRateioTecnico";
 import { getProposalServicesLabel } from "@/services/proposalPayments";
+import { TaskDelayJustificationDialog } from "@/components/tasks/TaskDelayJustificationDialog";
+import { taskIsOverdue } from "@/components/tasks/taskDeadline";
 
 interface PendingRaiaRemoval {
   id: number;
@@ -78,6 +80,7 @@ const ContratosKanban = () => {
   const [newRaiaTitle, setNewRaiaTitle] = useState("");
   const [taskModalRaiaId, setTaskModalRaiaId] = useState<number | null>(null);
   const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
+  const [lateCompletion, setLateCompletion] = useState<{ task: ContratoKanbanTask; raiaId: number } | null>(null);
   const [taskDraft, setTaskDraft] = useState<KanbanTaskDraft>(emptyDraft);
   const [editingRaiaId, setEditingRaiaId] = useState<number | null>(null);
   const [editingRaiaTitle, setEditingRaiaTitle] = useState("");
@@ -121,6 +124,10 @@ const ContratosKanban = () => {
     () => board?.raias.flatMap((raia) => raia.tasks).find((task) => task.id === editingTaskId),
     [board, editingTaskId],
   );
+  useEffect(() => {
+    const id = Number(searchParams.get("tarefaId"));
+    if (id && board?.raias.some(r => r.tasks.some(t => t.id === id))) setEditingTaskId(id);
+  }, [board, searchParams]);
   const usuariosKanban = useMemo(() => {
     const usuariosDisponiveis = board?.usuariosDisponiveis || board?.participantes || [];
     const profilesById = new Map(usuariosComPerfil.map((usuario) => [usuario.id, usuario]));
@@ -279,6 +286,7 @@ const ContratosKanban = () => {
           responsavelIds: taskDraft.responsavelIds ?? (taskDraft.responsavelId ? [Number(taskDraft.responsavelId)] : []),
           dataInicio: taskDraft.dataInicio || undefined,
           dataFim: taskDraft.dataFim || undefined,
+          justificativaAtraso: taskDraft.justificativaAtraso,
         },
       });
       setTaskDraft(emptyDraft);
@@ -313,18 +321,24 @@ const ContratosKanban = () => {
     }
   }
 
-  async function handleMoveTask(task: ContratoKanbanTask, raiaId: number) {
+  async function handleMoveTask(task: ContratoKanbanTask, raiaId: number, justificativaAtraso?: string) {
     if (!selectedContratoId || task.raiaId === raiaId) return;
+    if (board?.raias.find(r => r.id === raiaId)?.concluiTarefas
+        && !board.raias.find(r => r.id === task.raiaId)?.concluiTarefas
+        && taskIsOverdue(task.dataFim) && justificativaAtraso === undefined) {
+      setLateCompletion({ task, raiaId }); return;
+    }
 
     try {
       await moveTask.mutateAsync({
         contratoId: selectedContratoId,
         taskId: task.id,
-        data: { raiaId },
+        data: { raiaId, justificativaAtraso },
       });
       setMessage({ type: "success", text: "Tarefa movida com sucesso." });
     } catch (error) {
       setMessage({ type: "error", text: error instanceof Error ? error.message : "Erro ao mover tarefa." });
+      if (justificativaAtraso !== undefined) throw error;
     }
   }
 
@@ -657,6 +671,7 @@ const ContratosKanban = () => {
 
       {taskModalRaiaId && board?.podeEditar && (
         <KanbanTaskDialog
+          concluiTarefas={board.raias.find(r => r.id === taskModalRaiaId)?.concluiTarefas}
           assignmentHint={equipe?.lider ? "Pessoas de fora da equipe terão acesso até concluir as tarefas atribuídas e participarão do rateio técnico de cada mês em atuação, com pagamento no mês seguinte." : undefined}
           raiaTitulo={board.raias.find((raia) => raia.id === taskModalRaiaId)?.titulo || "Raia selecionada"}
           draft={taskDraft}
@@ -673,12 +688,16 @@ const ContratosKanban = () => {
           key={editingTask.id}
           contratoId={selectedContratoId}
           canEdit={!!board.podeEditar}
+          canEditDeadline={!!board.gestor}
           canToggle={!!board.podeEditar || (editingTask.responsaveis ?? (editingTask.responsavel ? [editingTask.responsavel] : [])).some((usuario) => usuario.id === usuarioId)}
           task={editingTask}
           usuarios={usuariosKanban}
           isSaving={updateTask.isPending}
           subtaskPending={createSubtask.isPending || updateSubtask.isPending || toggleSubtask.isPending || deleteSubtask.isPending}
-          onClose={() => setEditingTaskId(null)}
+          onClose={() => {
+            setEditingTaskId(null);
+            if (searchParams.has("tarefaId")) { const next = new URLSearchParams(searchParams); next.delete("tarefaId"); setSearchParams(next, { replace: true }); }
+          }}
           onSave={handleSaveTask}
           onCreateSubtask={handleCreateSubtask}
           onUpdateSubtask={handleUpdateSubtask}
@@ -686,6 +705,7 @@ const ContratosKanban = () => {
           onDeleteSubtask={handleDeleteSubtask}
         />
       )}
+      {lateCompletion && <TaskDelayJustificationDialog title={lateCompletion.task.titulo} onClose={() => setLateCompletion(null)} onConfirm={reason => handleMoveTask(lateCompletion.task, lateCompletion.raiaId, reason)} />}
       {selectedContrato && equipe?.lider && (editingEquipe || !equipe.configurada) && <ContratoEquipeDialog
         key={selectedContrato.id} equipe={equipe} titulo={getContratoLabel(selectedContrato)}
         usuarios={equipe.usuariosDisponiveis.map(u => ({ ...u, ...usuariosComPerfil.find(p => p.id === u.id) }))}

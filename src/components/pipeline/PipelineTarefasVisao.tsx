@@ -11,6 +11,8 @@ import type { PipelineNegocio } from "@/services/usePipelineVendas";
 import type { Usuario } from "@/services/useUsuarios";
 import { PipelineTaskCard } from "./PipelineTaskCard";
 import { UserSelect } from "@/components/users/UserSelect";
+import { TaskDelayJustificationDialog } from "@/components/tasks/TaskDelayJustificationDialog";
+import { taskIsOverdue } from "@/components/tasks/taskDeadline";
 
 interface PipelineTarefasVisaoProps {
   funilId?: number;
@@ -35,6 +37,7 @@ const fieldClass = "h-9 rounded-lg border border-border/25 bg-card/45 px-3 text-
 
 export const PipelineTarefasVisao = ({ funilId, campanhaId, negocios, usuarios, canView, canViewAll, canConclude, onOpenNegocio }: PipelineTarefasVisaoProps) => {
   const [view, setView] = useState<PipelineTarefaVisao>("HOJE");
+  const [lateTask, setLateTask] = useState<PipelineTarefa | null>(null);
   const [responsible, setResponsible] = useState("");
   const [business, setBusiness] = useState("");
   const [type, setType] = useState("");
@@ -49,12 +52,16 @@ export const PipelineTarefasVisao = ({ funilId, campanhaId, negocios, usuarios, 
   const filteredTasks = tasks.filter(t => (!campanhaId || (t.campanhaId ?? negocios.find(n => n.id === t.negocioId)?.campanhaOrigemId) === campanhaId) && (!canceladas || t.status === "CANCELADA"));
   const setStatus = useSetPipelineTarefaStatus();
 
-  const toggleTask = async (task: PipelineTarefa) => {
+  const toggleTask = async (task: PipelineTarefa, justificativaAtraso?: string) => {
+    if (task.status !== "CONCLUIDA" && taskIsOverdue(task.prazo) && justificativaAtraso === undefined) {
+      setLateTask(task); return;
+    }
     try {
-      await setStatus.mutateAsync({ tarefaId: task.id, status: task.status === "CONCLUIDA" ? "PENDENTE" : "CONCLUIDA" });
+      await setStatus.mutateAsync({ tarefaId: task.id, status: task.status === "CONCLUIDA" ? "PENDENTE" : "CONCLUIDA", justificativaAtraso });
       toast.success(task.status === "CONCLUIDA" ? "Tarefa reaberta" : "Tarefa concluída");
     } catch (statusError) {
       toast.error(statusError instanceof Error ? statusError.message : "Erro ao alterar a tarefa");
+      if (justificativaAtraso !== undefined) throw statusError;
     }
   };
 
@@ -67,6 +74,7 @@ export const PipelineTarefasVisao = ({ funilId, campanhaId, negocios, usuarios, 
 
   return (
     <div>
+      {lateTask && <TaskDelayJustificationDialog title={lateTask.titulo} onClose={() => setLateTask(null)} onConfirm={reason => toggleTask(lateTask, reason)} />}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h2 className="flex items-center gap-2 text-[15px] font-semibold"><CalendarCheck2 className="h-4 w-4 text-accent" />Agenda comercial</h2><p className="mt-1 text-[10px] text-muted-foreground">Consulte atividades por prazo, responsável, negócio e tipo.</p></div><span className="rounded-full border border-border/25 bg-card/40 px-3 py-1 text-[9px] text-muted-foreground">{filteredTasks.length} tarefa(s)</span></div>
 
       <div className="mb-4 flex flex-wrap gap-2">{views.map((item) => <button key={item.value} type="button" onClick={() => { setView(item.value); setCanceladas(false); }} className={`h-8 rounded-lg px-3 text-[10px] font-medium transition-colors ${!canceladas && view === item.value ? "bg-accent text-accent-foreground" : "border border-border/25 bg-card/35 text-muted-foreground hover:text-foreground"}`}>{item.label}</button>)}<button type="button" onClick={() => setCanceladas(true)} className={`rounded border px-3 text-xs ${canceladas ? "bg-accent text-accent-foreground" : ""}`}>Canceladas</button></div>

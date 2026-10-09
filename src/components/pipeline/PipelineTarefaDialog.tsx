@@ -7,6 +7,7 @@ import { UserMultiSelect } from "@/components/users/UserMultiSelect";
 import { PipelineSubtaskFields } from "./PipelineSubtaskFields";
 import { TaskCollaborationPanel } from "@/components/tasks/TaskCollaborationPanel";
 import { TaskDialogShell } from "@/components/tasks/TaskDialogShell";
+import { taskIsOverdue } from "@/components/tasks/taskDeadline";
 
 interface PipelineTarefaDialogProps {
   tarefa?: PipelineTarefa | null;
@@ -40,10 +41,13 @@ export const PipelineTarefaDialog = ({
     status: tarefa?.status || "PENDENTE",
     tipo: tarefa?.tipo || "Follow-up",
     observacoes: tarefa?.observacoes || "",
+    justificativaAtraso: "",
     subtarefas: (tarefa?.subtarefas || []).map(({ titulo, concluida, posicao, responsavel }) => ({ titulo, concluida, posicao, responsavelId: responsavel?.id ?? null })),
   }), [defaultResponsavelId, tarefa]);
   const [draft, setDraft] = useState(initialDraft);
   const responsaveis = usuarios.filter((user) => draft.responsavelIds?.includes(user.id));
+  const needsJustification = draft.status === "CONCLUIDA" && tarefa?.status !== "CONCLUIDA"
+    && taskIsOverdue(tarefa?.prazo || draft.prazo);
 
 
   return (
@@ -70,6 +74,8 @@ export const PipelineTarefaDialog = ({
               </div>
 
               <label className="block text-[10px] font-medium">Observações<textarea className={`${textAreaClass} mt-1 min-h-16`} value={draft.observacoes || ""} onChange={(event) => setDraft({ ...draft, observacoes: event.target.value })} /></label>
+              {needsJustification && <label className="block text-xs font-medium">Justificativa do atraso *<textarea required maxLength={4000} className={`${textAreaClass} mt-1 min-h-24`} value={draft.justificativaAtraso || ""} onChange={e => setDraft({ ...draft, justificativaAtraso: e.target.value })} placeholder="Conte o motivo de a tarefa ter passado do prazo." /></label>}
+              {!needsJustification && tarefa?.justificativaAtraso && <div className="rounded-lg border border-border/25 p-3 text-xs"><strong>Justificativa do atraso</strong><p className="mt-1 whitespace-pre-wrap">{tarefa.justificativaAtraso}</p></div>}
               {draft.dataInicio && draft.prazo && draft.prazo < draft.dataInicio && <p className="text-[10px] text-destructive">O prazo não pode ser anterior à data de início.</p>}
             </div>
             <div className="min-w-0">

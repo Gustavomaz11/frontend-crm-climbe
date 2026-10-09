@@ -4,8 +4,10 @@ import type { KanbanTaskPrioridade, UsuarioResumo } from "@/services";
 import { UserMultiSelect } from "@/components/users/UserMultiSelect";
 import { TaskDialogShell } from "@/components/tasks/TaskDialogShell";
 import { kanbanPriorityOptions } from "./kanbanPriority";
+import { taskIsOverdue } from "@/components/tasks/taskDeadline";
 
 export interface KanbanTaskDraft {
+  justificativaAtraso?: string;
   titulo: string;
   descricao: string;
   prioridade: KanbanTaskPrioridade;
@@ -16,6 +18,7 @@ export interface KanbanTaskDraft {
 }
 
 interface KanbanTaskDialogProps {
+  concluiTarefas?: boolean;
   assignmentHint?: string;
   raiaTitulo: string;
   draft: KanbanTaskDraft;
@@ -27,6 +30,7 @@ interface KanbanTaskDialogProps {
 }
 
 export const KanbanTaskDialog = ({
+  concluiTarefas,
   assignmentHint,
   raiaTitulo,
   draft,
@@ -91,11 +95,12 @@ export const KanbanTaskDialog = ({
             </span>
           </label>
           <label>
-            <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground">Fim</span>
-            <input type="date" value={draft.dataFim} onChange={(event) => onChange({ ...draft, dataFim: event.target.value })} className="h-9 w-full rounded-lg border border-border/25 bg-background/60 px-2 text-[12px] text-foreground outline-none transition-colors focus:border-accent/40" />
+            <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground">Fim (prazo) *</span>
+            <input type="date" required min={draft.dataInicio || undefined} value={draft.dataFim} onChange={(event) => onChange({ ...draft, dataFim: event.target.value })} className="h-9 w-full rounded-lg border border-border/25 bg-background/60 px-2 text-[12px] text-foreground outline-none transition-colors focus:border-accent/40" />
           </label>
         </div>
 
+        {concluiTarefas && taskIsOverdue(draft.dataFim) && <label className="block text-xs">Justificativa do atraso *<textarea required maxLength={4000} value={draft.justificativaAtraso || ""} onChange={e => onChange({ ...draft, justificativaAtraso: e.target.value })} className="mt-1 min-h-24 w-full rounded-lg border border-border/30 bg-background p-3" /></label>}
         </div>
         <footer className="flex shrink-0 justify-end gap-2 border-t border-border/25 p-4">
           <button type="button" onClick={onClose} className="h-9 rounded-lg border border-border/30 px-4 text-[12px] font-semibold text-muted-foreground transition-colors hover:text-foreground">Cancelar</button>

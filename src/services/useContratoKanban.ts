@@ -40,6 +40,7 @@ export interface ContratoKanbanSubtarefa {
 }
 
 export interface ContratoKanbanTask {
+  justificativaAtraso?: string | null;
   responsaveis?: UsuarioResumo[];
   id: number;
   raiaId: number;
@@ -83,6 +84,7 @@ export interface KanbanRaiaDTO {
 }
 
 export interface KanbanTaskDTO {
+  justificativaAtraso?: string;
   responsavelIds?: number[];
   raiaId: number;
   titulo: string;
@@ -96,6 +98,7 @@ export interface KanbanTaskDTO {
 
 export interface MoveKanbanTaskDTO {
   raiaId: number;
+  justificativaAtraso?: string;
 }
 
 export interface KanbanSubtarefaDTO {
