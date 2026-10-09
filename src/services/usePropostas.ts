@@ -19,6 +19,7 @@ export interface PropostaServicoConfig {
 export interface PropostaRecebimento {
   numero: number;
   valor: number;
+  servicos?: { servico: CommercialService; valor: number }[] | null;
 }
 
 export interface PropostaCommercialConfig {

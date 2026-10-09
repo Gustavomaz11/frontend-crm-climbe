@@ -17,7 +17,10 @@ export const PropostaFinancialSummary = ({ servicos = [], recebimentos = [] }: {
     </div>}
     {recebimentos.length > 0 && <div>
       <h3 className="mb-2 text-[11px] font-semibold">Plano de recebimentos</h3>
-      <div className="grid grid-cols-2 gap-2">{recebimentos.map((item) => <p key={item.numero} className="rounded-lg border border-border/25 p-2 text-[11px]">{item.numero}º · {formatProposalMoney(item.valor)}</p>)}</div>
+      <div className="grid gap-2 sm:grid-cols-2">{recebimentos.map((item) => <div key={item.numero} className="min-w-0 rounded-lg border border-border/25 p-2 text-[11px]">
+        <p className="font-semibold">{item.numero}º · {formatProposalMoney(item.valor)}</p>
+        {item.servicos?.map((service) => <p key={service.servico} className="mt-1 flex flex-wrap justify-between gap-1 text-muted-foreground"><span>{getServiceLabel(service.servico)}</span><span>{formatProposalMoney(service.valor)}</span></p>)}
+      </div>)}</div>
     </div>}
   </>
 );
