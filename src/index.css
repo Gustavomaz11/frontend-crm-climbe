@@ -5,7 +5,8 @@
 @tailwind utilities;
 
 /* Required fields only pulse after an attempted submission. */
-[data-field-error="true"] {
+[data-field-error="true"],
+label:has(> input[type="file"][data-field-error="true"]) {
   border-color: #f43f5e !important;
   outline: 2px solid #f43f5e !important;
   outline-offset: 1px;
@@ -38,7 +39,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  [data-field-error="true"] { animation: none; }
+  [data-field-error="true"], label:has(> input[type="file"][data-field-error="true"]) { animation: none; }
 }
 
 @layer base {

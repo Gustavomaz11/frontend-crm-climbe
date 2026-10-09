@@ -116,7 +116,7 @@ export function UserSelect({
         )}
       >
         {selectedUser ? (
-          <UserIdentity user={selectedUser} avatarClassName="h-7 w-7" />
+          <UserIdentity user={selectedUser} className="!flex" avatarClassName="h-7 w-7" />
         ) : (
           <span className="truncate text-[11px] text-muted-foreground">{placeholder}</span>
         )}

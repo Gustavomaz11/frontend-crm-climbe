@@ -1,3 +1,6 @@
+import { ContratoPreparacaoBoard } from "@/components/contratos/ContratoPreparacaoBoard";
+import { ContratoPreparacaoDialog } from "@/components/contratos/ContratoPreparacaoDialog";
+import { useUsuarioPermissoes } from "@/services/usePermissoes";
 import { FormValidation } from "@/components/ui/form-validation";
 import { getProposalServicesLabel } from "@/services/proposalPayments";
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
@@ -84,6 +87,7 @@ const Contratos = () => {
   const [activeTab, setActiveTab] = useState<FilterTab>("Todos");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedContrato, setSelectedContrato] = useState<Contrato | null>(null);
+  const [preparacaoId, setPreparacaoId] = useState<number | null>(null);
   const [reviewContratoId, setReviewContratoId] = useState<number | null>(null);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -120,6 +124,19 @@ const Contratos = () => {
 
   const basicUserData = useAuthStore((state) => state.basicUserData);
   const userData = useAuthStore((state) => state.userData);
+  const { data: contractPermissions = [] } = useUsuarioPermissoes(basicUserData?.id ?? userData?.id);
+  const canEditPreparacao = contractPermissions.some(p => p.permissao.codigo === "CONTRATO_CRUD");
+  const preparacaoContrato = contratos.find(c => c.id === preparacaoId);
+  const closePreparacao = () => {
+    setPreparacaoId(null);
+    if (searchParams.has("contrato")) {
+      const params = new URLSearchParams(searchParams); params.delete("contrato"); setSearchParams(params, { replace: true });
+    }
+  };
+  useEffect(() => {
+    const id = Number(searchParams.get("contrato"));
+    if (id && contratos.some(c => c.id === id)) setPreparacaoId(id);
+  }, [contratos, searchParams]);
   const userName =
     basicUserData?.nomeCompleto ||
     userData?.nomeCompleto ||
@@ -632,58 +649,18 @@ const Contratos = () => {
           </div>
 
           <div className="px-6 pb-6">
-            <motion.div className="rounded-xl border border-border/25 bg-card/40 backdrop-blur-sm overflow-hidden" initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}>
-              <div className="grid grid-cols-[1fr_1fr_120px_132px] px-5 py-2.5 border-b border-border/15 bg-muted/5">
-                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Contrato</span>
-                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Empresa</span>
-                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Status</span>
-                <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Ações</span>
-              </div>
-              <div className="divide-y divide-border/10 max-h-[calc(100vh-260px)] overflow-y-auto [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-muted-foreground/20 [&::-webkit-scrollbar-thumb]:rounded-full">
-                {isLoading ? (
-                  <div className="py-12 text-center text-[12px] text-muted-foreground">Carregando contratos...</div>
-                ) : error ? (
-                  <div className="py-12 text-center text-[12px] text-destructive">Erro ao carregar contratos</div>
-                ) : filtered.length === 0 ? (
-                  <div className="py-12 text-center text-[12px] text-muted-foreground">Nenhum contrato encontrado</div>
-                ) : (
-                  filtered.map((c, i) => (
-                    <motion.div key={c.id} className="grid grid-cols-[1fr_1fr_120px_132px] items-center px-5 py-4 hover:bg-muted/10 transition-colors cursor-pointer group" onClick={() => openContratoModal(c)} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }} whileHover={{ x: 2 }}>
-                      <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-7 h-7 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
-                          <FileText className="w-3.5 h-3.5 text-accent" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-[12px] font-medium text-foreground/80 group-hover:text-accent transition-colors truncate">{c.titulo}</p>
-                          <p className="text-[10px] text-muted-foreground truncate">CT-{c.id}{c.propostaTitulo ? ` · ${c.propostaTitulo}` : ""}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 min-w-0">
-                        <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                          <Building2 className="w-2.5 h-2.5 text-primary" />
-                        </div>
-                        <p className="text-[12px] text-foreground truncate">{c.empresaNome}</p>
-                      </div>
-                      <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full w-fit ${statusStyles[c.status] || "bg-muted/10 text-muted-foreground"}`}>{c.status}</span>
-                      <div className="flex items-center gap-1.5">
-                        <button type="button" title="Aprovar contrato" onClick={(e) => { e.stopPropagation(); handleUpdateStatus(c, "APROVADO"); }} disabled={c.status !== "PENDENTE" || updateContratoStatus.isPending} className="w-7 h-7 rounded-lg border border-border/25 flex items-center justify-center text-muted-foreground hover:text-accent hover:border-accent/40 hover:bg-accent/5 transition-colors disabled:opacity-35 disabled:cursor-not-allowed">
-                          <Check className="w-3.5 h-3.5" />
-                        </button>
-                        <button type="button" title="Rejeitar contrato" onClick={(e) => { e.stopPropagation(); handleUpdateStatus(c, "REJEITADO"); }} disabled={c.status !== "PENDENTE" || updateContratoStatus.isPending} className="w-7 h-7 rounded-lg border border-border/25 flex items-center justify-center text-muted-foreground hover:text-destructive hover:border-destructive/40 hover:bg-destructive/5 transition-colors disabled:opacity-35 disabled:cursor-not-allowed">
-                          <XCircle className="w-3.5 h-3.5" />
-                        </button>
-                        <button type="button" title="Ver histórico" onClick={(e) => { e.stopPropagation(); handleOpenHistory(c); }} className="w-7 h-7 rounded-lg border border-border/25 flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-accent/40 hover:bg-muted/20 transition-colors">
-                          <History className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </motion.div>
-                  ))
-                )}
-              </div>
-            </motion.div>
+            {isLoading ? <p className="py-12 text-center text-xs text-muted-foreground">Carregando contratos...</p>
+              : error ? <p role="alert" className="py-12 text-center text-xs text-destructive">Não foi possível carregar os contratos.</p>
+              : <ContratoPreparacaoBoard contratos={filtered} canEdit={canEditPreparacao} onOpen={c => setPreparacaoId(c.id)} />}
+
           </div>
         </main>
       </div>
+
+      {preparacaoContrato && <ContratoPreparacaoDialog key={preparacaoContrato.id} contrato={preparacaoContrato}
+        proposta={propostas.find(p => p.idProposta === preparacaoContrato.propostaId)} canEdit={canEditPreparacao}
+        onClose={closePreparacao} onReview={() => setReviewContratoId(preparacaoContrato.id)}
+        onManage={() => { openContratoModal(preparacaoContrato); closePreparacao(); }} />}
 
       <AnimatePresence>
         {selectedContrato && (

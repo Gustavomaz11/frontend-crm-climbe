@@ -151,6 +151,7 @@ const useInvalidatePipeline = () => {
     queryClient.invalidateQueries({ queryKey: ["pipeline-atividades"] }),
     queryClient.invalidateQueries({ queryKey: ["pipeline-campaigns"] }),
     queryClient.invalidateQueries({ queryKey: ["pipeline-dashboard"] }),
+    queryClient.invalidateQueries({ queryKey: ["contratos"] }),
   ]);
 };
 
@@ -201,13 +202,14 @@ export const useMovePipelineNegocio = () => {
   const queryClient = useQueryClient();
   const invalidate = useInvalidatePipeline();
   return useMutation({
-    mutationFn: async ({ id, etapaId, motivoPerdaId, observacaoPerda }: {
+    mutationFn: async ({ id, etapaId, motivoPerdaId, observacaoPerda, responsavelTecnicoId, propostaId }: {
       id: number; etapaId: number; motivoPerdaId?: number; observacaoPerda?: string;
+      responsavelTecnicoId?: number; propostaId?: number;
     }) => {
       try {
         return unwrap((await api.patch<ApiResponse<PipelineNegocio>>(
           `/pipeline-vendas/negocios/${id}/etapa`,
-          { etapaId, motivoPerdaId, observacaoPerda },
+          { etapaId, motivoPerdaId, observacaoPerda, responsavelTecnicoId, propostaId },
         )).data);
       } catch (error) {
         throw new Error(getErrorMessage(error));
@@ -236,15 +238,16 @@ export const useMovePipelineNegocio = () => {
 export const useConcludePipelineNegocio = () => {
   const invalidate = useInvalidatePipeline();
   return useMutation({
-    mutationFn: async ({ id, resultado, motivoPerdaId, observacaoPerda }: {
+    mutationFn: async ({ id, resultado, motivoPerdaId, observacaoPerda, responsavelTecnicoId, propostaId }: {
       id: number; resultado: Exclude<PipelineResultado, "ABERTO">;
       motivoPerdaId?: number; observacaoPerda?: string;
+      responsavelTecnicoId?: number; propostaId?: number;
     }) => {
       const action = resultado === "GANHO" ? "ganhar" : "perder";
       try {
         return unwrap((await api.patch<ApiResponse<PipelineNegocio>>(
           `/pipeline-vendas/negocios/${id}/${action}`,
-          resultado === "PERDIDO" ? { motivoPerdaId, observacaoPerda } : {},
+          resultado === "PERDIDO" ? { motivoPerdaId, observacaoPerda } : { responsavelTecnicoId, propostaId },
         )).data);
       } catch (error) {
         throw new Error(getErrorMessage(error));

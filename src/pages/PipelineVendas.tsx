@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { PipelineKanbanBoard } from "@/components/pipeline/PipelineKanbanBoard";
 import { PipelineNegocioDialog } from "@/components/pipeline/PipelineNegocioDialog";
 import { PipelinePerdaDialog } from "@/components/pipeline/PipelinePerdaDialog";
+import { PipelineGanhoDialog } from "@/components/pipeline/PipelineGanhoDialog";
 import { PipelineTarefasVisao } from "@/components/pipeline/PipelineTarefasVisao";
 import { PipelineVendasShell } from "@/components/pipeline/PipelineVendasShell";
 import { useQuery } from "@tanstack/react-query";
@@ -72,6 +73,7 @@ const PipelineVendas = ({ preVendas = false }: { preVendas?: boolean }) => {
   const [selectedBusiness, setSelectedBusiness] = useState<PipelineNegocio | null>(null);
   const [createStageId, setCreateStageId] = useState<number | null>(null);
   const [pendingLoss, setPendingLoss] = useState<{ business: PipelineNegocio; stageId: number } | null>(null);
+  const [pendingWin, setPendingWin] = useState<{ business: PipelineNegocio; stageId?: number } | null>(null);
   const deferredSearch = useDeferredValue(search);
   const basicUserData = useAuthStore((state) => state.basicUserData);
   const userData = useAuthStore((state) => state.userData);
@@ -91,7 +93,7 @@ const PipelineVendas = ({ preVendas = false }: { preVendas?: boolean }) => {
   const { data: lossReasons = [] } = usePipelineMotivosPerdaAtivos(
     businessDialogOpen || pendingLoss !== null,
   );
-  const { data: users = [] } = useUsuarios(businessDialogOpen || view === "tarefas");
+  const { data: users = [] } = useUsuarios(businessDialogOpen || pendingWin !== null || view === "tarefas");
   const { data: companies = [] } = useEmpresas(businessDialogOpen);
   const createBusiness = useCreatePipelineNegocio();
   const updateBusiness = useUpdatePipelineNegocio();
@@ -162,6 +164,7 @@ const PipelineVendas = ({ preVendas = false }: { preVendas?: boolean }) => {
 
   const conclude = async (result: "GANHO" | "PERDIDO", motivoPerdaId?: number, observacaoPerda?: string) => {
     if (!selectedBusiness) return;
+    if (result === "GANHO" && !preVendas) { setPendingWin({ business: selectedBusiness }); return; }
     try {
       const updated = await concludeBusiness.mutateAsync({ id: selectedBusiness.id, resultado: result, motivoPerdaId, observacaoPerda });
       setSelectedBusiness(updated);
@@ -169,6 +172,19 @@ const PipelineVendas = ({ preVendas = false }: { preVendas?: boolean }) => {
     } catch (concludeError) {
       toast.error(concludeError instanceof Error ? concludeError.message : "Erro ao concluir negócio");
     }
+  };
+
+  const confirmWin = async (propostaId: number, responsavelTecnicoId: number) => {
+    if (!pendingWin) return;
+    try {
+      const data = { id: pendingWin.business.id, propostaId, responsavelTecnicoId };
+      const updated = pendingWin.stageId
+        ? await moveBusiness.mutateAsync({ ...data, etapaId: pendingWin.stageId })
+        : await concludeBusiness.mutateAsync({ ...data, resultado: "GANHO" });
+      if (selectedBusiness?.id === updated.id) setSelectedBusiness(updated);
+      setPendingWin(null);
+      toast.success(`Venda ganha. Criação do contrato CT-${updated.contratoId} adicionada na aba Contratos.`);
+    } catch (error) { toast.error(error instanceof Error ? error.message : "Não foi possível concluir a venda"); }
   };
 
   const reactivate = async () => {
@@ -182,20 +198,17 @@ const PipelineVendas = ({ preVendas = false }: { preVendas?: boolean }) => {
     }
   };
 
-  const convert = async (companyId: number) => {
-    if (!selectedBusiness) return;
-    try {
-      const updated = await convertBusiness.mutateAsync({ id: selectedBusiness.id, empresaId: companyId });
-      setSelectedBusiness(updated);
-      toast.success(`Contrato CT-${updated.contratoId} criado`);
-    } catch (convertError) {
-      toast.error(convertError instanceof Error ? convertError.message : "Erro ao converter negócio");
-    }
+  const convert = async (_companyId: number) => {
+    if (selectedBusiness) setPendingWin({ business: selectedBusiness });
   };
 
   const move = async (business: PipelineNegocio, stageId: number) => {
     if (!can(commercialPermissions.move)) return;
     const destination = board?.etapas.find((stage) => stage.id === stageId);
+    if (destination?.resultado === "GANHO" && !preVendas) {
+      if (!can(commercialPermissions.conclude)) { toast.error("Você não tem permissão para concluir vendas"); return; }
+      setPendingWin({ business, stageId }); return;
+    }
     if (destination?.resultado === "PERDIDO") {
       setPendingLoss({ business, stageId });
       return;
@@ -253,7 +266,8 @@ const PipelineVendas = ({ preVendas = false }: { preVendas?: boolean }) => {
         {view === "tarefas" && <PipelineTarefasVisao campanhaId={campaign ? Number(campaign) : undefined} funilId={effectiveFunnelId} negocios={allBusinesses} usuarios={users} canView={can(commercialPermissions.taskView)} canViewAll={can(commercialPermissions.taskViewAll)} canConclude={can(commercialPermissions.taskConclude)} onOpenNegocio={setSelectedBusiness} />}
       </section>
 
-      <AnimatePresence>{(selectedBusiness || createStageId) && <PipelineNegocioDialog canRestartCadence={can("COMERCIAL_CAMPANHA_EXECUTAR")} preVendas={preVendas} negocio={selectedBusiness} initialEtapaId={createStageId || undefined} initialResponsavelId={userId} initialTaskId={selectedBusiness?.id === linkedBusinessId ? linkedTaskId : undefined} etapas={board?.etapas || []} empresas={companies} usuarios={users} motivosPerda={lossReasons} canEdit={can(commercialPermissions.edit)} canConclude={can(commercialPermissions.conclude)} canConvert={can(commercialPermissions.convert)} canViewTasks={can(commercialPermissions.taskView)} canCreateTask={can(commercialPermissions.taskCreate)} canEditTask={can(commercialPermissions.taskEdit)} canConcludeTask={can(commercialPermissions.taskConclude)} canViewComments={can(commercialPermissions.commentView)} canCreateComment={can(commercialPermissions.commentCreate)} canViewHistory={can(commercialPermissions.historyView)} canCreateProposal={can(commercialPermissions.proposalCreate)} isProcessing={isProcessing} onClose={closeDialog} onSave={(data) => void saveBusiness(data)} onConclude={(result, motivoId, observacao) => void conclude(result, motivoId, observacao)} onReactivate={() => void reactivate()} onConvert={(companyId) => void convert(companyId)} onOpenContract={() => navigate("/contratos")} onCreateProposal={() => { if (!selectedBusiness?.empresaId) return; navigate(`/propostas?empresaId=${selectedBusiness.empresaId}&negocioId=${selectedBusiness.id}&nova=true`); }} />}</AnimatePresence>
+      <AnimatePresence>{(selectedBusiness || createStageId) && <PipelineNegocioDialog canRestartCadence={can("COMERCIAL_CAMPANHA_EXECUTAR")} preVendas={preVendas} negocio={selectedBusiness} initialEtapaId={createStageId || undefined} initialResponsavelId={userId} initialTaskId={selectedBusiness?.id === linkedBusinessId ? linkedTaskId : undefined} etapas={board?.etapas || []} empresas={companies} usuarios={users} motivosPerda={lossReasons} canEdit={can(commercialPermissions.edit)} canConclude={can(commercialPermissions.conclude)} canConvert={can(commercialPermissions.convert)} canViewTasks={can(commercialPermissions.taskView)} canCreateTask={can(commercialPermissions.taskCreate)} canEditTask={can(commercialPermissions.taskEdit)} canConcludeTask={can(commercialPermissions.taskConclude)} canViewComments={can(commercialPermissions.commentView)} canCreateComment={can(commercialPermissions.commentCreate)} canViewHistory={can(commercialPermissions.historyView)} canCreateProposal={can(commercialPermissions.proposalCreate)} isProcessing={isProcessing} onClose={closeDialog} onSave={(data) => void saveBusiness(data)} onConclude={(result, motivoId, observacao) => void conclude(result, motivoId, observacao)} onReactivate={() => void reactivate()} onConvert={(companyId) => void convert(companyId)} onOpenContract={() => navigate(`/contratos?contrato=${selectedBusiness?.contratoId}`)} onCreateProposal={() => { if (!selectedBusiness?.empresaId) return; navigate(`/propostas?empresaId=${selectedBusiness.empresaId}&negocioId=${selectedBusiness.id}&nova=true`); }} />}</AnimatePresence>
+      {pendingWin && <PipelineGanhoDialog negocio={pendingWin.business} usuarios={users} isProcessing={isProcessing} onClose={() => setPendingWin(null)} onConfirm={(proposalId, tecnicoId) => void confirmWin(proposalId, tecnicoId)} />}
       {pendingLoss && <PipelinePerdaDialog empresa={pendingLoss.business.nomeEmpresa} motivos={lossReasons} isProcessing={moveBusiness.isPending} onCancel={() => setPendingLoss(null)} onConfirm={(motivoId, observacao) => void confirmDraggedLoss(motivoId, observacao)} />}
     </PipelineVendasShell>
   );

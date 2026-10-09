@@ -4,6 +4,7 @@ import { api } from "@/api";
 import { getPropostaFileNameFromUrl } from "./usePropostas";
 import type { PropostaServicoConfig } from "./usePropostas";
 import type { CommercialService } from "./commercialProposal";
+import type { RevisaoDocumento } from "./useRevisoesDocumento";
 
 interface ApiEnvelope<T> {
   success: boolean;
@@ -14,6 +15,7 @@ interface ApiEnvelope<T> {
 }
 
 export type ContratoStatus = "PENDENTE" | "APROVADO" | "REJEITADO" | string;
+export type ContratoPreparacaoEtapa = "A_FAZER" | "EM_ANDAMENTO" | "REVISAO" | "CONCLUIDO";
 
 interface ContratoApi {
   idContrato?: number;
@@ -23,11 +25,14 @@ interface ContratoApi {
     url?: string;
     servico?: CommercialService | null;
     servicos?: PropostaServicoConfig[];
+    valuation?: number | null;
   } | null;
   usuario?: {
     id?: number;
     nomeCompleto?: string;
   } | null;
+  responsavelComercial?: { id?: number; nomeCompleto?: string } | null;
+  etapaPreparacao?: ContratoPreparacaoEtapa | null;
   responsavel?: {
     id?: number;
     nomeCompleto?: string;
@@ -55,6 +60,9 @@ interface ContratoApi {
 }
 
 export interface Contrato {
+  etapaPreparacao?: ContratoPreparacaoEtapa | null;
+  responsavelComercialId?: number | null;
+  responsavelComercialNome?: string | null;
   servicos?: PropostaServicoConfig[];
   id: number;
   titulo: string;
@@ -162,7 +170,10 @@ function normalizeContrato(contrato: ContratoApi): Contrato {
     status: contrato.status ?? "PENDENTE",
     dataInicio: contrato.dataInicio ?? "",
     dataFim: contrato.dataFim ?? "",
-    valor: 0,
+    valor: Number(contrato.proposta?.valuation ?? 0),
+    etapaPreparacao: contrato.etapaPreparacao ?? null,
+    responsavelComercialId: contrato.responsavelComercial?.id ?? contrato.usuario?.id ?? null,
+    responsavelComercialNome: contrato.responsavelComercial?.nomeCompleto ?? contrato.usuario?.nomeCompleto ?? null,
     empresaId,
     empresaNome,
     propostaId: contrato.proposta?.idProposta ?? null,
@@ -197,10 +208,37 @@ function normalizeContrato(contrato: ContratoApi): Contrato {
 export function useContratos() {
   return useQuery<Contrato[]>({
     queryKey: ["contratos"],
+    refetchInterval: 60_000,
     queryFn: async () => {
       const response = await api.get<ContratoApi[]>("/contratos");
       return response.data.map(normalizeContrato);
     },
+  });
+}
+
+export function useMoveContratoPreparacao() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, etapa }: { id: number; etapa: ContratoPreparacaoEtapa }) => {
+      try { return normalizeContrato((await api.patch<ContratoApi>(`/contratos/${id}/etapa-preparacao`, { etapa })).data); }
+      catch (error) { throw new Error(getApiErrorMessage(error)); }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["contratos"] }),
+  });
+}
+
+export function useEnviarContratoCliente() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, file }: { id: number; file: File }) => {
+      const data = new FormData();
+      data.append("arquivo", file);
+      try { return unwrap((await api.post<ApiEnvelope<RevisaoDocumento>>(`/contratos/${id}/enviar-cliente`, data, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })).data); }
+      catch (error) { throw new Error(getApiErrorMessage(error)); }
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["contratos"] }),
   });
 }
 
