@@ -12,8 +12,14 @@ export function PipelineGanhoDialog({ negocio, usuarios, isProcessing, onClose, 
   negocio: PipelineNegocio; usuarios: Usuario[]; isProcessing: boolean;
   onClose: () => void; onConfirm: (propostaId: number, tecnicoId: number) => void;
 }) {
-  const { data: propostas = [], isLoading, error } = usePropostas({ empresaId: negocio.empresaId || undefined, negocioId: negocio.id });
-  const aprovadas = propostas.filter(p => p.status === "APROVADA" && (!p.revisaoStatus || p.revisaoStatus === "APROVADO"));
+  const { data: propostas = [], isLoading, error } = usePropostas(
+    negocio.empresaId ? { empresaId: negocio.empresaId } : { negocioId: negocio.id },
+  );
+  const aprovadas = propostas.filter(p =>
+    p.status === "APROVADA" && (!p.revisaoStatus || p.revisaoStatus === "APROVADO")
+    && (p.negocioId === negocio.id || (p.negocioId == null && !!negocio.empresaId))
+    && (!negocio.empresaId || p.empresaId === negocio.empresaId),
+  );
   const [propostaSelecionada, setPropostaSelecionada] = useState("");
   const [tecnicoId, setTecnicoId] = useState("");
   const propostaId = propostaSelecionada || (aprovadas.length === 1 ? String(aprovadas[0].idProposta) : "");

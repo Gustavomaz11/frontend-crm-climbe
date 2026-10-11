@@ -21,7 +21,7 @@ describe("conclusão da venda", () => {
     fireEvent.change(screen.getByLabelText("Responsável técnico pelo contrato"), { target: { value: "2" } });
     fireEvent.click(screen.getByRole("button", { name: "Marcar como ganho" }));
     expect(confirm).toHaveBeenCalledWith(40, 2);
-    expect(usePropostas).toHaveBeenCalledWith({ empresaId: 30, negocioId: 10 });
+    expect(usePropostas).toHaveBeenCalledWith({ empresaId: 30 });
   });
 
   it("bloqueia o ganho quando a aprovação do cliente ainda está pendente", () => {
@@ -29,5 +29,43 @@ describe("conclusão da venda", () => {
     render(<PipelineGanhoDialog negocio={negocio} usuarios={[]} isProcessing={false} onClose={vi.fn()} onConfirm={vi.fn()} />);
     expect(screen.getByRole("button", { name: "Marcar como ganho" })).toBeDisabled();
     expect(screen.getByRole("alert")).toHaveTextContent("precisa de uma proposta aprovada pelo cliente");
+  });
+
+  it("mostra as propostas aprovadas cadastradas diretamente para a empresa", () => {
+    vi.mocked(usePropostas).mockImplementation(filters => ({
+      data: filters?.negocioId ? [] : [
+        { ...proposal, negocioId: null, url: "https://storage.test/proposta-1.pdf" },
+        { ...proposal, idProposta: 41, negocioId: null, url: "https://storage.test/proposta-2.pdf" },
+      ], isLoading: false, error: null,
+    } as ReturnType<typeof usePropostas>));
+    const confirm = vi.fn();
+    render(<PipelineGanhoDialog negocio={negocio} usuarios={[]} isProcessing={false} onClose={vi.fn()} onConfirm={confirm} />);
+    expect(screen.getByRole("option", { name: "proposta-1.pdf" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "proposta-2.pdf" })).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Proposta aprovada pelo cliente"), { target: { value: "41" } });
+    fireEvent.change(screen.getByLabelText("Responsável técnico pelo contrato"), { target: { value: "2" } });
+    fireEvent.click(screen.getByRole("button", { name: "Marcar como ganho" }));
+    expect(confirm).toHaveBeenCalledWith(41, 2);
+  });
+
+  it("não oferece propostas de outra empresa ou já vinculadas a outro negócio", () => {
+    vi.mocked(usePropostas).mockReturnValue({ data: [
+      proposal,
+      { ...proposal, idProposta: 41, negocioId: 99, url: "https://storage.test/outro-negocio.pdf" },
+      { ...proposal, idProposta: 42, empresaId: 99, negocioId: null, url: "https://storage.test/outra-empresa.pdf" },
+    ], isLoading: false, error: null } as ReturnType<typeof usePropostas>);
+    render(<PipelineGanhoDialog negocio={negocio} usuarios={[]} isProcessing={false} onClose={vi.fn()} onConfirm={vi.fn()} />);
+    expect(screen.queryByRole("option", { name: "outro-negocio.pdf" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "outra-empresa.pdf" })).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Proposta aprovada pelo cliente")).toHaveValue("40");
+  });
+
+  it("consulta apenas o negócio quando ele não possui uma empresa vinculada", () => {
+    vi.mocked(usePropostas).mockReturnValue({ data: [
+      proposal, { ...proposal, idProposta: 41, negocioId: null, url: "https://storage.test/avulsa.pdf" },
+    ], isLoading: false, error: null } as ReturnType<typeof usePropostas>);
+    render(<PipelineGanhoDialog negocio={{ ...negocio, empresaId: null }} usuarios={[]} isProcessing={false} onClose={vi.fn()} onConfirm={vi.fn()} />);
+    expect(usePropostas).toHaveBeenCalledWith({ negocioId: 10 });
+    expect(screen.queryByRole("option", { name: "avulsa.pdf" })).not.toBeInTheDocument();
   });
 });

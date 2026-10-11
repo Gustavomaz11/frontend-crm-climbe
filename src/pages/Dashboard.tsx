@@ -663,7 +663,7 @@ const Dashboard = () => {
         empresaId: contrato.empresaId,
         empresa: empresa?.nome ?? `Empresa #${contrato.empresaId}`,
         tipo: "Contrato",
-        responsavel: userName,
+        responsavel: contrato.responsavelNome?.trim() || "Não definido",
         status: contrato.status,
         badge: getContractBadge(contrato.status),
         data: formatDateShort(contrato.dataInicio),
@@ -682,13 +682,16 @@ const Dashboard = () => {
         fluxo: fluxoBase,
       };
     });
-  }, [contratos, contratosByEmpresaId, documentsByEmpresaId, empresaById, propostasByEmpresaId, userName]);
+  }, [contratos, contratosByEmpresaId, documentsByEmpresaId, empresaById, propostasByEmpresaId]);
 
   const empresasData = useMemo<PipelineRow[]>(() => {
     return empresas.map((empresa) => {
       const empresaDocs = documentsByEmpresaId.get(empresa.id) ?? [];
       const empresaContratos = contratosByEmpresaId.get(empresa.id) ?? [];
       const empresaPropostas = propostasByEmpresaId.get(empresa.id) ?? [];
+      const responsaveis = [...new Set(empresaContratos
+        .map(contrato => contrato.responsavelNome?.trim())
+        .filter(Boolean))];
       const hasContratoAtivo = empresaContratos.some((contrato) => {
         const status = contrato.status?.toUpperCase() ?? "";
         return status.includes("ATIVO") || status.includes("APROVADO");
@@ -713,7 +716,7 @@ const Dashboard = () => {
           `${empresaContratos.length} contratos`,
           `${empresaPropostas.length} propostas`,
         ].join(" · "),
-        responsavel: userName,
+        responsavel: responsaveis.join(", ") || "Não definido",
         status,
         badge: hasContratoAtivo ? "active" : hasPendencias ? "proposal" : "direct",
         data: formatDateShort(empresa.dataCriacao),
@@ -739,7 +742,7 @@ const Dashboard = () => {
         ],
       };
     });
-  }, [contratosByEmpresaId, documentsByEmpresaId, empresas, propostasByEmpresaId, userName]);
+  }, [contratosByEmpresaId, documentsByEmpresaId, empresas, propostasByEmpresaId]);
 
   const meetingsData = useMemo<Record<number, Meeting[]>>(() => {
     const grouped: Record<number, Meeting[]> = {};
