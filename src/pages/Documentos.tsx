@@ -1,3 +1,4 @@
+import { useCrudPermissions } from "@/hooks/useCrudPermissions";
 import { FormValidation } from "@/components/ui/form-validation";
 import { useEffect, useMemo, useState } from "react";
 import { useTheme } from "@/hooks/use-theme";
@@ -76,7 +77,8 @@ const Documentos = () => {
     userData?.pessoa?.fotoPerfil ||
     null;
 
-  const { data: documentos = [], isLoading, error } = useDocumentos();
+  const { canRead, canCreate, canEdit, canDelete } = useCrudPermissions("DOCUMENTO_JURIDICO");
+  const { data: documentos = [], isLoading, error } = useDocumentos(canRead);
   const { data: empresas = [] } = useEmpresas();
   const solicitarDocumentos = useSolicitarDocumentosLote();
   const reenviarSolicitacaoDocumento = useReenviarSolicitacaoDocumento();
@@ -250,9 +252,9 @@ const Documentos = () => {
               <input type="text" placeholder="Buscar documentos..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground text-foreground" />
             </div>
             <div className="flex items-center gap-3">
-              <motion.button onClick={() => setRequestOpen(true)} className="h-9 px-3 rounded-lg bg-accent text-accent-foreground text-[12px] font-semibold flex items-center gap-2" whileHover={{ scale: 1.02, y: -1 }} whileTap={{ scale: 0.98 }}>
+              {canCreate && (<motion.button onClick={() => setRequestOpen(true)} className="h-9 px-3 rounded-lg bg-accent text-accent-foreground text-[12px] font-semibold flex items-center gap-2" whileHover={{ scale: 1.02, y: -1 }} whileTap={{ scale: 0.98 }}>
                 <Plus className="w-3.5 h-3.5" /> Solicitar
-              </motion.button>
+              </motion.button>)}
               <AppHeaderUser name={userName} photoUrl={userPhoto} />
             </div>
           </motion.header>
@@ -303,7 +305,7 @@ const Documentos = () => {
                       <span className={`text-[10px] font-medium px-2.5 py-1 rounded-full w-fit ${statusStyles[doc.validado] || "bg-muted/10 text-muted-foreground"}`}>{statusLabels[doc.validado] || doc.validado}</span>
                       <p className="text-[11px] text-muted-foreground">{formatDate(doc.dataUpload)}</p>
                       <div className="flex items-center gap-1.5">
-                        <button
+                        {canEdit && (<button
                           type="button"
                           title="Aprovar documento"
                           onClick={(event) => { event.stopPropagation(); handleValidarDocumento(doc, "APROVADO"); }}
@@ -311,8 +313,8 @@ const Documentos = () => {
                           className="w-7 h-7 rounded-lg border border-border/25 flex items-center justify-center text-muted-foreground hover:text-accent hover:border-accent/40 hover:bg-accent/5 transition-colors disabled:opacity-35 disabled:cursor-not-allowed"
                         >
                           <Check className="w-3.5 h-3.5" />
-                        </button>
-                        <button
+                        </button>)}
+                        {canEdit && (<button
                           type="button"
                           title="Rejeitar documento"
                           onClick={(event) => { event.stopPropagation(); handleValidarDocumento(doc, "REPROVADO"); }}
@@ -320,7 +322,7 @@ const Documentos = () => {
                           className="w-7 h-7 rounded-lg border border-border/25 flex items-center justify-center text-muted-foreground hover:text-destructive hover:border-destructive/40 hover:bg-destructive/5 transition-colors disabled:opacity-35 disabled:cursor-not-allowed"
                         >
                           <XCircle className="w-3.5 h-3.5" />
-                        </button>
+                        </button>)}
                       </div>
                     </motion.div>
                   ))
@@ -332,7 +334,7 @@ const Documentos = () => {
       </div>
 
       <AnimatePresence>
-        {requestOpen && (
+        {canCreate && requestOpen && (
           <motion.div className="fixed inset-0 z-50 flex items-center justify-center p-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
             <motion.div className="absolute inset-0 bg-background/80 backdrop-blur-md" onClick={() => setRequestOpen(false)} />
             <motion.div className="relative z-10 w-full max-w-xl rounded-2xl border border-border/30 bg-card/95 backdrop-blur-xl shadow-2xl overflow-hidden" initial={{ scale: 0.92, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.92, opacity: 0, y: 20 }}>
@@ -422,20 +424,20 @@ const Documentos = () => {
                   <button onClick={() => handleDownloadDocumento(selectedDoc)} disabled={!selectedDoc.caminho} className="h-10 rounded-lg border border-accent/20 bg-accent/10 text-accent text-[12px] font-medium flex items-center justify-center gap-2 hover:bg-accent/20 transition-colors disabled:opacity-45 disabled:cursor-not-allowed">
                     <Download className="w-4 h-4" /> Baixar
                   </button>
-                  <button onClick={() => handleReenviarSolicitacao(selectedDoc)} disabled={!podeReenviarSolicitacao(selectedDoc) || reenviarSolicitacaoDocumento.isPending} className="h-10 rounded-lg border border-primary/20 bg-primary/10 text-primary text-[12px] font-medium flex items-center justify-center gap-2 hover:bg-primary/20 transition-colors disabled:opacity-45 disabled:cursor-not-allowed">
+                  {canEdit && (<button onClick={() => handleReenviarSolicitacao(selectedDoc)} disabled={!podeReenviarSolicitacao(selectedDoc) || reenviarSolicitacaoDocumento.isPending} className="h-10 rounded-lg border border-primary/20 bg-primary/10 text-primary text-[12px] font-medium flex items-center justify-center gap-2 hover:bg-primary/20 transition-colors disabled:opacity-45 disabled:cursor-not-allowed">
                     <RotateCcw className="w-4 h-4" /> {reenviarSolicitacaoDocumento.isPending ? "Reenviando..." : "Reenviar"}
-                  </button>
-                  <button onClick={() => handleExcluirSolicitacao(selectedDoc)} disabled={deleteDocumento.isPending} className="h-10 rounded-lg border border-destructive/20 bg-destructive/10 text-destructive text-[12px] font-medium flex items-center justify-center gap-2 hover:bg-destructive/20 transition-colors disabled:opacity-45 disabled:cursor-not-allowed">
+                  </button>)}
+                  {canDelete && (<button onClick={() => handleExcluirSolicitacao(selectedDoc)} disabled={deleteDocumento.isPending} className="h-10 rounded-lg border border-destructive/20 bg-destructive/10 text-destructive text-[12px] font-medium flex items-center justify-center gap-2 hover:bg-destructive/20 transition-colors disabled:opacity-45 disabled:cursor-not-allowed">
                     <Trash2 className="w-4 h-4" /> {deleteDocumento.isPending ? "Excluindo..." : "Excluir"}
-                  </button>
+                  </button>)}
                 </div>
                 <div className="grid grid-cols-2 gap-2">
-                  <button onClick={() => handleValidarDocumento(selectedDoc, "APROVADO")} disabled={selectedDoc.validado !== "EM_ANALISE" || validarDocumento.isPending} className="h-10 rounded-lg border border-accent/20 bg-accent/10 text-accent text-[12px] font-medium flex items-center justify-center gap-2 hover:bg-accent/20 transition-colors disabled:opacity-45 disabled:cursor-not-allowed">
+                  {canEdit && (<button onClick={() => handleValidarDocumento(selectedDoc, "APROVADO")} disabled={selectedDoc.validado !== "EM_ANALISE" || validarDocumento.isPending} className="h-10 rounded-lg border border-accent/20 bg-accent/10 text-accent text-[12px] font-medium flex items-center justify-center gap-2 hover:bg-accent/20 transition-colors disabled:opacity-45 disabled:cursor-not-allowed">
                     <Check className="w-4 h-4" /> {validarDocumento.isPending ? "Aprovando..." : "Aprovar"}
-                  </button>
-                  <button onClick={() => handleValidarDocumento(selectedDoc, "REPROVADO")} disabled={selectedDoc.validado !== "EM_ANALISE" || validarDocumento.isPending} className="h-10 rounded-lg border border-destructive/20 bg-destructive/10 text-destructive text-[12px] font-medium flex items-center justify-center gap-2 hover:bg-destructive/20 transition-colors disabled:opacity-45 disabled:cursor-not-allowed">
+                  </button>)}
+                  {canEdit && (<button onClick={() => handleValidarDocumento(selectedDoc, "REPROVADO")} disabled={selectedDoc.validado !== "EM_ANALISE" || validarDocumento.isPending} className="h-10 rounded-lg border border-destructive/20 bg-destructive/10 text-destructive text-[12px] font-medium flex items-center justify-center gap-2 hover:bg-destructive/20 transition-colors disabled:opacity-45 disabled:cursor-not-allowed">
                     <XCircle className="w-4 h-4" /> {validarDocumento.isPending ? "Rejeitando..." : "Rejeitar"}
-                  </button>
+                  </button>)}
                 </div>
                 {modalError && <p className="text-[12px] text-destructive">{modalError}</p>}
               </div>

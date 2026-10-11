@@ -190,6 +190,21 @@ export function useSolicitacoesAcesso() {
   });
 }
 
+export function useExcluirSolicitacaoAcesso() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, origem }: { id: number; origem: OrigemSolicitacaoAcesso }) => {
+      await api.delete(`/usuarios/solicitacoes/${origem}/${id}`);
+    },
+    onSuccess: (_data, { id, origem }) => {
+      queryClient.setQueryData<SolicitacaoAcesso[]>(["usuarios", "solicitacoes"], (atuais) =>
+        atuais?.filter((item) => item.id !== id || item.origem !== origem));
+      return queryClient.invalidateQueries({ queryKey: ["usuarios"] });
+    },
+  });
+}
+
 export function useGruposCargos() {
   return useQuery<GrupoCargo[]>({
     queryKey: ["grupos-cargos"],

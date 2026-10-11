@@ -7,6 +7,7 @@ import {
 } from "@/lib/googleAccessToken";
 
 export interface Reuniao {
+  arquivadoEm?: string | null;
   id: number;
   idReuniao?: number;
   titulo: string;

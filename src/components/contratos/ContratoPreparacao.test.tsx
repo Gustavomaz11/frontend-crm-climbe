@@ -1,10 +1,16 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { fireEvent, render as renderUi, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ContratoPreparacaoDialog } from "./ContratoPreparacaoDialog";
 import { ContratoPreparacaoBoard } from "./ContratoPreparacaoBoard";
 import { getContratoPreparacaoEtapa } from "@/services/contratoPreparacao";
 import type { Contrato } from "@/services/useContratos";
 import { toast } from "sonner";
+const render = (ui: React.ReactElement) => {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return renderUi(ui, { wrapper: ({ children }) => <QueryClientProvider client={client}>{children}</QueryClientProvider> });
+};
+
 const mocks = vi.hoisted(() => ({ move: vi.fn(), send: vi.fn() }));
 vi.mock("@/services/useContratos", () => ({ useMoveContratoPreparacao: () => ({ mutateAsync: mocks.move, isPending: false }), useEnviarContratoCliente: () => ({ mutateAsync: mocks.send, isPending: false }), getContratoDownloadUrl: vi.fn() }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
@@ -20,6 +26,24 @@ const selectFile = (file: File) => {
 beforeEach(() => { vi.clearAllMocks(); mocks.move.mockResolvedValue({}); mocks.send.mockResolvedValue({ emailStatus: "ENVIADO" }); });
 
 describe("preparação de contratos", () => {
+  it("movimentar não libera o envio ao cliente", () => {
+    render(<ContratoPreparacaoDialog {...props} canEdit canSend={false} />);
+    expect(screen.getByLabelText("Coluna do contrato")).toBeEnabled();
+    expect(screen.queryByRole("button", { name: "Enviar contrato ao cliente" })).not.toBeInTheDocument();
+  });
+
+  it("enviar ao cliente não libera a movimentação das colunas", () => {
+    render(<ContratoPreparacaoDialog {...props} canEdit={false} canSend />);
+    expect(screen.getByRole("button", { name: "Enviar contrato ao cliente" })).toBeInTheDocument();
+    expect(screen.getByLabelText("Coluna do contrato")).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Salvar alterações" })).not.toBeInTheDocument();
+  });
+
+  it("arquivar não exige permissão de movimentação", () => {
+    render(<ContratoPreparacaoBoard contratos={[{ ...contrato, status: "APROVADO" }]} canEdit={false} canArchive canRestore={false} onOpen={vi.fn()} />);
+    expect(screen.getByRole("button", { name: /Arquivar Criação de Contrato/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^CT-10 / })).toHaveAttribute("draggable", "false");
+  });
   it("coloca o novo contrato em À fazer e os aprovados em Concluído", () => {
     render(<ContratoPreparacaoBoard contratos={[contrato, { ...contrato, id: 11, status: "APROVADO" }]} canEdit onOpen={vi.fn()} />);
     expect(screen.getByRole("region", { name: "À fazer" })).toHaveTextContent("Criação de Contrato - Empresa - Contabilidade + Valuation");

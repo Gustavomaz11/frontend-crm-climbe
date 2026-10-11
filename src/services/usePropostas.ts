@@ -134,7 +134,7 @@ function getApiErrorMessage(error: unknown) {
 }
 
 export function usePropostas(filters: PropostaFilters = {}, enabled = true) {
-  return useQuery<PropostaApi[]>({
+  const query = useQuery<PropostaApi[]>({
     queryKey: ["propostas", filters.empresaId ?? null, filters.negocioId ?? null],
     enabled,
     queryFn: async () => {
@@ -144,6 +144,7 @@ export function usePropostas(filters: PropostaFilters = {}, enabled = true) {
       return unwrap(response.data);
     },
   });
+  return { ...query, data: enabled ? query.data : undefined };
 }
 
 export async function getPropostaDownloadUrl(id: number) {

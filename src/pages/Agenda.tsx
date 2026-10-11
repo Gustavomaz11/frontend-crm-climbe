@@ -1,4 +1,5 @@
 import { FormValidation } from "@/components/ui/form-validation";
+import { KanbanArquivados, KanbanArquivarButton } from "@/components/kanban/KanbanArquivados";
 import { useEffect, useRef, useState, useMemo } from "react";
 import { useTheme } from "@/hooks/use-theme";
 import { useSidebarState } from "@/hooks/useSidebarState";
@@ -27,6 +28,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { shouldShowAgendaReuniao } from "./agendaVisibility";
 
 interface AgendaEvent {
+  arquivadoEm?: string | null;
   id: string;
   title: string;
   time: string;
@@ -166,7 +168,7 @@ const matchesSearch = (event: AgendaEvent, query: string) => {
 const normalizeKanbanColumnId = (status?: string) => {
   const normalized = (status || "AGENDADA").trim().toUpperCase();
   if (["CONFIRMADO", "CONFIRMADA"].includes(normalized)) return "confirmado";
-  if (["REALIZADO", "REALIZADA"].includes(normalized)) return "realizado";
+  if (["REALIZADO", "REALIZADA", "CONCLUIDO", "CONCLUIDA"].includes(normalized)) return "realizado";
   if (["CANCELADO", "CANCELADA"].includes(normalized)) return "cancelado";
   return "agendado";
 };
@@ -325,6 +327,7 @@ const Agenda = () => {
           presencial: Boolean(reuniao.presencial),
           dateKey: dateKey(date),
           status: reuniao.status ?? "AGENDADA",
+          arquivadoEm: reuniao.arquivadoEm,
         };
       })
       .filter((event): event is AgendaEvent => event !== null)
@@ -377,7 +380,7 @@ const Agenda = () => {
     }, {});
 
     agendaEvents.forEach((event) => {
-      if (isGoogleExternalEvent(event)) return;
+      if (isGoogleExternalEvent(event) || event.arquivadoEm) return;
 
       const columnId = normalizeKanbanColumnId(event.status);
       grouped[columnId] = [
@@ -867,6 +870,7 @@ const Agenda = () => {
               {/* KANBAN */}
               {activeView === "kanban" && (
                 <motion.div key="kanban" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="grid grid-cols-4 gap-4">
+                  <div className="col-span-full flex justify-end"><KanbanArquivados<{ idReuniao: number }> contexto={{ tipo: "REUNIAO" }} canRestore onOpen={item => { const event = agendaEvents.find(e => e.id === String(item.idReuniao)); if (event) handleEditEvent(event); }} /></div>
                   {kanbanColumns.map((col, colIndex) => (
                     <motion.div key={col.id} className={`rounded-xl border bg-card/40 backdrop-blur-sm overflow-hidden flex flex-col transition-all duration-300 ${dragOverCol === col.id ? "border-accent/40 bg-accent/[0.03] scale-[1.01]" : "border-border/25"}`} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: colIndex * 0.08 }} onDragOver={e => handleDragOver(e, col.id)} onDragLeave={() => setDragOverCol(null)} onDrop={() => handleDrop(col.id)}>
                       <div className="px-4 py-3 border-b border-border/15 flex items-center justify-between">
@@ -910,6 +914,7 @@ const Agenda = () => {
                               </div>
                               {card.event && !isGoogleExternalEvent(card.event) && (
                                 <div className="mt-3 flex flex-wrap justify-end gap-2">
+                                  {col.id === "realizado" && <KanbanArquivarButton contexto={{ tipo: "REUNIAO" }} id={Number(card.id)} titulo={card.title} />}
                                   <button
                                     type="button"
                                     onMouseDown={(e) => e.stopPropagation()}

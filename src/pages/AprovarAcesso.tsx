@@ -10,6 +10,7 @@ import {
   Moon,
   Search,
   Sun,
+  Trash2,
   User,
   UserCheck,
   X,
@@ -20,12 +21,17 @@ import { AprovacaoAcessoDialog } from "@/components/access/AprovacaoAcessoDialog
 import { GerenciamentoAcessos } from "@/components/access/GerenciamentoAcessos";
 import { AppHeaderUser } from "@/components/layout/AppHeaderUser";
 import { AppSidebarNav } from "@/components/layout/AppSidebarNav";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "@/hooks/use-toast";
 import { useTheme } from "@/hooks/use-theme";
 import { useSidebarState } from "@/hooks/useSidebarState";
 import {
   useAprovarSolicitacaoAcesso,
   useCargos,
+  useExcluirSolicitacaoAcesso,
   useRecusarSolicitacaoAcesso,
   useSolicitacoesAcesso,
   useUsuarioById,
@@ -146,12 +152,14 @@ const AprovarAcesso = () => {
     acao: AcaoConfirmacao;
   } | null>(null);
   const [cargoSelecionadoId, setCargoSelecionadoId] = useState<number | null>(null);
+  const [solicitacaoParaExcluir, setSolicitacaoParaExcluir] = useState<SolicitacaoAcessoView | null>(null);
   const [permissaoIdsSelecionadas, setPermissaoIdsSelecionadas] = useState<Set<number>>(new Set());
   const navigate = useNavigate();
 
   const { data: solicitacoesPersistidas = [], isLoading, isError, error } = useSolicitacoesAcesso();
   const aprovarSolicitacao = useAprovarSolicitacaoAcesso();
   const recusarSolicitacao = useRecusarSolicitacaoAcesso();
+  const excluirSolicitacao = useExcluirSolicitacaoAcesso();
   const { data: cargos = [], isLoading: loadingCargos } = useCargos();
   const { data: permissoes = [], isLoading: loadingPermissoes } = usePermissoes();
   const { data: gruposPermissoes = [] } = useGruposPermissoes();
@@ -193,7 +201,25 @@ const AprovarAcesso = () => {
   const aprovados = solicitacoes.filter((solicitacao) => solicitacao.status === "aprovado").length;
   const recusados = solicitacoes.filter((solicitacao) => solicitacao.status === "recusado").length;
   const solicitacaoConfirmada = solicitacoes.find((solicitacao) => solicitacao.key === confirmando?.key);
-  const isProcessing = aprovarSolicitacao.isPending || recusarSolicitacao.isPending;
+  const isProcessing = aprovarSolicitacao.isPending || recusarSolicitacao.isPending || excluirSolicitacao.isPending;
+
+  async function handleExcluir() {
+    if (!solicitacaoParaExcluir || isProcessing) return;
+    try {
+      await excluirSolicitacao.mutateAsync({
+        id: solicitacaoParaExcluir.id,
+        origem: solicitacaoParaExcluir.origem,
+      });
+      setSolicitacaoParaExcluir(null);
+      toast({ title: "Solicitação excluída", description: "A solicitação de acesso foi removida da lista." });
+    } catch (err) {
+      toast({
+        title: "Não foi possível excluir a solicitação",
+        description: getErrorMessage(err),
+        variant: "destructive",
+      });
+    }
+  }
 
   function abrirConfirmacao(key: string, acao: AcaoConfirmacao) {
     setConfirmando({ key, acao });
@@ -598,6 +624,7 @@ const AprovarAcesso = () => {
                                 {solicitacao.status === "pendente" ? (
                                   <>
                                     <motion.button
+                                      disabled={isProcessing}
                                       onClick={() =>
                                         abrirConfirmacao(solicitacao.key, "aprovar")
                                       }
@@ -609,6 +636,7 @@ const AprovarAcesso = () => {
                                       Aprovar
                                     </motion.button>
                                     <motion.button
+                                      disabled={isProcessing}
                                       onClick={() =>
                                         abrirConfirmacao(solicitacao.key, "recusar")
                                       }
@@ -623,6 +651,18 @@ const AprovarAcesso = () => {
                                 ) : (
                                   <span className="text-[11px] text-muted-foreground italic">Concluído</span>
                                 )}
+                                <motion.button
+                                  type="button"
+                                  disabled={isProcessing}
+                                  aria-label={`Excluir solicitação de ${solicitacao.nome}`}
+                                  onClick={() => setSolicitacaoParaExcluir(solicitacao)}
+                                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-red-500 border border-red-400/20 hover:bg-red-400/10 transition-all text-[11px] font-medium disabled:opacity-50"
+                                  whileHover={{ scale: 1.03 }}
+                                  whileTap={{ scale: 0.97 }}
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                  Excluir
+                                </motion.button>
                               </div>
                             </td>
                           </motion.tr>
@@ -661,6 +701,32 @@ const AprovarAcesso = () => {
           />
         )}
       </AnimatePresence>
+      <AlertDialog
+        open={!!solicitacaoParaExcluir}
+        onOpenChange={(open) => { if (!open && !isProcessing) setSolicitacaoParaExcluir(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir solicitação de acesso?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {solicitacaoParaExcluir?.nome} ({solicitacaoParaExcluir?.email}).{" "}
+              {solicitacaoParaExcluir?.status === "pendente"
+                ? "A solicitação será removida e o pedido de acesso será cancelado."
+                : "A solicitação será removida da lista. A conta e o acesso do usuário serão mantidos."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isProcessing}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={isProcessing}
+              className="bg-red-600 text-white hover:bg-red-700"
+              onClick={(event) => { event.preventDefault(); void handleExcluir(); }}
+            >
+              {excluirSolicitacao.isPending ? "Excluindo..." : "Excluir solicitação"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

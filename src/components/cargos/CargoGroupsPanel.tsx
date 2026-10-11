@@ -5,6 +5,9 @@ import { FolderKanban, Loader2, Pencil, Plus, Save, Trash2, X } from "lucide-rea
 import type { Cargo, GrupoCargo } from "@/services";
 
 interface CargoGroupsPanelProps {
+  canCreate: boolean;
+  canEdit: boolean;
+  canDelete: boolean;
   cargos: Cargo[];
   grupos: GrupoCargo[];
   isLoading: boolean;
@@ -16,6 +19,9 @@ interface CargoGroupsPanelProps {
 }
 
 export function CargoGroupsPanel({
+  canCreate,
+  canEdit,
+  canDelete,
   cargos,
   grupos,
   isLoading,
@@ -79,7 +85,7 @@ export function CargoGroupsPanel({
             Organize o catálogo por área ou segmento sem alterar a hierarquia.
           </p>
         </div>
-        <FormValidation as="form" onSubmit={criarGrupo} className="grid w-full gap-2 sm:w-auto sm:grid-cols-[190px_250px_auto]">
+        {canCreate && <FormValidation as="form" onSubmit={criarGrupo} className="grid w-full gap-2 sm:w-auto sm:grid-cols-[190px_250px_auto]">
           <label className="flex min-w-0 flex-col gap-1 text-[11px]"><span>Nome do grupo *</span><input required
             value={novoNome}
             onChange={(event) => setNovoNome(event.target.value)}
@@ -101,7 +107,7 @@ export function CargoGroupsPanel({
             {isProcessing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
             Criar grupo
           </button>
-        </FormValidation>
+        </FormValidation>}
       </div>
 
       {isLoading ? (
@@ -158,8 +164,8 @@ export function CargoGroupsPanel({
                     </>
                   ) : (
                     <>
-                      <button type="button" onClick={() => iniciarEdicao(grupo)} className="rounded-lg p-2 text-muted-foreground hover:bg-muted/30 hover:text-foreground" aria-label={`Editar ${grupo.nome}`}><Pencil className="h-4 w-4" /></button>
-                      <button type="button" onClick={() => void removerGrupo(grupo)} className="rounded-lg p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" aria-label={`Excluir ${grupo.nome}`}><Trash2 className="h-4 w-4" /></button>
+                      {canEdit && <button type="button" onClick={() => iniciarEdicao(grupo)} className="rounded-lg p-2 text-muted-foreground hover:bg-muted/30 hover:text-foreground" aria-label={`Editar ${grupo.nome}`}><Pencil className="h-4 w-4" /></button>}
+                      {canDelete && <button type="button" onClick={() => void removerGrupo(grupo)} className="rounded-lg p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive" aria-label={`Excluir ${grupo.nome}`}><Trash2 className="h-4 w-4" /></button>}
                     </>
                   )}
                 </div>

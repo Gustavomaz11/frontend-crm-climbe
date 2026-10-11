@@ -11,8 +11,10 @@ import type {
   PipelineTarefaStatus,
 } from "@/services/usePipelineAtividades";
 import { PipelineTaskCard } from "./PipelineTaskCard";
+import { KanbanArquivados, KanbanArquivarButton } from "@/components/kanban/KanbanArquivados";
 
 interface PipelineTaskKanbanProps {
+  negocioId?: number;
   tasks: PipelineTarefa[];
   highlightedTaskId?: number;
   canEdit: boolean;
@@ -36,6 +38,7 @@ const kanbanColumns: KanbanColumn[] = [
 ];
 
 export const PipelineTaskKanban = ({
+  negocioId,
   tasks,
   highlightedTaskId,
   canEdit,
@@ -73,6 +76,8 @@ export const PipelineTaskKanban = ({
   };
 
   return (
+    <div>
+    {negocioId && <div className="mb-3 flex justify-end"><KanbanArquivados<PipelineTarefa> contexto={{ tipo: "PIPELINE_TAREFA", negocioId }} canRestore={canEdit} onOpen={onEdit} /></div>}
     <div className="overflow-x-auto pb-2">
       <div className="grid min-w-[920px] grid-cols-4 gap-3">
         {kanbanColumns.map((column) => {
@@ -136,6 +141,7 @@ export const PipelineTaskKanban = ({
                         task.status === "CONCLUIDA" ? "PENDENTE" : "CONCLUIDA",
                       )}
                     />
+                    {canEdit && task.status === "CONCLUIDA" && <KanbanArquivarButton contexto={{ tipo: "PIPELINE_TAREFA", negocioId }} id={task.id} titulo={task.titulo} />}
                   </div>
                 ))}
                 {columnTasks.length === 0 && (
@@ -148,6 +154,7 @@ export const PipelineTaskKanban = ({
           );
         })}
       </div>
+    </div>
     </div>
   );
 };

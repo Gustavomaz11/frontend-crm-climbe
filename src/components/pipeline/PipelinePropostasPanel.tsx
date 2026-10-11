@@ -1,3 +1,4 @@
+import { useCrudPermissions } from "@/hooks/useCrudPermissions";
 import { useState } from "react";
 import { ExternalLink, FileText, Loader2, MessageSquareWarning, Plus } from "lucide-react";
 import { RevisaoDocumentoDialog } from "@/components/revisoes/RevisaoDocumentoDialog";
@@ -36,10 +37,11 @@ export const PipelinePropostasPanel = ({
   canCreate,
   onCreate,
 }: PipelinePropostasPanelProps) => {
+  const { canRead } = useCrudPermissions("PROPOSTA");
   const empresaId = negocio.empresaId ?? undefined;
   const { data: propostas = [], isLoading, error } = usePropostas(
     { empresaId },
-    Boolean(empresaId),
+    Boolean(empresaId) && canRead,
   );
   const [openingId, setOpeningId] = useState<number | null>(null);
   const [reviewProposalId, setReviewProposalId] = useState<number | null>(null);
@@ -86,6 +88,7 @@ export const PipelinePropostasPanel = ({
         )}
       </div>
 
+      {!canRead && <p className="mb-3 text-[12px] text-muted-foreground">Você não possui permissão para ler propostas.</p>}
       {openError && <p className="mb-3 rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-[11px] text-destructive">{openError}</p>}
       {hasPendingAdjustments && (
         <div className="mb-3 flex items-start gap-3 rounded-xl border border-amber-500/35 bg-amber-500/10 p-3 text-amber-500">

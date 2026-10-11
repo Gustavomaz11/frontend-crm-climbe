@@ -2,8 +2,11 @@ import { useCallback, useMemo, useState, type DragEvent } from "react";
 import { Plus } from "lucide-react";
 import type { PipelineEtapa, PipelineNegocio } from "@/services/usePipelineVendas";
 import { PipelineNegocioCard } from "./PipelineNegocioCard";
+import { KanbanArquivados, KanbanArquivarButton } from "@/components/kanban/KanbanArquivados";
 
 interface PipelineKanbanBoardProps {
+  funilId?: number;
+  canArchive?: boolean;
   etapas: PipelineEtapa[];
   canMove: boolean;
   canCreate: boolean;
@@ -14,6 +17,8 @@ interface PipelineKanbanBoardProps {
 }
 
 export const PipelineKanbanBoard = ({
+  funilId,
+  canArchive = false,
   etapas,
   canMove,
   canCreate,
@@ -47,6 +52,8 @@ export const PipelineKanbanBoard = ({
   };
 
   return (
+    <div>
+    {funilId && <div className="mb-3 flex justify-end"><KanbanArquivados<PipelineNegocio> contexto={{ tipo: "NEGOCIO", funilId }} canRestore={canArchive} onOpen={onOpen} /></div>}
     <div className="flex min-h-[540px] gap-4 overflow-x-auto pb-4">
       {etapas.map((stage) => {
         const isDragTarget = dragOverStage === stage.id;
@@ -71,6 +78,7 @@ export const PipelineKanbanBoard = ({
             </header>
             <div className="flex-1 space-y-2 p-3">
               {stage.negocios.map((business) => (
+                <div key={business.id}>
                 <PipelineNegocioCard
                   key={business.id}
                   negocio={business}
@@ -79,6 +87,8 @@ export const PipelineKanbanBoard = ({
                   onOpen={onOpen}
                   onDragStart={startDragging}
                 />
+                {canArchive && business.resultado !== "ABERTO" && <KanbanArquivarButton contexto={{ tipo: "NEGOCIO", funilId }} id={business.id} titulo={business.nomeEmpresa} />}
+                </div>
               ))}
               {stage.negocios.length === 0 && (
                 <div className="rounded-lg border border-dashed border-border/25 py-10 text-center text-[10px] text-muted-foreground">Sem negócios</div>
@@ -92,6 +102,7 @@ export const PipelineKanbanBoard = ({
           </div>
         );
       })}
+    </div>
     </div>
   );
 };

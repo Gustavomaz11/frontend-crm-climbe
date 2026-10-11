@@ -17,7 +17,8 @@ interface ApiEnvelope<T> {
 export type ContratoStatus = "PENDENTE" | "APROVADO" | "REJEITADO" | string;
 export type ContratoPreparacaoEtapa = "A_FAZER" | "EM_ANDAMENTO" | "REVISAO" | "CONCLUIDO";
 
-interface ContratoApi {
+export interface ContratoApi {
+  arquivadoEm?: string | null;
   idContrato?: number;
   id?: number;
   proposta?: {
@@ -60,6 +61,7 @@ interface ContratoApi {
 }
 
 export interface Contrato {
+  arquivadoEm?: string | null;
   etapaPreparacao?: ContratoPreparacaoEtapa | null;
   responsavelComercialId?: number | null;
   responsavelComercialNome?: string | null;
@@ -152,7 +154,7 @@ function getFileNameFromUrl(url?: string | null) {
   return fileName.replace(/^[0-9a-fA-F-]{36}_/, "");
 }
 
-function normalizeContrato(contrato: ContratoApi): Contrato {
+export function normalizeContrato(contrato: ContratoApi): Contrato {
   const id = contrato.id ?? contrato.idContrato ?? 0;
   const empresaId = contrato.empresa?.idEmpresa ?? contrato.empresa?.id ?? 0;
   const empresaNome =
@@ -172,6 +174,7 @@ function normalizeContrato(contrato: ContratoApi): Contrato {
     dataFim: contrato.dataFim ?? "",
     valor: Number(contrato.proposta?.valuation ?? 0),
     etapaPreparacao: contrato.etapaPreparacao ?? null,
+    arquivadoEm: contrato.arquivadoEm ?? null,
     responsavelComercialId: contrato.responsavelComercial?.id ?? contrato.usuario?.id ?? null,
     responsavelComercialNome: contrato.responsavelComercial?.nomeCompleto ?? contrato.usuario?.nomeCompleto ?? null,
     empresaId,
@@ -205,8 +208,9 @@ function normalizeContrato(contrato: ContratoApi): Contrato {
   };
 }
 
-export function useContratos() {
-  return useQuery<Contrato[]>({
+export function useContratos(enabled = true) {
+  const query = useQuery<Contrato[]>({
+    enabled,
     queryKey: ["contratos"],
     refetchInterval: 60_000,
     queryFn: async () => {
@@ -214,6 +218,7 @@ export function useContratos() {
       return response.data.map(normalizeContrato);
     },
   });
+  return { ...query, data: enabled ? query.data : undefined };
 }
 
 export function useContratosKanbanDisponiveis(usuarioId?: number | null) {

@@ -1,6 +1,7 @@
+import { useContratoPermissions } from "@/hooks/useContratoPermissions";
 import { ContratoPreparacaoBoard } from "@/components/contratos/ContratoPreparacaoBoard";
 import { ContratoPreparacaoDialog } from "@/components/contratos/ContratoPreparacaoDialog";
-import { useUsuarioPermissoes } from "@/services/usePermissoes";
+import { useCrudPermissions } from "@/hooks/useCrudPermissions";
 import { FormValidation } from "@/components/ui/form-validation";
 import { getProposalServicesLabel } from "@/services/proposalPayments";
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
@@ -113,9 +114,12 @@ const Contratos = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const { data: contratos = [], isLoading, error } = useContratos();
+  const contractAccess = useContratoPermissions();
+  const proposalAccess = useCrudPermissions("PROPOSTA");
+  const canCreate = contractAccess.canCreateWithUpload;
+  const { data: contratos = [], isLoading, error } = useContratos(contractAccess.canRead);
   const { data: empresas = [] } = useEmpresas();
-  const { data: propostas = [] } = usePropostas();
+  const { data: propostas = [] } = usePropostas({}, proposalAccess.canRead);
   const { data: usuarios = [] } = useUsuarios();
   const createContratoWithFile = useCreateContratoWithFile();
   const updateContratoStatus = useUpdateContratoStatus();
@@ -124,8 +128,6 @@ const Contratos = () => {
 
   const basicUserData = useAuthStore((state) => state.basicUserData);
   const userData = useAuthStore((state) => state.userData);
-  const { data: contractPermissions = [] } = useUsuarioPermissoes(basicUserData?.id ?? userData?.id);
-  const canEditPreparacao = contractPermissions.some(p => p.permissao.codigo === "CONTRATO_CRUD");
   const preparacaoContrato = contratos.find(c => c.id === preparacaoId);
   const closePreparacao = () => {
     setPreparacaoId(null);
@@ -185,7 +187,7 @@ const Contratos = () => {
   );
 
   useEffect(() => {
-    if (searchParams.get("novo") !== "1") return;
+    if (!canCreate || searchParams.get("novo") !== "1") return;
 
     setUploadOpen(true);
     setUploadDone(false);
@@ -194,7 +196,7 @@ const Contratos = () => {
     const nextParams = new URLSearchParams(searchParams);
     nextParams.delete("novo");
     setSearchParams(nextParams, { replace: true });
-  }, [searchParams, setSearchParams]);
+  }, [canCreate, searchParams, setSearchParams]);
 
   useEffect(() => {
     if (!uploadError && !uploadDone) return;
@@ -419,7 +421,7 @@ const Contratos = () => {
 
   const filtered = useMemo(() => {
     const statusFilter = STATUS_MAP[activeTab];
-    return contratos.filter(c => {
+    return contratos.filter(c => !c.arquivadoEm).filter(c => {
       const matchSearch =
         c.titulo?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         c.empresaNome?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -470,18 +472,18 @@ const Contratos = () => {
                 <h1 className="text-[22px] font-bold text-foreground tracking-tight">Contratos</h1>
                 <p className="text-[12px] text-muted-foreground mt-0.5">{isLoading ? "Carregando..." : `${filtered.length} de ${contratos.length} contratos`}</p>
               </div>
-              <motion.button
+              {canCreate && (<motion.button
                 onClick={() => { setUploadOpen(!uploadOpen); setUploadDone(false); setUploadError(""); }}
                 className="h-9 px-4 rounded-lg bg-accent text-accent-foreground text-[12px] font-semibold flex items-center gap-2 shadow-[0_2px_10px_-2px_hsl(var(--accent)/0.3)]"
                 whileHover={{ scale: 1.02, y: -1 }}
                 whileTap={{ scale: 0.98 }}
               >
                 <Plus className="w-3.5 h-3.5" /> Novo Contrato
-              </motion.button>
+              </motion.button>)}
             </div>
 
             <AnimatePresence>
-              {uploadOpen && (
+              {canCreate && uploadOpen && (
                 <motion.div className="mb-4 rounded-xl border border-border/25 bg-card/40 backdrop-blur-sm overflow-hidden" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.22 }}>
                   <div className="p-4">
                     <input ref={inputRef} type="file" multiple accept={ACCEPTED} className="hidden" onChange={(e) => addFiles(e.target.files)} />
@@ -651,14 +653,14 @@ const Contratos = () => {
           <div className="px-6 pb-6">
             {isLoading ? <p className="py-12 text-center text-xs text-muted-foreground">Carregando contratos...</p>
               : error ? <p role="alert" className="py-12 text-center text-xs text-destructive">Não foi possível carregar os contratos.</p>
-              : <ContratoPreparacaoBoard contratos={filtered} canEdit={canEditPreparacao} onOpen={c => setPreparacaoId(c.id)} />}
+              : <ContratoPreparacaoBoard contratos={filtered} canEdit={contractAccess.canMove} canArchive={contractAccess.canArchive} canRestore={contractAccess.canRestore} onOpen={c => setPreparacaoId(c.id)} />}
 
           </div>
         </main>
       </div>
 
       {preparacaoContrato && <ContratoPreparacaoDialog key={preparacaoContrato.id} contrato={preparacaoContrato}
-        proposta={propostas.find(p => p.idProposta === preparacaoContrato.propostaId)} canEdit={canEditPreparacao}
+        proposta={propostas.find(p => p.idProposta === preparacaoContrato.propostaId)} canEdit={contractAccess.canMove} canSend={contractAccess.canSendClient}
         onClose={closePreparacao} onReview={() => setReviewContratoId(preparacaoContrato.id)}
         onManage={() => { openContratoModal(preparacaoContrato); closePreparacao(); }} />}
 
@@ -691,7 +693,7 @@ const Contratos = () => {
                     <p className="min-w-0 truncate text-[12px] text-foreground/70">
                       {selectedContrato.propostaTitulo || "Sem proposta vinculada"}
                     </p>
-                    {selectedContrato.propostaId && (
+                    {contractAccess.canUnlinkProposal && selectedContrato.propostaId && (
                       <button
                         type="button"
                         onClick={() => handleDesvincularProposta(selectedContrato)}
@@ -706,7 +708,7 @@ const Contratos = () => {
                 <div className="rounded-lg border border-border/20 bg-background/50 p-4">
                   <div className="mb-3 flex items-center justify-between gap-3">
                     <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Responsável e atores</p>
-                    {!responsaveisEditOpen ? (
+                    {contractAccess.canEditResponsibles && (!responsaveisEditOpen ? (
                       <button
                         type="button"
                         onClick={() => handleStartEditResponsaveis(selectedContrato)}
@@ -725,7 +727,7 @@ const Contratos = () => {
                       >
                         Cancelar
                       </button>
-                    )}
+                    ))}
                   </div>
 
                   {!responsaveisEditOpen ? (

@@ -29,7 +29,10 @@ export default function Cargos() {
   const userId = basicUserData?.id ?? userData?.id;
   const { data: permissionAssociations = [], isLoading: loadingPermissions } = useUsuarioPermissoes(userId);
   const permissionCodes = new Set(permissionAssociations.map((item) => item.permissao.codigo));
-  const canManageCatalog = permissionCodes.has("CARGO_CRUD");
+  const canCreate = permissionCodes.has("CARGO_CRIAR");
+  const canEdit = permissionCodes.has("CARGO_EDITAR");
+  const canDelete = permissionCodes.has("CARGO_DELETAR");
+  const canViewCatalog = permissionCodes.has("CARGO_LER") || canCreate || canEdit || canDelete;
   const canEditHierarchy = permissionCodes.has("CARGO_HIERARQUIA_EDITAR");
   const { data: cargos = [], isLoading } = useCargos();
   const { data: grupos = [], isLoading: loadingGroups } = useGruposCargos();
@@ -79,7 +82,7 @@ export default function Cargos() {
     }
   }
 
-  const hasAccess = hierarchyMode ? canEditHierarchy : canManageCatalog;
+  const hasAccess = hierarchyMode ? canEditHierarchy : canViewCatalog;
 
   return (
     <AppPageShell>
@@ -89,7 +92,7 @@ export default function Cargos() {
             <h1 className="text-[24px] font-bold tracking-tight">{hierarchyMode ? "Hierarquia de cargos" : "Cargos"}</h1>
             <p className="mt-1 text-[12px] text-muted-foreground">{hierarchyMode ? "Organize os níveis e segmentos que definem a visibilidade das tarefas." : "Cadastre e mantenha os cargos disponíveis no sistema."}</p>
           </div>
-          {!hierarchyMode && canManageCatalog && <FormValidation as="form" onSubmit={criarCargo} className="flex flex-wrap gap-2">
+          {!hierarchyMode && canCreate && <FormValidation as="form" onSubmit={criarCargo} className="flex flex-wrap gap-2">
             <label className="flex min-w-0 flex-col gap-1 text-[11px]"><span>Nome do novo cargo *</span><input required value={novoNome} onChange={(e) => setNovoNome(e.target.value)} placeholder="Nome do novo cargo" className="h-10 w-64 rounded-lg border border-border/30 bg-card/45 px-3 text-[13px] outline-none focus:border-accent/50" /></label>
             <select value={novoGrupoId ?? ""} onChange={(event) => setNovoGrupoId(event.target.value ? Number(event.target.value) : null)} className="h-10 w-52 rounded-lg border border-border/30 bg-card px-3 text-[12px] outline-none focus:border-accent/50">
               <option value="">Sem grupo</option>
@@ -106,6 +109,9 @@ export default function Cargos() {
         {loadingPermissions ? <div className="flex justify-center p-20"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div> : !hasAccess ? <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-12 text-center"><LockKeyhole className="mx-auto h-7 w-7 text-destructive" /><p className="mt-3 text-sm font-semibold">Você não possui permissão para acessar esta configuração.</p></div> : hierarchyMode ? <CargoHierarchyTree cargos={cargos} isSaving={atualizarHierarquia.isPending} onSave={salvarHierarquia} /> : <>
           <CargoGroupsPanel
             cargos={cargos}
+            canCreate={canCreate}
+            canEdit={canEdit}
+            canDelete={canDelete}
             grupos={grupos}
             isLoading={loadingGroups}
             isProcessing={criarGrupo.isPending || atualizarGrupo.isPending || excluirGrupo.isPending}
@@ -132,7 +138,7 @@ export default function Cargos() {
               </div>
               <select
                 value={cargo.grupoId ?? ""}
-                disabled={atribuirGrupo.isPending}
+                disabled={!canEdit || atribuirGrupo.isPending}
                 onChange={(event) => void atribuirGrupo.mutateAsync({ cargoId: cargo.id, grupoId: event.target.value ? Number(event.target.value) : null }).then(() => setFeedback("Grupo do cargo atualizado."))}
                 className="h-9 w-full rounded-lg border border-border/30 bg-background/55 px-3 text-[11px] text-foreground outline-none focus:border-accent/50 disabled:opacity-50"
                 aria-label={`Grupo de ${cargo.nome}`}
@@ -148,8 +154,8 @@ export default function Cargos() {
                   </>
                 ) : (
                   <>
-                    <button type="button" onClick={() => { setEditandoId(cargo.id); setEditandoNome(cargo.nome); }} className="rounded-lg p-2 text-muted-foreground hover:bg-muted/30 hover:text-foreground"><Pencil className="h-4 w-4" /></button>
-                    <button type="button" onClick={() => removerCargo(cargo.id)} className="rounded-lg p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
+                    {canEdit && <button type="button" aria-label={`Editar ${cargo.nome}`} onClick={() => { setEditandoId(cargo.id); setEditandoNome(cargo.nome); }} className="rounded-lg p-2 text-muted-foreground hover:bg-muted/30 hover:text-foreground"><Pencil className="h-4 w-4" /></button>}
+                    {canDelete && <button type="button" aria-label={`Excluir ${cargo.nome}`} onClick={() => removerCargo(cargo.id)} className="rounded-lg p-2 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"><Trash2 className="h-4 w-4" /></button>}
                   </>
                 )}
               </div>

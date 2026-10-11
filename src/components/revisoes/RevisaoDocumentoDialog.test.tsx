@@ -1,8 +1,13 @@
+vi.mock("@/hooks/useCrudPermissions", () => ({ useCrudPermissions: () => ({ canRead: true, canCreate: true, canEdit: canEdit, canDelete: true, canAccess: true, isLoading: false }) }));
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { RevisaoDocumentoDialog } from "./RevisaoDocumentoDialog";
+vi.mock("@/hooks/useContratoPermissions", () => ({ useContratoPermissions: () => ({ canResend: legalResend, canSendNewVersion: legalNewVersion }) }));
 
+let canEdit = true;
+let legalResend = false;
+let legalNewVersion = false;
 const getRevisaoInternaMock = vi.fn();
 
 vi.mock("@/services", () => ({
@@ -59,6 +64,29 @@ beforeAll(() => {
 });
 
 describe("RevisaoDocumentoDialog", () => {
+  it.each([true, false])("separa nova versão e reenvio para o Jurídico: reenviar=%s", async reenviar => {
+    legalResend = reenviar; legalNewVersion = !reenviar;
+    getRevisaoInternaMock.mockResolvedValue({ ...revisao, tipo: "CONTRATO" });
+    render(<QueryClientProvider client={new QueryClient()}><RevisaoDocumentoDialog open tipo="CONTRATO" referenciaId={7} onClose={vi.fn()} /></QueryClientProvider>);
+    await screen.findByRole("button", { name: /Marcação 1.*página 1/i });
+    if (reenviar) {
+      expect(screen.getByRole("button", { name: "Reenviar e-mail" })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Enviar nova versão" })).not.toBeInTheDocument();
+    } else {
+      expect(screen.getByRole("button", { name: "Enviar nova versão" })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Reenviar e-mail" })).not.toBeInTheDocument();
+    }
+  });
+  it("permite ler os ajustes sem reenviar e-mail ou anexar nova versão", async () => {
+    canEdit = false;
+    getRevisaoInternaMock.mockResolvedValue(revisao);
+    render(<QueryClientProvider client={new QueryClient()}><RevisaoDocumentoDialog open tipo="PROPOSTA" referenciaId={7} onClose={vi.fn()} /></QueryClientProvider>);
+    expect(await screen.findByRole("button", { name: /Marcação 1.*página 1/i })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Reenviar e-mail" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Enviar nova versão" })).not.toBeInTheDocument();
+    canEdit = true;
+  });
+
   it("permite navegar entre comentário e trecho marcado na revisão aberta pelo pipeline", async () => {
     getRevisaoInternaMock.mockResolvedValue(revisao);
     render(

@@ -1,9 +1,6 @@
 import { useMutation } from "@tanstack/react-query";
 import { api } from "@/api";
-
-interface GoogleAuthUrlResponse {
-  authorizationUrl: string;
-}
+import { beginGoogleLogin, googleLoginVerifier, clearGoogleLoginVerifier } from "@/lib/googleOAuthPkce";
 
 interface ExchangeCodeResponse {
   success: boolean;
@@ -56,21 +53,33 @@ interface CompleteRegistrationResponse {
 
 export const useGoogleAuthUrl = () => {
   return useMutation({
-    mutationFn: async () => {
-      const response = await api.get<GoogleAuthUrlResponse>("/auth/google/url");
-      return response.data;
-    },
+    mutationFn: beginGoogleLogin,
   });
 };
 
+// Compartilha a troca durante remontagens/effects concorrentes (o código é de uso único).
+const exchanges = new Map<string, Promise<ExchangeCodeResponse>>();
+export function exchangeGoogleCode(code: string): Promise<ExchangeCodeResponse> {
+  const pending = exchanges.get(code);
+  if (pending) return pending;
+  const exchange = (async () => {
+    const codeVerifier = googleLoginVerifier();
+    const response = await api.post<ExchangeCodeResponse>("/auth/exchange", { code, codeVerifier });
+    clearGoogleLoginVerifier();
+    return response.data;
+  })();
+  exchanges.set(code, exchange);
+  // Nunca retém os tokens na memória além do período de troca do código.
+  void exchange.then(
+    () => { setTimeout(() => exchanges.delete(code), 60_000); },
+    () => { exchanges.delete(code); },
+  );
+  return exchange;
+}
+
 export const useExchangeGoogleCode = () => {
   return useMutation({
-    mutationFn: async (code: string) => {
-      const response = await api.post<ExchangeCodeResponse>("/auth/exchange", {
-        code,
-      });
-      return response.data;
-    },
+    mutationFn: exchangeGoogleCode,
   });
 };
 

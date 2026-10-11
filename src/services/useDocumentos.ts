@@ -137,14 +137,16 @@ function getApiErrorMessage(error: unknown) {
   return "Erro na API";
 }
 
-export function useDocumentos() {
-  return useQuery<Documento[]>({
+export function useDocumentos(enabled = true) {
+  const query = useQuery<Documento[]>({
+    enabled,
     queryKey: ["documentos"],
     queryFn: async () => {
       const response = await api.get<DocumentoApi[]>("/documentos");
       return response.data.map(normalizeDocumento);
     },
   });
+  return { ...query, data: enabled ? query.data : undefined };
 }
 
 export function useDocumentoById(id: number) {

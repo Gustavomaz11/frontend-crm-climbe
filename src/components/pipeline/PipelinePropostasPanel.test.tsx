@@ -1,3 +1,4 @@
+vi.mock("@/hooks/useCrudPermissions", () => ({ useCrudPermissions: () => ({ canRead: true, canCreate: true, canEdit: true, canDelete: true, canAccess: true, isLoading: false }) }));
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { PipelineNegocio } from "@/services/usePipelineVendas";

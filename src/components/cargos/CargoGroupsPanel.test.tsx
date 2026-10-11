@@ -4,12 +4,27 @@ import { describe, expect, it, vi } from "vitest";
 import { CargoGroupsPanel } from "./CargoGroupsPanel";
 
 describe("CargoGroupsPanel", () => {
+  it.each([
+    { canCreate: false, canEdit: false, canDelete: false },
+    { canCreate: true, canEdit: false, canDelete: false },
+    { canCreate: false, canEdit: true, canDelete: false },
+    { canCreate: false, canEdit: false, canDelete: true },
+  ])("exibe apenas as ações concedidas: %o", permissions => {
+    render(<CargoGroupsPanel {...permissions} cargos={[]} grupos={[{ id: 10, nome: "Tecnologia" }]}
+      isLoading={false} isProcessing={false} onCreate={vi.fn()} onUpdate={vi.fn()} onDelete={vi.fn()} onFeedback={vi.fn()} />);
+    expect(!!screen.queryByRole("button", { name: "Criar grupo" })).toBe(permissions.canCreate);
+    expect(!!screen.queryByRole("button", { name: "Editar Tecnologia" })).toBe(permissions.canEdit);
+    expect(!!screen.queryByRole("button", { name: "Excluir Tecnologia" })).toBe(permissions.canDelete);
+    expect(screen.getByText("Tecnologia")).toBeInTheDocument();
+  });
+
   it("cria grupos e mostra quantos cargos estão vinculados", async () => {
     const onCreate = vi.fn().mockResolvedValue(undefined);
     const onFeedback = vi.fn();
 
     render(
       <CargoGroupsPanel
+        canCreate canEdit canDelete
         cargos={[
           { id: 1, nome: "Diretor de TI", grupoId: 10 },
           { id: 2, nome: "Analista de TI", grupoId: 10 },
@@ -39,6 +54,7 @@ describe("CargoGroupsPanel", () => {
 
     render(
       <CargoGroupsPanel
+        canCreate canEdit canDelete
         cargos={[{ id: 1, nome: "Diretor de TI", grupoId: 10 }]}
         grupos={[{ id: 10, nome: "Tecnologia" }]}
         isLoading={false}

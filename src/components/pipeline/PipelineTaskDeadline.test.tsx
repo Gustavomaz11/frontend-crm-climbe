@@ -1,9 +1,15 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { fireEvent, render as renderUi, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { PipelineTarefasPanel } from "./PipelineTarefasPanel";
 import { PipelineTarefasVisao } from "./PipelineTarefasVisao";
 import { PipelineTarefaDialog } from "./PipelineTarefaDialog";
 import type { PipelineTarefa } from "@/services/usePipelineAtividades";
+
+const render = (ui: React.ReactElement) => {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return renderUi(ui, { wrapper: ({ children }) => <QueryClientProvider client={client}>{children}</QueryClientProvider> });
+};
 
 const mocks = vi.hoisted(() => ({ tasks: [] as unknown[], status: vi.fn() }));
 vi.mock("@/services/usePipelineAtividades", async original => ({ ...await original<typeof import("@/services/usePipelineAtividades")>(),

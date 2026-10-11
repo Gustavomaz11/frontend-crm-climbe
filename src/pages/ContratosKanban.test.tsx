@@ -1,8 +1,14 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { fireEvent, render as renderUi, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import ContratosKanban from "./ContratosKanban";
 vi.mock("@/components/NotificationBell", () => ({ NotificationBell: () => null }));
+
+const render = (ui: React.ReactElement) => {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  return renderUi(ui, { wrapper: ({ children }) => <QueryClientProvider client={client}>{children}</QueryClientProvider> });
+};
 
 const mocks = vi.hoisted(() => ({ equipe: {} as Record<string, unknown>, board: {} as Record<string, unknown>, buscarBoard: vi.fn(), move: vi.fn() }));
 vi.mock("@/services", async importOriginal => {

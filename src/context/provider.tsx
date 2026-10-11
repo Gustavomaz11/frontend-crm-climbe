@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import { setUnauthorizedCallback } from "@/api";
 import { syncGoogleAccessToken } from "@/lib/googleAccessToken";
+import { invalidatePendingRefresh, revokeAuthSession } from "@/lib/authSession";
 import {
   ACCESS_TOKEN_COOKIE,
   REFRESH_TOKEN_COOKIE,
@@ -73,6 +74,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   // Função para fazer logout (extraída para reutilização)
   const handleLogout = useCallback(() => {
+    invalidatePendingRefresh();
     // Limpar timer
     if (refreshTokenInterval) {
       clearInterval(refreshTokenInterval);
@@ -99,9 +101,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
     try {
       const response = await refreshToken(refreshTokenCookie);
-      const { accessToken, expiresIn } = response;
-
-      saveAccessToken(accessToken, expiresIn);
+      const { expiresIn } = response;
 
       // Atualizar tempo de expiração
       tokenExpiresAt = calculateExpiresAt(expiresIn);
@@ -214,8 +214,18 @@ export function AuthProvider({ children }: PropsWithChildren) {
     [signIn, setRole, setBasicUserData, setupRefreshTimer, navigate],
   );
 
-  const signOut = useCallback(() => {
-    handleLogout();
+  const signOut = useCallback(async () => {
+    if (refreshTokenInterval) {
+      clearInterval(refreshTokenInterval);
+      refreshTokenInterval = null;
+    }
+    try {
+      await revokeAuthSession();
+    } catch {
+      toast.error("Você saiu deste navegador, mas não foi possível encerrar a sessão no servidor. Tente novamente quando a conexão voltar.");
+    } finally {
+      handleLogout();
+    }
   }, [handleLogout]);
 
   const cachedValue = useMemo(() => {

@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import ClimbLogo from "@/components/login/ClimbLogo";
 import { KanbanTaskCard } from "@/components/kanban/KanbanTaskCard";
+import { KanbanArquivados, KanbanArquivarButton } from "@/components/kanban/KanbanArquivados";
 import { KanbanTaskDialog, type KanbanTaskDraft } from "@/components/kanban/KanbanTaskDialog";
 import { KanbanTaskEditDialog } from "@/components/kanban/KanbanTaskEditDialog";
 import { AppHeaderUser } from "@/components/layout/AppHeaderUser";
@@ -80,6 +81,7 @@ const ContratosKanban = () => {
   const [newRaiaTitle, setNewRaiaTitle] = useState("");
   const [taskModalRaiaId, setTaskModalRaiaId] = useState<number | null>(null);
   const [editingTaskId, setEditingTaskId] = useState<number | null>(null);
+  const [archivedTask, setArchivedTask] = useState<ContratoKanbanTask | null>(null);
   const [lateCompletion, setLateCompletion] = useState<{ task: ContratoKanbanTask; raiaId: number } | null>(null);
   const [taskDraft, setTaskDraft] = useState<KanbanTaskDraft>(emptyDraft);
   const [editingRaiaId, setEditingRaiaId] = useState<number | null>(null);
@@ -121,8 +123,8 @@ const ContratosKanban = () => {
   const { data: board, isLoading: boardLoading, error: boardError } = useContratoKanban(equipe?.configurada ? selectedContratoId : undefined, usuarioId ?? undefined);
   const { data: usuariosComPerfil = [] } = useUsuarios();
   const editingTask = useMemo(
-    () => board?.raias.flatMap((raia) => raia.tasks).find((task) => task.id === editingTaskId),
-    [board, editingTaskId],
+    () => board?.raias.flatMap((raia) => raia.tasks).find((task) => task.id === editingTaskId) ?? (archivedTask?.id === editingTaskId ? archivedTask : undefined),
+    [board, editingTaskId, archivedTask],
   );
   useEffect(() => {
     const id = Number(searchParams.get("tarefaId"));
@@ -184,6 +186,7 @@ const ContratosKanban = () => {
     setPendingRaiaRemoval(null);
     setTaskModalRaiaId(null);
     setEditingTaskId(null);
+    setArchivedTask(null);
     setTaskDraft(emptyDraft);
     setMessage(null);
   }
@@ -538,6 +541,7 @@ const ContratosKanban = () => {
                 )}
               </AnimatePresence>
 
+              {board && <div className="mb-3 flex justify-end"><KanbanArquivados<ContratoKanbanTask> contexto={{ tipo: "CONTRATO_TAREFA", contratoId: selectedContratoId }} canRestore={!!board.podeEditar} onOpen={task => { setArchivedTask(task); setEditingTaskId(task.id); }} /></div>}
               {equipeLoading || (equipe?.configurada && boardLoading) ? (
                 <div className="py-16 text-center text-[12px] text-muted-foreground">Carregando quadro...</div>
               ) : equipeError || boardError ? (
@@ -596,6 +600,7 @@ const ContratosKanban = () => {
                           </div>
                         ) : (
                           raia.tasks.map((task) => (
+                            <div key={task.id}>
                             <KanbanTaskCard
                               key={task.id}
                               task={task}
@@ -610,6 +615,8 @@ const ContratosKanban = () => {
                               onDelete={handleDeleteTask}
                               onToggleSubtask={handleToggleSubtask}
                             />
+                            {!!board.podeEditar && raia.concluiTarefas && <KanbanArquivarButton contexto={{ tipo: "CONTRATO_TAREFA", contratoId: selectedContratoId }} id={task.id} titulo={task.titulo} />}
+                            </div>
                           ))
                         )}
                       </div>
@@ -687,15 +694,15 @@ const ContratosKanban = () => {
         <KanbanTaskEditDialog
           key={editingTask.id}
           contratoId={selectedContratoId}
-          canEdit={!!board.podeEditar}
-          canEditDeadline={!!board.gestor}
-          canToggle={!!board.podeEditar || (editingTask.responsaveis ?? (editingTask.responsavel ? [editingTask.responsavel] : [])).some((usuario) => usuario.id === usuarioId)}
+          canEdit={!archivedTask && !!board.podeEditar}
+          canEditDeadline={!archivedTask && !!board.gestor}
+          canToggle={!archivedTask && (!!board.podeEditar || (editingTask.responsaveis ?? (editingTask.responsavel ? [editingTask.responsavel] : [])).some((usuario) => usuario.id === usuarioId))}
           task={editingTask}
           usuarios={usuariosKanban}
           isSaving={updateTask.isPending}
           subtaskPending={createSubtask.isPending || updateSubtask.isPending || toggleSubtask.isPending || deleteSubtask.isPending}
           onClose={() => {
-            setEditingTaskId(null);
+            setEditingTaskId(null); setArchivedTask(null);
             if (searchParams.has("tarefaId")) { const next = new URLSearchParams(searchParams); next.delete("tarefaId"); setSearchParams(next, { replace: true }); }
           }}
           onSave={handleSaveTask}

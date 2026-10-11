@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { CONTRATO_ACCESS_CODES } from "./useContratoPermissions";
 import {
   Home,
   FileText,
@@ -33,7 +34,7 @@ export interface MainNavItem {
 
 const mainNavItems: MainNavItem[] = [
   { icon: Home, label: "Home", path: "/dashboard" },
-  { icon: FileText, label: "Contratos", path: "/contratos", permissions: ["CONTRATO_CRUD"] },
+  { icon: FileText, label: "Contratos", path: "/contratos", permissions: CONTRATO_ACCESS_CODES },
   { icon: LayoutDashboard, label: "Kanban", path: "/contratos/kanban", permissions: ["CONTRATO_KANBAN"] },
   { icon: TrendingUp, label: "Pré-vendas", path: "/pipeline-pre-vendas", permissions: ["COMERCIAL"] },
   { icon: TrendingUp, label: "Pipeline de Vendas", path: "/pipeline-vendas", permissions: ["COMERCIAL"] },
@@ -43,10 +44,10 @@ const mainNavItems: MainNavItem[] = [
   { icon: SlidersHorizontal, label: "Tags e campos", path: "/pipeline-vendas/cadastros", permissions: ["COMERCIAL"] },
   { icon: FileCode2, label: "Biblioteca de Scripts", path: "/pipeline-vendas/scripts", permissions: ["COMERCIAL_SCRIPT_VISUALIZAR"] },
   { icon: SlidersHorizontal, label: "Configuração de Funis", path: "/pipeline-vendas/funis", permissions: ["COMERCIAL_FUNIL_VISUALIZAR"] },
-  { icon: ScrollText, label: "Propostas", path: "/propostas", permissions: ["PROPOSTA_CRUD"] },
+  { icon: ScrollText, label: "Propostas", path: "/propostas", permissions: ["PROPOSTA_LER", "PROPOSTA_CRIAR", "PROPOSTA_EDITAR", "PROPOSTA_DELETAR"] },
   { icon: CalendarIcon, label: "Agenda", path: "/agenda", permissions: ["REUNIAO_AGENDAMENTO"] },
-  { icon: Shield, label: "Permissões", path: "/permissoes", permissions: ["PERMITIR_ACESSO", "CARGO_CRUD"] },
-  { icon: BriefcaseBusiness, label: "Cargos", path: "/cargos", permissions: ["CARGO_CRUD"] },
+  { icon: Shield, label: "Permissões", path: "/permissoes", permissions: ["PERMITIR_ACESSO"] },
+  { icon: BriefcaseBusiness, label: "Cargos", path: "/cargos", permissions: ["CARGO_LER", "CARGO_CRIAR", "CARGO_EDITAR", "CARGO_DELETAR"] },
   { icon: Network, label: "Hierarquia de cargos", path: "/cargos/hierarquia", permissions: ["CARGO_HIERARQUIA_EDITAR"] },
   { icon: Building2, label: "Empresas", path: "/empresas" },
   { icon: UsersRound, label: "Pessoas", path: "/pessoas" },
@@ -54,7 +55,7 @@ const mainNavItems: MainNavItem[] = [
     icon: FileCheck,
     label: "Documentos",
     path: "/documentos",
-    permissions: ["DOCUMENTO_JURIDICO_CRUD", "ARQUIVO_UPLOAD", "ARQUIVO_DOWNLOAD"],
+    permissions: ["DOCUMENTO_JURIDICO_LER", "DOCUMENTO_JURIDICO_CRIAR", "DOCUMENTO_JURIDICO_EDITAR", "DOCUMENTO_JURIDICO_DELETAR"],
   },
   { icon: UserCheck, label: "Solicitações", path: "/aprovar-acesso", permissions: ["PERMITIR_ACESSO"] },
 ];

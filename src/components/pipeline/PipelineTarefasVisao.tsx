@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { KanbanArquivados } from "@/components/kanban/KanbanArquivados";
 import { CalendarCheck2, Filter, ListTodo } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -22,6 +23,7 @@ interface PipelineTarefasVisaoProps {
   canView: boolean;
   canViewAll: boolean;
   canConclude: boolean;
+  canEdit?: boolean;
   onOpenNegocio: (negocio: PipelineNegocio) => void;
 }
 
@@ -35,7 +37,7 @@ const views: { value: PipelineTarefaVisao; label: string }[] = [
 
 const fieldClass = "h-9 rounded-lg border border-border/25 bg-card/45 px-3 text-[10px] outline-none focus:border-accent/40";
 
-export const PipelineTarefasVisao = ({ funilId, campanhaId, negocios, usuarios, canView, canViewAll, canConclude, onOpenNegocio }: PipelineTarefasVisaoProps) => {
+export const PipelineTarefasVisao = ({ funilId, campanhaId, negocios, usuarios, canView, canViewAll, canConclude, canEdit = false, onOpenNegocio }: PipelineTarefasVisaoProps) => {
   const [view, setView] = useState<PipelineTarefaVisao>("HOJE");
   const [lateTask, setLateTask] = useState<PipelineTarefa | null>(null);
   const [responsible, setResponsible] = useState("");
@@ -74,6 +76,7 @@ export const PipelineTarefasVisao = ({ funilId, campanhaId, negocios, usuarios, 
 
   return (
     <div>
+      <div className="mb-3 flex justify-end"><KanbanArquivados<PipelineTarefa> contexto={{ tipo: "PIPELINE_TAREFA", funilId }} canRestore={canEdit} /></div>
       {lateTask && <TaskDelayJustificationDialog title={lateTask.titulo} onClose={() => setLateTask(null)} onConfirm={reason => toggleTask(lateTask, reason)} />}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><h2 className="flex items-center gap-2 text-[15px] font-semibold"><CalendarCheck2 className="h-4 w-4 text-accent" />Agenda comercial</h2><p className="mt-1 text-[10px] text-muted-foreground">Consulte atividades por prazo, responsável, negócio e tipo.</p></div><span className="rounded-full border border-border/25 bg-card/40 px-3 py-1 text-[9px] text-muted-foreground">{filteredTasks.length} tarefa(s)</span></div>
 

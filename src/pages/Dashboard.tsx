@@ -1,3 +1,5 @@
+import { useContratoPermissions } from "@/hooks/useContratoPermissions";
+import { useCrudPermissions } from "@/hooks/useCrudPermissions";
 import { useDeferredValue, useMemo, useContext, useState } from "react";
 import { getReuniaoError } from "@/services/useReunioes";
 import { useTheme } from "@/hooks/use-theme";
@@ -421,11 +423,14 @@ const Dashboard = () => {
     docs: string[];
   } | null>(null);
 
+  const contractAccess = useContratoPermissions();
+  const proposalAccess = useCrudPermissions("PROPOSTA");
+  const documentAccess = useCrudPermissions("DOCUMENTO_JURIDICO");
   const {
     data: contratos = [],
     isLoading: loadingContratos,
     isError: errorContratos,
-  } = useContratos();
+  } = useContratos(contractAccess.canRead);
 
   const {
     data: empresas = [],
@@ -445,13 +450,13 @@ const Dashboard = () => {
     data: documentos = [],
     isLoading: loadingDocumentos,
     isError: errorDocumentos,
-  } = useDocumentos();
+  } = useDocumentos(documentAccess.canRead);
 
   const {
     data: propostas = [],
     isLoading: loadingPropostas,
     isError: errorPropostas,
-  } = usePropostas();
+  } = usePropostas({}, proposalAccess.canRead);
 
   // A página deixa o estado de carregamento assim que a primeira fonte
   // responde e completa as demais seções progressivamente.
@@ -1833,14 +1838,14 @@ const Dashboard = () => {
               variants={itemVariants}
             >
               <div className="flex items-center gap-3">
-                <motion.button
+                {contractAccess.canCreateWithUpload && (<motion.button
                   onClick={() => navigate("/contratos?novo=1")}
                   className="flex h-9 items-center gap-2 rounded-lg bg-accent px-4 text-[12px] font-semibold text-accent-foreground shadow-[0_2px_10px_-2px_hsl(var(--accent)/0.3)]"
                   whileHover={{ scale: 1.02, y: -1 }}
                   whileTap={{ scale: 0.98 }}
                 >
                   <Plus className="h-3.5 w-3.5" /> Novo Contrato
-                </motion.button>
+                </motion.button>)}
 
                 <div className="flex h-9 items-center gap-2 rounded-lg border border-border/25 bg-card/20 px-3 text-[12px] text-muted-foreground">
                   <CalendarIcon className="h-3.5 w-3.5" />

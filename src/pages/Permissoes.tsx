@@ -25,6 +25,7 @@ import {
 } from "@/services";
 
 function getPermissaoGroup(permissao: Permissao) {
+  if (permissao.codigo.startsWith("JURIDICO_CONTRATO_")) return "Jurídico";
   if (permissao.codigo.includes("COMERCIAL")) return "Comercial";
   if (permissao.codigo.includes("CONTRATO")) return "Contratos";
   if (permissao.codigo.includes("PROPOSTA")) return "Propostas";

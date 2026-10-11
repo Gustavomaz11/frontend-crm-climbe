@@ -1,3 +1,4 @@
+import { useCrudPermissions } from "@/hooks/useCrudPermissions";
 import { FormValidation } from "@/components/ui/form-validation";
 import { useState, useMemo, useRef, useCallback, useEffect } from "react";
 import { useTheme } from "@/hooks/use-theme";
@@ -148,7 +149,8 @@ const Propostas = () => {
 
   const { data: empresas = [] } = useEmpresas();
   const { data: usuarios = [] } = useUsuarios();
-  const { data: propostas = [], isLoading: propostasLoading, error: propostasError } = usePropostas();
+  const { canRead, canCreate, canEdit } = useCrudPermissions("PROPOSTA");
+  const { data: propostas = [], isLoading: propostasLoading, error: propostasError } = usePropostas({}, canRead);
   const createPropostaWithFile = useCreatePropostaWithFile();
   const updatePropostaStatus = useUpdatePropostaStatus();
 
@@ -161,11 +163,11 @@ const Propostas = () => {
   }, [empresas]);
 
   useEffect(() => {
-    if (searchParams.get("nova") !== "true" || contextualEmpresaId <= 0) return;
+    if (!canCreate || searchParams.get("nova") !== "true" || contextualEmpresaId <= 0) return;
     if (!empresas.some((empresa) => Number(empresa.id) === contextualEmpresaId)) return;
     setSelectedEmpresaId(String(contextualEmpresaId));
     setUploadOpen(true);
-  }, [contextualEmpresaId, empresas, searchParams]);
+  }, [canCreate, contextualEmpresaId, empresas, searchParams]);
 
   const propostasView = useMemo<Proposta[]>(
     () =>
@@ -384,19 +386,19 @@ const Propostas = () => {
                 <h1 className="text-[22px] font-bold text-foreground tracking-tight">Propostas</h1>
                 <p className="text-[12px] text-muted-foreground mt-0.5">{`${filtered.length} de ${propostasView.length} propostas`}</p>
               </div>
-              <motion.button
+              {canCreate && (<motion.button
                 onClick={() => { setUploadOpen(!uploadOpen); setUploadDone(false); setUploadError(""); }}
                 className="h-9 px-4 rounded-lg bg-accent text-accent-foreground text-[12px] font-semibold flex items-center gap-2 shadow-[0_2px_10px_-2px_hsl(var(--accent)/0.3)]"
                 whileHover={{ scale: 1.02, y: -1 }}
                 whileTap={{ scale: 0.98 }}
               >
                 <Plus className="w-3.5 h-3.5" /> Nova Proposta
-              </motion.button>
+              </motion.button>)}
             </div>
 
             {/* Upload zone */}
             <AnimatePresence>
-              {uploadOpen && (
+              {canCreate && uploadOpen && (
                 <motion.div
                   className="mb-4 rounded-xl border border-border/25 bg-card/40 backdrop-blur-sm overflow-hidden"
                   initial={{ opacity: 0, height: 0 }}
@@ -618,7 +620,7 @@ const Propostas = () => {
                         {p.status}
                       </span>
                       <div className="flex items-center gap-1.5">
-	                        <button
+	                        {canEdit && (<button
 	                          type="button"
 	                          title="Aprovar proposta"
 	                          onClick={(e) => { e.stopPropagation(); handleUpdateStatus(p, "APROVADA"); }}
@@ -626,8 +628,8 @@ const Propostas = () => {
 	                          className="w-7 h-7 rounded-lg border border-border/25 flex items-center justify-center text-muted-foreground hover:text-accent hover:border-accent/40 hover:bg-accent/5 transition-colors disabled:opacity-35 disabled:cursor-not-allowed"
 	                        >
                           <Check className="w-3.5 h-3.5" />
-                        </button>
-	                        <button
+                        </button>)}
+	                        {canEdit && (<button
 	                          type="button"
 	                          title="Rejeitar proposta"
 	                          onClick={(e) => { e.stopPropagation(); handleUpdateStatus(p, "REJEITADA"); }}
@@ -635,7 +637,7 @@ const Propostas = () => {
 	                          className="w-7 h-7 rounded-lg border border-border/25 flex items-center justify-center text-muted-foreground hover:text-destructive hover:border-destructive/40 hover:bg-destructive/5 transition-colors disabled:opacity-35 disabled:cursor-not-allowed"
 	                        >
                           <XCircle className="w-3.5 h-3.5" />
-                        </button>
+                        </button>)}
                         <button
                           type="button"
                           title="Ver histórico"
