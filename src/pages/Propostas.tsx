@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import ClimbLogo from "@/components/login/ClimbLogo";
-import { UserAvatar } from "@/components/UserAvatar";
+import { AppHeaderUser } from "@/components/layout/AppHeaderUser";
 import { AppSidebarNav } from "@/components/layout/AppSidebarNav";
 import { RevisaoDocumentoDialog } from "@/components/revisoes/RevisaoDocumentoDialog";
 import { createEmptyProposalConfig, PropostaCommercialFields } from "@/components/propostas/PropostaCommercialFields";
@@ -375,7 +375,7 @@ const Propostas = () => {
               <Search className="w-3.5 h-3.5" />
               <input type="text" placeholder="Buscar propostas..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground text-foreground" />
             </div>
-            <UserAvatar name={userName} photoUrl={userPhoto} />
+            <AppHeaderUser name={userName} photoUrl={userPhoto} />
           </motion.header>
 
           <div className="px-6 pt-6 pb-4">

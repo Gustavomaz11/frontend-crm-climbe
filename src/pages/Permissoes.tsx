@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import ClimbLogo from "@/components/login/ClimbLogo";
-import { UserAvatar } from "@/components/UserAvatar";
+import { AppHeaderUser } from "@/components/layout/AppHeaderUser";
 import { AppSidebarNav } from "@/components/layout/AppSidebarNav";
 import { PermissionGroupsPanel } from "@/components/permissions/PermissionGroupsPanel";
 import { UserIdentity } from "@/components/users/UserSelect";
@@ -277,7 +277,7 @@ const Permissoes = () => {
               <Search className="w-3.5 h-3.5" />
               <input type="text" placeholder="Buscar usuário..." value={userSearch} onChange={(e) => setUserSearch(e.target.value)} className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground text-foreground" />
             </div>
-            <UserAvatar name={userName} photoUrl={userPhoto} />
+            <AppHeaderUser name={userName} photoUrl={userPhoto} />
           </motion.header>
 
           <div className="px-6 pt-6 pb-2">

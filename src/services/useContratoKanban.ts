@@ -204,6 +204,7 @@ export function useUpdateKanbanRaia() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["contratos"] });
       queryClient.invalidateQueries({ queryKey: ["empresas"] });
+      queryClient.invalidateQueries({ queryKey: ["notificacoes"] });
     },
   });
 }
@@ -244,6 +245,7 @@ export function useCreateKanbanTask() {
       queryClient.setQueryData(queryKey, board);
       queryClient.invalidateQueries({ queryKey: ["contratos"] });
       queryClient.invalidateQueries({ queryKey: ["empresas"] });
+      queryClient.invalidateQueries({ queryKey: ["notificacoes"] });
     },
   });
 }
@@ -263,6 +265,7 @@ export function useUpdateKanbanTask() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["contratos"] });
       queryClient.invalidateQueries({ queryKey: ["empresas"] });
+      queryClient.invalidateQueries({ queryKey: ["notificacoes"] });
     },
   });
 }
@@ -302,6 +305,7 @@ export function useMoveKanbanTask() {
         queryKey: ["contratos"],
       });
       queryClient.invalidateQueries({ queryKey: ["empresas"] });
+      queryClient.invalidateQueries({ queryKey: ["notificacoes"] });
     },
   });
 }

@@ -1,5 +1,5 @@
 import { FormValidation } from "@/components/ui/form-validation";
-import { useState, useMemo } from "react";
+import { useEffect, useRef, useState, useMemo } from "react";
 import { useTheme } from "@/hooks/use-theme";
 import { useSidebarState } from "@/hooks/useSidebarState";
 import { motion, AnimatePresence } from "framer-motion";
@@ -8,9 +8,10 @@ import {
   LogOut, Sun, Moon, ChevronLeft, ChevronRight, Plus, Search,
   Clock, MapPin, X, GripVertical, Video, FileCheck, UserCheck, ScrollText
 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { getReuniaoError } from "@/services/useReunioes";
 import ClimbLogo from "@/components/login/ClimbLogo";
-import { UserAvatar } from "@/components/UserAvatar";
+import { AppHeaderUser } from "@/components/layout/AppHeaderUser";
 import { AppSidebarNav } from "@/components/layout/AppSidebarNav";
 import { UserIdentity } from "@/components/users/UserSelect";
 import {
@@ -228,6 +229,8 @@ const Agenda = () => {
   const [eventError, setEventError] = useState("");
   const [editingEventId, setEditingEventId] = useState<number | null>(null);
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const openedMeeting = useRef<number>();
   const { data: reunioes = [] } = useReunioes();
   const { data: empresas = [] } = useEmpresas();
   const { data: usuarios = [] } = useUsuarios();
@@ -312,7 +315,7 @@ const Agenda = () => {
           endTime: diaInteiro ? "--" : addOneHour(formatEventTime(reuniao.dataHora)),
           diaInteiro,
           empresa,
-          local: reuniao.local,
+          local: reuniao.presencial ? reuniao.local : reuniao.linkMeet || reuniao.local,
           type: reuniao.presencial ? "presencial" : "virtual",
           color: reuniao.googleEventId ? "accent" : "primary",
           data: reuniao.data ?? eventDateInput(date),
@@ -425,6 +428,9 @@ const Agenda = () => {
     setEventError("");
     setParticipantSearchQuery("");
     setShowAddEvent(false);
+    if (searchParams.has("reuniaoId")) {
+      const next = new URLSearchParams(searchParams); next.delete("reuniaoId"); setSearchParams(next, { replace: true });
+    }
   };
 
   const updateEventStatus = async (event: AgendaEvent, status: string) => {
@@ -505,8 +511,8 @@ const Agenda = () => {
       setEventForm(initialEventForm());
       setEditingEventId(null);
       setShowAddEvent(false);
-    } catch {
-      setEventError("Não foi possível confirmar o agendamento.");
+    } catch (error) {
+      setEventError(getReuniaoError(error));
     }
   };
 
@@ -569,6 +575,17 @@ const Agenda = () => {
   const isViewingCurrentMonth = currentMonth === today.getMonth() && currentYear === today.getFullYear();
 
 
+  useEffect(() => {
+    const id = Number(searchParams.get("reuniaoId"));
+    if (!id) { openedMeeting.current = undefined; return; }
+    if (openedMeeting.current === id) return;
+    const evento = agendaEvents.find(e => Number(e.id) === id);
+    if (!evento) return;
+    openedMeeting.current = id;
+    setVisibleDate(new Date(`${evento.data}T12:00:00`));
+    handleEditEvent(evento);
+  }, [searchParams, agendaEvents, participantesReuniao]);
+
   return (
     <div className="relative min-h-screen bg-background text-foreground transition-colors duration-500 overflow-hidden">
       <div className="fixed inset-0 pointer-events-none">
@@ -617,7 +634,7 @@ const Agenda = () => {
               <motion.button onClick={openCreateEventModal} className="h-9 px-4 rounded-lg bg-accent text-accent-foreground text-[12px] font-semibold flex items-center gap-2 shadow-[0_2px_10px_-2px_hsl(var(--accent)/0.3)]" whileHover={{ scale: 1.02, y: -1 }} whileTap={{ scale: 0.98 }}>
                 <Plus className="w-3.5 h-3.5" /> Agendar
               </motion.button>
-              <UserAvatar name={userName} photoUrl={userPhoto} />
+              <AppHeaderUser name={userName} photoUrl={userPhoto} />
             </div>
           </motion.header>
 
@@ -976,12 +993,14 @@ const Agenda = () => {
                     {usuarios.length === 0 ? (
                       <p className="px-2 py-2 text-[11px] text-muted-foreground">Nenhum usuario cadastrado.</p>
                     ) : filteredUsuarios.length > 0 ? filteredUsuarios.map((usuario) => {
-                      const checked = eventForm.participanteIds.includes(usuario.id);
+                      const obrigatorio = usuario.email?.toLowerCase() === "contato@climbe.com.br";
+                      const checked = obrigatorio || eventForm.participanteIds.includes(usuario.id);
                       return (
                         <label key={usuario.id} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-[12px] text-foreground/75 transition-colors hover:bg-muted/20">
                           <input
                             type="checkbox"
                             checked={checked}
+                            disabled={obrigatorio}
                             onChange={(e) => {
                               setEventForm((prev) => ({
                                 ...prev,
@@ -1010,14 +1029,16 @@ const Agenda = () => {
                   <div><label className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Horário *</label><input required type="time" value={eventForm.hora} onChange={(e) => setEventForm((prev) => ({ ...prev, hora: e.target.value }))} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 text-foreground" /></div>
                 </div>
                 <div>
-                  <label className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Local</label>
-                  <input type="text" placeholder="Sala, endereço ou link" value={eventForm.local} disabled={!eventForm.presencial} onChange={(e) => setEventForm((prev) => ({ ...prev, local: e.target.value }))} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 transition-colors placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-45" />
+                  <label className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Local{eventForm.presencial ? " *" : ""}</label>
+                  <input required={eventForm.presencial} type="text" placeholder="Sala ou endereço" value={eventForm.local} disabled={!eventForm.presencial} onChange={(e) => setEventForm((prev) => ({ ...prev, local: e.target.value }))} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 transition-colors placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-45" />
+                  {!eventForm.presencial && editingEventId && reunioes.find(r => r.id === editingEventId)?.linkMeet && <a href={reunioes.find(r => r.id === editingEventId)?.linkMeet} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-xs text-accent underline">Entrar no Google Meet</a>}
                 </div>
                 <div className="flex items-center gap-3">
                   <label className="flex items-center gap-2 cursor-pointer"><input type="radio" name="tipo-modal" checked={!eventForm.presencial} onChange={() => setEventForm((prev) => ({ ...prev, presencial: false, local: "" }))} className="accent-[hsl(var(--accent))]" /><span className="text-[12px] text-foreground/70">Virtual</span></label>
                   <label className="flex items-center gap-2 cursor-pointer"><input type="radio" name="tipo-modal" checked={eventForm.presencial} onChange={() => setEventForm((prev) => ({ ...prev, presencial: true }))} className="accent-[hsl(var(--accent))]" /><span className="text-[12px] text-foreground/70">Presencial</span></label>
                 </div>
                 {eventError && <p className="text-[11px] text-destructive">{eventError}</p>}
+                <p className="text-[11px] text-muted-foreground">Todos os convidados receberão o convite no Google Agenda. contato@climbe.com.br será incluído automaticamente.</p>
                 <motion.button data-validate-submit onClick={handleCreateEvent} disabled={isSavingEvent} className="w-full h-10 rounded-lg bg-accent text-accent-foreground text-[13px] font-semibold shadow-[0_2px_10px_-2px_hsl(var(--accent)/0.3)]" whileHover={{ scale: 1.01, y: -1 }} whileTap={{ scale: 0.98 }}>{isSavingEvent ? "Salvando..." : "Confirmar Agendamento"}</motion.button>
               </FormValidation>
               <div className="hidden">

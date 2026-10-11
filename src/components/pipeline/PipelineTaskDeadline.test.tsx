@@ -17,6 +17,15 @@ const task: PipelineTarefa = { id: 1, negocioId: 10, negocioNome: "Empresa", tit
 beforeEach(() => { vi.clearAllMocks(); mocks.tasks = [task]; mocks.status.mockResolvedValue({}); });
 
 describe("conclusão atrasada nas atividades comerciais", () => {
+  it("abre diretamente a tarefa recebida pela notificação e permite visualizar sem edição", async () => {
+    render(<PipelineTarefasPanel negocioId={10} responsavelId={1} initialTaskId={1} usuarios={[]} canView canCreate={false} canEdit={false} canConclude={false} />);
+    expect(await screen.findByRole("dialog", { name: "Visualizar tarefa" })).toBeInTheDocument();
+    expect(screen.getByLabelText(/Título/)).toHaveValue("Enviar documentação");
+    expect(screen.getByLabelText(/Título/)).toBeDisabled();
+    expect(screen.queryByRole("button", { name: "Salvar tarefa" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Cancelar" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  });
   it.each(["negociação", "agenda"])("solicita justificativa antes da conclusão na %s", async origem => {
     if (origem === "negociação") render(<PipelineTarefasPanel negocioId={10} responsavelId={1} usuarios={[]} canView canCreate canEdit canConclude />);
     else render(<PipelineTarefasVisao negocios={[]} usuarios={[]} canView canViewAll canConclude onOpenNegocio={vi.fn()} />);

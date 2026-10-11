@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowRight, ListTodo, Plus } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -22,6 +22,7 @@ interface PipelineTarefasPanelProps {
   negocioId: number;
   responsavelId: number;
   initialTaskId?: number;
+  onLinkedTaskClose?: () => void;
   usuarios: Usuario[];
   canView: boolean;
   canCreate: boolean;
@@ -33,6 +34,7 @@ export const PipelineTarefasPanel = ({
   negocioId,
   responsavelId,
   initialTaskId,
+  onLinkedTaskClose,
   usuarios,
   canView,
   canCreate,
@@ -44,6 +46,15 @@ export const PipelineTarefasPanel = ({
   const [editingTask, setEditingTask] = useState<PipelineTarefa | null | undefined>(undefined);
   const [statusOverrides, setStatusOverrides] = useState<Record<number, PipelineTarefaStatus>>({});
   const { data: tasks = [], isLoading } = useNegocioTarefas(negocioId, canView);
+  const openedLink = useRef<string>();
+  useEffect(() => {
+    const key = `${negocioId}:${initialTaskId}`;
+    if (!initialTaskId) { openedLink.current = undefined; return; }
+    if (openedLink.current === key) return;
+    const tarefa = tasks.find(t => t.id === initialTaskId);
+    if (tarefa) { openedLink.current = key; setEditingTask(tarefa); }
+  }, [initialTaskId, negocioId, tasks]);
+  const closeTask = () => { setEditingTask(undefined); onLinkedTaskClose?.(); };
   const createTask = useCreatePipelineTarefa();
   const updateTask = useUpdatePipelineTarefa();
   const setStatus = useSetPipelineTarefaStatus();
@@ -59,7 +70,7 @@ export const PipelineTarefasPanel = ({
       if (editingTask) await updateTask.mutateAsync({ tarefaId: editingTask.id, data: input });
       else await createTask.mutateAsync({ negocioId, data: input });
       toast.success(editingTask ? "Tarefa atualizada" : "Tarefa criada");
-      setEditingTask(undefined);
+      closeTask();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erro ao salvar tarefa");
     }
@@ -100,7 +111,7 @@ export const PipelineTarefasPanel = ({
 
       {cancelling && <PipelineCancelarTarefaDialog tarefa={cancelling} onClose={() => setCancelling(null)} />}
       {lateTask && <TaskDelayJustificationDialog title={lateTask.titulo} onClose={() => setLateTask(null)} onConfirm={reason => moveTask(lateTask, "CONCLUIDA", reason)} />}
-      {editingTask !== undefined && <PipelineTarefaDialog tarefa={editingTask} usuarios={usuarios} defaultResponsavelId={responsavelId} isProcessing={processing} onClose={() => setEditingTask(undefined)} onSave={(input) => void saveTask(input)} />}
+      {editingTask !== undefined && <PipelineTarefaDialog tarefa={editingTask} usuarios={usuarios} defaultResponsavelId={responsavelId} isProcessing={processing} readOnly={!!editingTask && !canEdit} onClose={closeTask} onSave={(input) => void saveTask(input)} />}
     </div>
   );
 };

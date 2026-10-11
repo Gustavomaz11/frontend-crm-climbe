@@ -24,5 +24,11 @@ describe("notificações pessoais da equipe", () => {
   it("não transforma links externos ou texto arbitrário em destinos", () => {
     expect(getNotificacaoDestino("Visite https://example.test")).toBeUndefined();
     expect(getNotificacaoDestino("Contrato enviado ao cliente")).toBeUndefined();
+    expect(getNotificacaoDestino("Aviso", "https://example.test/agenda?reuniaoId=1")).toBeUndefined();
+    expect(getNotificacaoDestino("Aviso", "//example.test")).toBeUndefined();
+  });
+  it("preserva a tarefa e o menu correspondente no destino", () => {
+    expect(getNotificacaoDestino("Tarefa atribuída", "/contratos/kanban?contrato=12&tarefaId=34")).toBe("/contratos/kanban?contrato=12&tarefaId=34");
+    expect(getNotificacaoDestino("Tarefa atribuída", "/pipeline-pre-vendas?funilId=1&negocioId=2&tarefaId=3")).toBe("/pipeline-pre-vendas?funilId=1&negocioId=2&tarefaId=3");
   });
 });

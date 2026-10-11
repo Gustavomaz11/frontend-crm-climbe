@@ -4,14 +4,23 @@ import { api } from "@/api";
 export interface Notificacao {
   id: number;
   mensagem: string;
+  destino?: string | null;
   tipo: string;
   lida: boolean;
   dataCriacao: string;
   dataEnvio: string;
 }
-export const getNotificacaoDestino = (mensagem: string) => {
-  const contratoId = mensagem.match(/\/contratos\/kanban\?contrato=(\d+)/)?.[1];
-  return contratoId ? `/contratos/kanban?contrato=${contratoId}` : undefined;
+export const getNotificacaoDestino = (mensagem: string, destino?: string | null) => {
+  const rota = destino || mensagem.match(/\/(?:contratos\/kanban|pipeline-vendas|pipeline-pre-vendas|agenda)\?[A-Za-z0-9=&_-]+/)?.[0];
+  if (!rota || !/^\/(?:contratos\/kanban|pipeline-vendas|pipeline-pre-vendas|agenda)\?[A-Za-z0-9=&_-]+$/.test(rota)) return undefined;
+  return rota;
+};
+export const useLerTodasNotificacoes = () => {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async () => { await api.patch("/notificacoes/minhas/lidas"); },
+    onSuccess: () => { void client.invalidateQueries({ queryKey: ["notificacoes"] }); },
+  });
 };
 export const useMinhasNotificacoes = (usuarioId?: number) => useQuery({
   queryKey: ["notificacoes", usuarioId], enabled: !!usuarioId, refetchInterval: 60_000,

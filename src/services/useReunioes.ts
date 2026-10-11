@@ -27,10 +27,16 @@ export interface Reuniao {
   presencial?: boolean;
   status?: string;
   googleEventId?: string;
+  linkMeet?: string;
   /** Evento de dia inteiro (ex.: Google Calendar com start.date). */
   diaInteiro?: boolean;
   dataCriacao?: string;
   dataAtualizacao?: string;
+}
+
+export function getReuniaoError(error: unknown) {
+  if (isAxiosError(error)) return error.response?.data?.message || "Não foi possível confirmar o agendamento.";
+  return error instanceof Error ? error.message : "Não foi possível confirmar o agendamento.";
 }
 
 export interface CreateReuniaoDTO {
@@ -273,6 +279,7 @@ export function useCreateReuniao() {
       );
       queryClient.invalidateQueries({ queryKey: ["reunioes"] });
       queryClient.invalidateQueries({ queryKey: ["participantes-reuniao"] });
+      queryClient.invalidateQueries({ queryKey: ["notificacoes"] });
     },
   });
 }
@@ -294,6 +301,7 @@ export function useUpdateReuniao() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["reunioes"] });
       queryClient.invalidateQueries({ queryKey: ["participantes-reuniao"] });
+      queryClient.invalidateQueries({ queryKey: ["notificacoes"] });
     },
   });
 }

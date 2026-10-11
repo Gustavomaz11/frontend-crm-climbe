@@ -26,6 +26,7 @@ interface PipelineNegocioDialogProps {
   initialEtapaId?: number;
   initialResponsavelId?: number | null;
   initialTaskId?: number;
+  onLinkedTaskClose?: () => void;
   etapas: PipelineEtapa[];
   empresas: Empresa[];
   usuarios: Usuario[];
@@ -64,6 +65,7 @@ export const PipelineNegocioDialog = ({
   initialEtapaId,
   initialResponsavelId,
   initialTaskId,
+  onLinkedTaskClose,
   etapas,
   empresas,
   usuarios,
@@ -165,7 +167,7 @@ export const PipelineNegocioDialog = ({
             {negocio?.negocioGeradoId && <a className="mb-4 block text-sm text-accent underline" href={`/pipeline-vendas?negocioId=${negocio.negocioGeradoId}`}>Abrir negócio gerado #{negocio.negocioGeradoId}</a>}
 
             {activeTab === "dados" && <><PipelineNegocioFormFields preVendas={preVendas} draft={draft} setDraft={setDraft} empresas={empresas} usuarios={usuarios} etapas={etapas.filter((etapa) => etapa.resultado === "ABERTO" || etapa.id === negocio?.etapaId)} disabled={closedLead || isProcessing || (!isCreating && !canEdit)} /><PipelineDadosAdicionais campanhaFixa={!!negocio?.campanhaOrigemId} draft={draft} setDraft={setDraft} preVendas={preVendas} disabled={closedLead || isProcessing || (!isCreating && !canEdit)} />{negocio?.resultado === "PERDIDO" && negocio.motivoPerdaNome && <div className="mt-5 rounded-xl border border-red-500/20 bg-red-500/5 p-4"><p className="text-[10px] uppercase tracking-wide text-red-500/70">Motivo da perda</p><p className="mt-1 text-xs font-semibold text-red-500">{negocio.motivoPerdaNome}</p>{negocio.observacaoPerda && <p className="mt-2 text-[11px] text-muted-foreground">{negocio.observacaoPerda}</p>}</div>}{showConversion && <FormValidation className="mt-5 rounded-xl border border-accent/25 bg-accent/5 p-4"><p className="text-[12px] font-semibold text-foreground">Converter em contrato</p><p className="mt-1 text-[10px] text-muted-foreground">Empresa para o contrato *: selecione a empresa cadastrada que será vinculada ao contrato pendente.</p><div className="mt-3 flex gap-2"><select required aria-label="Empresa para o contrato" value={conversionEmpresaId} onChange={(event) => setConversionEmpresaId(event.target.value)} className="h-9 flex-1 rounded-lg border border-border/30 bg-background px-3 text-[11px] outline-none"><option value="">Selecione a empresa</option>{empresas.map((empresa) => <option key={empresa.id} value={empresa.id}>{empresa.nome}</option>)}</select><button type="button" data-validate-submit disabled={isProcessing} onClick={() => onConvert(Number(conversionEmpresaId))} className="rounded-lg bg-accent px-3 text-[11px] font-semibold text-accent-foreground disabled:opacity-50">Gerar contrato</button></div></FormValidation>}</>}
-            {activeTab === "tarefas" && negocio && <PipelineTarefasPanel negocioId={negocio.id} responsavelId={negocio.responsavelId} initialTaskId={initialTaskId} usuarios={usuarios} canView={canViewTasks} canCreate={canCreateTask} canEdit={canEditTask} canConclude={canConcludeTask} />}
+            {activeTab === "tarefas" && negocio && <PipelineTarefasPanel negocioId={negocio.id} responsavelId={negocio.responsavelId} initialTaskId={initialTaskId} onLinkedTaskClose={onLinkedTaskClose} usuarios={usuarios} canView={canViewTasks} canCreate={canCreateTask} canEdit={canEditTask} canConclude={canConcludeTask} />}
             {activeTab === "comentarios" && negocio && <PipelineComentariosPanel negocioId={negocio.id} canView={canViewComments} canCreate={canCreateComment} />}
             {activeTab === "historico" && negocio && <PipelineHistoricoPanel negocioId={negocio.id} canView={canViewHistory} />}
             {activeTab === "propostas" && negocio && <PipelinePropostasPanel negocio={negocio} canCreate={canCreateProposal} onCreate={onCreateProposal} />}

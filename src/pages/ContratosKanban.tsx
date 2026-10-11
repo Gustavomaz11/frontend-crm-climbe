@@ -21,7 +21,7 @@ import ClimbLogo from "@/components/login/ClimbLogo";
 import { KanbanTaskCard } from "@/components/kanban/KanbanTaskCard";
 import { KanbanTaskDialog, type KanbanTaskDraft } from "@/components/kanban/KanbanTaskDialog";
 import { KanbanTaskEditDialog } from "@/components/kanban/KanbanTaskEditDialog";
-import { UserAvatar } from "@/components/UserAvatar";
+import { AppHeaderUser } from "@/components/layout/AppHeaderUser";
 import { AppSidebarNav } from "@/components/layout/AppSidebarNav";
 import { useSidebarState } from "@/hooks/useSidebarState";
 import { useTheme } from "@/hooks/use-theme";
@@ -471,7 +471,7 @@ const ContratosKanban = () => {
               <Search className="h-3.5 w-3.5" />
               <input type="text" placeholder="Buscar contratos..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="flex-1 bg-transparent text-[12px] text-foreground outline-none placeholder:text-muted-foreground" />
             </div>
-            <UserAvatar name={userName} photoUrl={userPhoto} />
+            <AppHeaderUser name={userName} photoUrl={userPhoto} />
           </header>
 
           <div className="grid min-h-[calc(100vh-64px)] grid-cols-[280px_1fr]">

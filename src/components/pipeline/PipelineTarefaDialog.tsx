@@ -14,6 +14,7 @@ interface PipelineTarefaDialogProps {
   usuarios: Usuario[];
   defaultResponsavelId: number;
   isProcessing: boolean;
+  readOnly?: boolean;
   onClose: () => void;
   onSave: (input: PipelineTarefaInput) => void;
 }
@@ -27,6 +28,7 @@ export const PipelineTarefaDialog = ({
   usuarios,
   defaultResponsavelId,
   isProcessing,
+  readOnly = false,
   onClose,
   onSave,
 }: PipelineTarefaDialogProps) => {
@@ -51,16 +53,16 @@ export const PipelineTarefaDialog = ({
 
 
   return (
-    <TaskDialogShell label={tarefa ? "Editar tarefa" : "Nova tarefa"} onClose={onClose} closeDisabled={isProcessing}>
+    <TaskDialogShell label={readOnly ? "Visualizar tarefa" : tarefa ? "Editar tarefa" : "Nova tarefa"} onClose={onClose} closeDisabled={isProcessing}>
       <FormValidation className="contents">
         <header className="flex shrink-0 items-center justify-between border-b border-border/20 px-5 py-4">
-          <div><h3 className="text-sm font-semibold">{tarefa ? "Editar tarefa" : "Nova tarefa"}</h3><p className="mt-0.5 text-[10px] text-muted-foreground">Organize a próxima ação desta negociação.</p></div>
+          <div><h3 className="text-sm font-semibold">{readOnly ? "Visualizar tarefa" : tarefa ? "Editar tarefa" : "Nova tarefa"}</h3><p className="mt-0.5 text-[10px] text-muted-foreground">Organize a próxima ação desta negociação.</p></div>
           <button type="button" onClick={onClose} disabled={isProcessing} className="rounded-lg p-2 hover:bg-muted/30"><X className="h-4 w-4" /></button>
         </header>
 
         <div className="min-h-0 flex-1 overflow-y-auto p-5">
           <div className="grid min-w-0 items-start gap-6 lg:grid-cols-2">
-            <div className="min-w-0 space-y-4" role="region" aria-label="Dados da tarefa">
+            <fieldset disabled={readOnly} className="min-w-0 space-y-4" role="region" aria-label="Dados da tarefa">
               <label className="block text-[10px] font-medium">Título *<input required className={`${inputClass} mt-1`} value={draft.titulo} onChange={(event) => setDraft({ ...draft, titulo: event.target.value })} placeholder="Ex.: Enviar proposta revisada" /></label>
               <label className="block text-[10px] font-medium">Descrição<textarea className={`${textAreaClass} mt-1 min-h-20`} value={draft.descricao || ""} onChange={(event) => setDraft({ ...draft, descricao: event.target.value })} /></label>
 
@@ -77,15 +79,15 @@ export const PipelineTarefaDialog = ({
               {needsJustification && <label className="block text-xs font-medium">Justificativa do atraso *<textarea required maxLength={4000} className={`${textAreaClass} mt-1 min-h-24`} value={draft.justificativaAtraso || ""} onChange={e => setDraft({ ...draft, justificativaAtraso: e.target.value })} placeholder="Conte o motivo de a tarefa ter passado do prazo." /></label>}
               {!needsJustification && tarefa?.justificativaAtraso && <div className="rounded-lg border border-border/25 p-3 text-xs"><strong>Justificativa do atraso</strong><p className="mt-1 whitespace-pre-wrap">{tarefa.justificativaAtraso}</p></div>}
               {draft.dataInicio && draft.prazo && draft.prazo < draft.dataInicio && <p className="text-[10px] text-destructive">O prazo não pode ser anterior à data de início.</p>}
-            </div>
+            </fieldset>
             <div className="min-w-0">
-              <PipelineSubtaskFields value={draft.subtarefas} onChange={(subtarefas) => setDraft({ ...draft, subtarefas })} responsaveis={responsaveis} />
+              <fieldset disabled={readOnly}><PipelineSubtaskFields value={draft.subtarefas} onChange={(subtarefas) => setDraft({ ...draft, subtarefas })} responsaveis={responsaveis} /></fieldset>
               {tarefa && <TaskCollaborationPanel tipo="COMERCIAL" taskId={tarefa.id} />}
             </div>
           </div>
         </div>
 
-        <footer className="flex shrink-0 justify-end gap-2 border-t border-border/20 px-5 py-4"><button type="button" onClick={onClose} disabled={isProcessing} className="h-9 rounded-lg border border-border/30 px-4 text-[11px]">Cancelar</button><button data-validate-submit type="button" onClick={() => onSave({ ...draft, titulo: draft.titulo.trim(), tipo: draft.tipo.trim(), subtarefas: draft.subtarefas.filter((item) => item.titulo.trim()).map((item, index) => ({ ...item, titulo: item.titulo.trim(), posicao: index })) })} disabled={isProcessing} className="flex h-9 items-center gap-2 rounded-lg bg-accent px-4 text-[11px] font-semibold text-accent-foreground disabled:opacity-50"><Save className="h-3.5 w-3.5" />{isProcessing ? "Salvando..." : "Salvar tarefa"}</button></footer>
+        <footer className="flex shrink-0 justify-end gap-2 border-t border-border/20 px-5 py-4"><button type="button" onClick={onClose} disabled={isProcessing} className="h-9 rounded-lg border border-border/30 px-4 text-[11px]">Cancelar</button>{!readOnly && <button data-validate-submit type="button" onClick={() => onSave({ ...draft, titulo: draft.titulo.trim(), tipo: draft.tipo.trim(), subtarefas: draft.subtarefas.filter((item) => item.titulo.trim()).map((item, index) => ({ ...item, titulo: item.titulo.trim(), posicao: index })) })} disabled={isProcessing} className="flex h-9 items-center gap-2 rounded-lg bg-accent px-4 text-[11px] font-semibold text-accent-foreground disabled:opacity-50"><Save className="h-3.5 w-3.5" />{isProcessing ? "Salvando..." : "Salvar tarefa"}</button>}</footer>
       </FormValidation>
     </TaskDialogShell>
   );

@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import ClimbLogo from "@/components/login/ClimbLogo";
-import { UserAvatar } from "@/components/UserAvatar";
+import { AppHeaderUser } from "@/components/layout/AppHeaderUser";
 import { AppSidebarNav } from "@/components/layout/AppSidebarNav";
 import { useAuthStore } from "@/store/useAuthStore";
 import {
@@ -323,7 +323,7 @@ const CadastroEmpresa = () => {
               Voltar para Empresas
             </motion.button>
 
-            <UserAvatar name={userName} photoUrl={userPhoto} />
+            <AppHeaderUser name={userName} photoUrl={userPhoto} />
           </motion.header>
 
           <div className="px-6 pt-6 pb-8 max-w-3xl mx-auto">

@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { ChevronLeft, ChevronRight, LogOut, Moon, Search, Sun } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import ClimbLogo from "@/components/login/ClimbLogo";
-import { UserAvatar } from "@/components/UserAvatar";
+import { AppHeaderUser } from "@/components/layout/AppHeaderUser";
 import { AppSidebarNav } from "@/components/layout/AppSidebarNav";
 import { useSidebarState } from "@/hooks/useSidebarState";
 import { useTheme } from "@/hooks/use-theme";
@@ -44,7 +44,7 @@ export const PipelineVendasShell = ({ search, onSearchChange, searchPlaceholder 
         <main className={`min-w-0 flex-1 transition-all duration-300 ${sidebarCollapsed ? "ml-[72px]" : "ml-[220px]"}`}>
           <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border/20 bg-background/80 px-6 backdrop-blur-xl">
             <div className="flex h-9 w-[300px] items-center gap-2 rounded-lg border border-border/25 bg-card/30 px-3"><Search className="h-3.5 w-3.5 text-muted-foreground" /><input value={search} onChange={(event) => onSearchChange(event.target.value)} placeholder={searchPlaceholder} className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground" /></div>
-            <UserAvatar name={userName} photoUrl={userPhoto} />
+            <AppHeaderUser name={userName} photoUrl={userPhoto} />
           </header>
           {children}
         </main>

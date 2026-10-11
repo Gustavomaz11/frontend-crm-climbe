@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import ClimbLogo from "@/components/login/ClimbLogo";
-import { UserAvatar } from "@/components/UserAvatar";
+import { AppHeaderUser } from "@/components/layout/AppHeaderUser";
 import { AppSidebarNav } from "@/components/layout/AppSidebarNav";
 import { useAuthStore } from "@/store/useAuthStore";
 import {
@@ -253,7 +253,7 @@ const Documentos = () => {
               <motion.button onClick={() => setRequestOpen(true)} className="h-9 px-3 rounded-lg bg-accent text-accent-foreground text-[12px] font-semibold flex items-center gap-2" whileHover={{ scale: 1.02, y: -1 }} whileTap={{ scale: 0.98 }}>
                 <Plus className="w-3.5 h-3.5" /> Solicitar
               </motion.button>
-              <UserAvatar name={userName} photoUrl={userPhoto} />
+              <AppHeaderUser name={userName} photoUrl={userPhoto} />
             </div>
           </motion.header>
 

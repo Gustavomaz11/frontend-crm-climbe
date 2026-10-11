@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import ContratosKanban from "./ContratosKanban";
+vi.mock("@/components/NotificationBell", () => ({ NotificationBell: () => null }));
 
 const mocks = vi.hoisted(() => ({ equipe: {} as Record<string, unknown>, board: {} as Record<string, unknown>, buscarBoard: vi.fn(), move: vi.fn() }));
 vi.mock("@/services", async importOriginal => {

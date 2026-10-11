@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, LogOut, Moon, Sun } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import ClimbLogo from "@/components/login/ClimbLogo";
-import { UserAvatar } from "@/components/UserAvatar";
+import { AppHeaderUser } from "@/components/layout/AppHeaderUser";
 import { AppSidebarNav } from "@/components/layout/AppSidebarNav";
 import { useSidebarState } from "@/hooks/useSidebarState";
 import { useTheme } from "@/hooks/use-theme";
@@ -74,7 +74,7 @@ export function AppPageShell({ children }: AppPageShellProps) {
                 <p className="text-[12px] font-semibold text-foreground">{userName}</p>
                 <p className="text-[10px] text-muted-foreground">{userRole}</p>
               </div>
-              <UserAvatar name={userName} photoUrl={userPhoto} />
+              <AppHeaderUser name={userName} photoUrl={userPhoto} />
             </div>
           </header>
           {children}

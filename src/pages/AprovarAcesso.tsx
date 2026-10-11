@@ -18,7 +18,7 @@ import {
 import ClimbLogo from "@/components/login/ClimbLogo";
 import { AprovacaoAcessoDialog } from "@/components/access/AprovacaoAcessoDialog";
 import { GerenciamentoAcessos } from "@/components/access/GerenciamentoAcessos";
-import { UserAvatar } from "@/components/UserAvatar";
+import { AppHeaderUser } from "@/components/layout/AppHeaderUser";
 import { AppSidebarNav } from "@/components/layout/AppSidebarNav";
 import { toast } from "@/hooks/use-toast";
 import { useTheme } from "@/hooks/use-theme";
@@ -347,7 +347,7 @@ const AprovarAcesso = () => {
             animate={{ opacity: 1, y: 0 }}
           >
             <div className="flex items-center gap-2">
-              <UserAvatar name={userName} photoUrl={userPhoto} />
+              <AppHeaderUser name={userName} photoUrl={userPhoto} />
               <div className="text-right">
                 <p className="text-[12px] font-medium text-foreground">{userName}</p>
                 <p className="text-[10px] text-muted-foreground">{userCargo}</p>

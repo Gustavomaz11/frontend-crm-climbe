@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import { api } from "@/api";
 import type { UsuarioResumo } from "./useContratoKanban";
+import { useAuthStore } from "@/store/useAuthStore";
 
 interface ApiResponse<T> {
   success: boolean;
@@ -98,10 +99,20 @@ const getErrorMessage = (error: unknown) => {
   return error instanceof Error ? error.message : "Erro ao processar a atividade";
 };
 
+export const usePipelineTarefa = (tarefaId?: number, enabled = true) => {
+  const usuarioId = useAuthStore(s => s.basicUserData?.id ?? s.userData?.id);
+  return useQuery({
+    queryKey: ["pipeline-atividades", "tarefa", tarefaId, usuarioId],
+    enabled: enabled && !!tarefaId && !!usuarioId,
+    queryFn: async () => unwrap((await api.get<ApiResponse<PipelineTarefa>>(`/pipeline-vendas/tarefas/${tarefaId}`)).data),
+  });
+};
+
 const useInvalidateAtividades = () => {
   const queryClient = useQueryClient();
   return async () => {
     await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["notificacoes"] }),
       queryClient.invalidateQueries({ queryKey: ["pipeline-atividades"] }),
       queryClient.invalidateQueries({ queryKey: ["pipeline-vendas"] }),
       queryClient.invalidateQueries({ queryKey: ["pipeline-campaigns"] }),

@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import ClimbLogo from "@/components/login/ClimbLogo";
-import { UserAvatar } from "@/components/UserAvatar";
+import { AppHeaderUser } from "@/components/layout/AppHeaderUser";
 import { AppSidebarNav } from "@/components/layout/AppSidebarNav";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useAlterarVencimentoParcela, useDeleteEmpresa, useEmpresaFinanceiro, useEmpresas, Empresa } from "@/services";
@@ -108,7 +108,7 @@ const Empresas = () => {
               <Search className="w-3.5 h-3.5" />
               <input type="text" placeholder="Buscar empresa..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground text-foreground" />
             </div>
-            <UserAvatar name={userName} photoUrl={userPhoto} />
+            <AppHeaderUser name={userName} photoUrl={userPhoto} />
           </motion.header>
 
           <div className="px-6 pt-6 pb-2 flex items-center justify-between">

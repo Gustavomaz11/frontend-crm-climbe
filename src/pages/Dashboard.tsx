@@ -1,4 +1,5 @@
 import { useDeferredValue, useMemo, useContext, useState } from "react";
+import { getReuniaoError } from "@/services/useReunioes";
 import { useTheme } from "@/hooks/use-theme";
 import { useSidebarState } from "@/hooks/useSidebarState";
 import { useNavigate, Link, useLocation } from "react-router-dom";
@@ -37,7 +38,7 @@ import {
 } from "lucide-react";
 
 import ClimbLogo from "@/components/login/ClimbLogo";
-import { UserAvatar } from "@/components/UserAvatar";
+import { AppHeaderUser } from "@/components/layout/AppHeaderUser";
 import { AppSidebarNav } from "@/components/layout/AppSidebarNav";
 
 // ajuste estes imports se sua pasta estiver diferente
@@ -760,7 +761,7 @@ const Dashboard = () => {
         title: reuniao.titulo,
         time: formatTime(reuniao.dataHora),
         empresa: empresa?.nome ?? `Empresa #${reuniao.empresaId}`,
-        local: reuniao.local,
+                local: reuniao.linkMeet || reuniao.local,
       });
     });
 
@@ -792,7 +793,7 @@ const Dashboard = () => {
   const allNotifications = useMemo<NotificationItem[]>(() => {
     const pessoais: NotificationItem[] = notificacoesPessoais.map(n => ({
       id: n.id,
-      destino: getNotificacaoDestino(n.mensagem),
+      destino: getNotificacaoDestino(n.mensagem, n.destino),
       text: n.mensagem.replace(/\. Acesse \/contratos\/kanban\?contrato=\d+ para trabalhar nas tarefas\./, "."),
       time: getRelativeLabel(n.dataCriacao || n.dataEnvio),
       icon: Bell,
@@ -1401,8 +1402,8 @@ const Dashboard = () => {
       setSelectedDay(day);
       setMeetingForm(initialDashboardMeetingForm(new Date(year, month - 1, day)));
       setShowAddMeeting(false);
-    } catch {
-      setMeetingError("Não foi possível confirmar o agendamento.");
+    } catch (error) {
+      setMeetingError(getReuniaoError(error));
     }
   };
 
@@ -1807,19 +1808,8 @@ const Dashboard = () => {
             </div>
 
             <div className="flex items-center gap-2">
-              <motion.button
-                onClick={() => setMaxNotifications(true)}
-                className="relative flex h-9 w-9 items-center justify-center rounded-lg border border-border/25 bg-card/20 text-muted-foreground transition-all duration-200 hover:border-accent/30 hover:text-foreground"
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-              >
-                <Bell className="h-4 w-4" />
-                <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-accent text-[8px] font-bold text-accent-foreground">
-                  {allNotifications.length > 9 ? "9+" : allNotifications.length}
-                </span>
-              </motion.button>
 
-              <UserAvatar name={userName} photoUrl={userPhoto} />
+              <AppHeaderUser name={userName} photoUrl={userPhoto} />
             </div>
           </motion.header>
 
