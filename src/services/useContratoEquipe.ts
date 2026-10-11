@@ -26,11 +26,11 @@ export interface ContratoRateioTecnico {
   servicos: Array<{ servico: CommercialService; recebimento: number; percentual: number; comissao: number }>;
   participantes: Array<{ usuario: UsuarioResumo; valor: number }>;
 }
-export const useContratoEquipe = (id?: number) => {
+export const useContratoEquipe = (id?: number, enabled = true) => {
   const usuarioId = useUsuarioAtualId();
   return useQuery({
     queryKey: ["contratos", id, "equipe", usuarioId],
-    enabled: !!id,
+    enabled: !!id && enabled,
     retry: false,
     queryFn: async () => (await api.get<ContratoEquipe>(`/contratos/${id}/equipe`)).data,
   });

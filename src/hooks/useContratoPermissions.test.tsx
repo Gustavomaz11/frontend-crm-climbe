@@ -6,7 +6,7 @@ let codes: string[] = [];
 vi.mock("@/store/useAuthStore", () => ({ useAuthStore: (selector: (state: unknown) => unknown) => selector({ basicUserData: { id: 7 } }) }));
 vi.mock("@/services/usePermissoes", () => ({ useUsuarioPermissoes: () => ({ data: codes.map(codigo => ({ permissao: { codigo } })), isLoading: false }) }));
 vi.mock("@/services", () => ({ useUsuarioPermissoes: () => ({ data: codes.map(codigo => ({ permissao: { codigo } })) }) }));
-vi.mock("@/services/useContratos", () => ({ useContratosKanbanDisponiveis: () => ({ data: [] }) }));
+vi.mock("@/services/useContratos", () => ({ useAcessoKanban: () => ({ data: false }) }));
 const fields = {
   "LER": "canRead",
   "CRIAR": "canCreate",

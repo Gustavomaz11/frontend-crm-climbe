@@ -221,12 +221,34 @@ export function useContratos(enabled = true) {
   return { ...query, data: enabled ? query.data : undefined };
 }
 
+export interface ContratoKanbanResumo {
+  id: number;
+  empresaNome: string;
+  titulo: string;
+  urlPdf?: string | null;
+  status: ContratoStatus;
+  equipeConfigurada: boolean;
+  servico?: CommercialService | null;
+  servicos: Array<{ servico: CommercialService }>;
+}
+
 export function useContratosKanbanDisponiveis(usuarioId?: number | null) {
-  return useQuery<Contrato[]>({
-    queryKey: ["contratos", "kanban-disponiveis", usuarioId],
+  return useQuery<ContratoKanbanResumo[]>({
+    queryKey: ["contratos", "kanban-resumos", usuarioId],
     enabled: !!usuarioId,
     refetchInterval: 60_000,
-    queryFn: async () => (await api.get<ContratoApi[]>("/contratos/kanban-disponiveis")).data.map(normalizeContrato),
+    queryFn: async () => (await api.get<ContratoKanbanResumo[]>("/contratos/kanban-resumos")).data
+      .map(contrato => ({ ...contrato, titulo: getFileNameFromUrl(contrato.urlPdf) })),
+  });
+}
+
+export function useAcessoKanban(usuarioId?: number | null, enabled = true) {
+  return useQuery<boolean>({
+    queryKey: ["contratos", "kanban-acesso", usuarioId],
+    enabled: !!usuarioId && enabled,
+    staleTime: 60_000,
+    refetchInterval: 60_000,
+    queryFn: async () => (await api.get<boolean>("/contratos/kanban-acesso")).data,
   });
 }
 

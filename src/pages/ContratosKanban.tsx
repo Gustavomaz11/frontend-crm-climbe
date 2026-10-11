@@ -29,6 +29,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { useAuthStore } from "@/store/useAuthStore";
 import {
   useContratoKanban,
+  useContratoKanbanAbertura,
   useContratoEquipe,
   useContratosKanbanDisponiveis,
   useUsuarios,
@@ -43,7 +44,7 @@ import {
   useUpdateKanbanSubtarefa,
   useUpdateKanbanRaia,
   useUpdateKanbanTask,
-  type Contrato,
+  type ContratoKanbanResumo,
   type ContratoKanbanSubtarefa,
   type ContratoKanbanTask,
   type KanbanTaskDTO,
@@ -69,7 +70,7 @@ const emptyDraft: KanbanTaskDraft = {
   dataFim: "",
 };
 
-function getContratoLabel(contrato: Contrato) {
+function getContratoLabel(contrato: ContratoKanbanResumo) {
   return `${contrato.empresaNome} - ${getProposalServicesLabel(contrato)}`;
 }
 
@@ -113,14 +114,13 @@ const ContratosKanban = () => {
     [contratos],
   );
   const requestedContratoId = Number(searchParams.get("contrato"));
-  const selectedContratoId =
-    contratosAprovados.some((contrato) => contrato.id === requestedContratoId)
-      ? requestedContratoId
-      : undefined;
+  const selectedContratoId = Number.isSafeInteger(requestedContratoId) && requestedContratoId > 0
+    ? requestedContratoId : undefined;
   const selectedContrato = contratosAprovados.find((contrato) => contrato.id === selectedContratoId);
-  const { data: equipe, isLoading: equipeLoading, error: equipeError } = useContratoEquipe(selectedContratoId);
+  const { isLoading: equipeLoading, error: equipeError } = useContratoKanbanAbertura(selectedContratoId, usuarioId ?? undefined);
+  const { data: equipe } = useContratoEquipe(selectedContratoId, false);
   const [editingEquipe, setEditingEquipe] = useState(false);
-  const { data: board, isLoading: boardLoading, error: boardError } = useContratoKanban(equipe?.configurada ? selectedContratoId : undefined, usuarioId ?? undefined);
+  const { data: board, isLoading: boardLoading, error: boardError } = useContratoKanban(equipe?.configurada ? selectedContratoId : undefined, usuarioId ?? undefined, false);
   const { data: usuariosComPerfil = [] } = useUsuarios();
   const editingTask = useMemo(
     () => board?.raias.flatMap((raia) => raia.tasks).find((task) => task.id === editingTaskId) ?? (archivedTask?.id === editingTaskId ? archivedTask : undefined),

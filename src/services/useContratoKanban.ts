@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { isAxiosError } from "axios";
 import { api } from "@/api";
 import { useAuthStore } from "@/store/useAuthStore";
+import type { ContratoEquipe } from "./useContratoEquipe";
 
 const usuarioAtualId = () => {
   const { basicUserData, userData } = useAuthStore.getState();
@@ -158,14 +159,35 @@ function getApiErrorMessage(error: unknown) {
   return "Erro na API";
 }
 
-export function useContratoKanban(contratoId?: number, usuarioId?: number) {
+export interface ContratoKanbanAbertura {
+  equipe: ContratoEquipe;
+  board: ContratoKanbanBoard | null;
+}
+
+export function useContratoKanbanAbertura(contratoId?: number, usuarioId = usuarioAtualId()) {
+  const client = useQueryClient();
+  return useQuery<ContratoKanbanAbertura>({
+    queryKey: ["contratos", contratoId, "abertura", usuarioId],
+    enabled: !!contratoId && !!usuarioId,
+    retry: false,
+    queryFn: async () => {
+      const response = await api.get<ApiEnvelope<ContratoKanbanAbertura>>(`/contratos/${contratoId}/kanban/abertura`);
+      const abertura = unwrap(response.data);
+      client.setQueryData(["contratos", contratoId, "equipe", usuarioId], abertura.equipe);
+      client.setQueryData(boardQueryKey(contratoId, usuarioId), abertura.board);
+      return abertura;
+    },
+  });
+}
+
+export function useContratoKanban(contratoId?: number, usuarioId?: number, enabled = true) {
   return useQuery<ContratoKanbanBoard>({
     queryKey: boardQueryKey(contratoId, usuarioId),
     queryFn: async () => {
       const response = await api.get<ApiEnvelope<ContratoKanbanBoard>>(`/contratos/${contratoId}/kanban`);
       return unwrap(response.data);
     },
-    enabled: !!contratoId,
+    enabled: !!contratoId && enabled,
     retry: false,
   });
 }

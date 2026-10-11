@@ -17,6 +17,7 @@ vi.mock("@/services", async importOriginal => {
   return { ...original,
     useContratosKanbanDisponiveis: () => ({ data: [{ id: 12, empresaNome: "Empresa teste", titulo: "contrato.pdf", status: "APROVADO", servico: "CONTABILIDADE" }] }),
     useContratoEquipe: (id?: number) => ({ data: id ? mocks.equipe : undefined }),
+    useContratoKanbanAbertura: () => ({ isLoading: false }),
     useContratoKanban: (id?: number) => { mocks.buscarBoard(id); return { data: id ? mocks.board : undefined }; },
     useUsuarios: () => ({ data: [] }),
     ...Object.fromEntries(["useCreateKanbanSubtarefa", "useCreateKanbanRaia", "useCreateKanbanTask", "useDeleteKanbanSubtarefa", "useDeleteKanbanRaia", "useDeleteKanbanTask", "useMoveKanbanTask", "useToggleKanbanSubtarefa", "useUpdateKanbanSubtarefa", "useUpdateKanbanRaia", "useUpdateKanbanTask"].map(name => [name, mutation])),

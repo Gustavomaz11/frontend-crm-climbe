@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useUsuarioPermissoes } from "@/services";
-import { useContratosKanbanDisponiveis } from "@/services/useContratos";
+import { useAcessoKanban } from "@/services/useContratos";
 
 export interface MainNavItem {
   icon: LucideIcon;
@@ -65,8 +65,9 @@ export function useVisibleMainNavItems() {
   const userData = useAuthStore((state) => state.userData);
   const usuarioId = basicUserData?.id ?? userData?.id;
 
-  const { data: usuarioPermissoes = [] } = useUsuarioPermissoes(usuarioId);
-  const { data: contratosKanban = [] } = useContratosKanbanDisponiveis(usuarioId);
+  const { data: usuarioPermissoes = [], isLoading } = useUsuarioPermissoes(usuarioId);
+  const temPermissaoKanban = usuarioPermissoes.some(associacao => associacao.permissao?.codigo === "CONTRATO_KANBAN");
+  const { data: temContratosKanban = false } = useAcessoKanban(usuarioId, !isLoading && !temPermissaoKanban);
 
   return useMemo(() => {
     const permissionCodes = new Set(
@@ -76,9 +77,9 @@ export function useVisibleMainNavItems() {
     );
 
     return mainNavItems.filter((item) => {
-      if (item.path === "/contratos/kanban" && contratosKanban.length > 0) return true;
+      if (item.path === "/contratos/kanban" && temContratosKanban) return true;
       if (!item.permissions?.length) return true;
       return item.permissions.some((permission) => permissionCodes.has(permission));
     });
-  }, [usuarioPermissoes, contratosKanban]);
+  }, [usuarioPermissoes, temContratosKanban]);
 }
