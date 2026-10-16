@@ -30,6 +30,7 @@ export interface MainNavItem {
   label: string;
   path: string;
   permissions?: string[];
+  adminOnly?: boolean;
 }
 
 const mainNavItems: MainNavItem[] = [
@@ -44,7 +45,7 @@ const mainNavItems: MainNavItem[] = [
   { icon: SlidersHorizontal, label: "Tags e campos", path: "/pipeline-vendas/cadastros", permissions: ["COMERCIAL"] },
   { icon: FileCode2, label: "Biblioteca de Scripts", path: "/pipeline-vendas/scripts", permissions: ["COMERCIAL_SCRIPT_VISUALIZAR"] },
   { icon: SlidersHorizontal, label: "Configuração de Funis", path: "/pipeline-vendas/funis", permissions: ["COMERCIAL_FUNIL_VISUALIZAR"] },
-  { icon: ScrollText, label: "Propostas", path: "/propostas", permissions: ["PROPOSTA_LER", "PROPOSTA_CRIAR", "PROPOSTA_EDITAR", "PROPOSTA_DELETAR"] },
+  { icon: ScrollText, label: "Propostas", path: "/propostas", adminOnly: true, permissions: ["PROPOSTA_LER", "PROPOSTA_CRIAR", "PROPOSTA_EDITAR", "PROPOSTA_DELETAR"] },
   { icon: CalendarIcon, label: "Agenda", path: "/agenda", permissions: ["REUNIAO_AGENDAMENTO"] },
   { icon: Shield, label: "Permissões", path: "/permissoes", permissions: ["PERMITIR_ACESSO"] },
   { icon: BriefcaseBusiness, label: "Cargos", path: "/cargos", permissions: ["CARGO_LER", "CARGO_CRIAR", "CARGO_EDITAR", "CARGO_DELETAR"] },
@@ -55,6 +56,7 @@ const mainNavItems: MainNavItem[] = [
     icon: FileCheck,
     label: "Documentos",
     path: "/documentos",
+    adminOnly: true,
     permissions: ["DOCUMENTO_JURIDICO_LER", "DOCUMENTO_JURIDICO_CRIAR", "DOCUMENTO_JURIDICO_EDITAR", "DOCUMENTO_JURIDICO_DELETAR"],
   },
   { icon: UserCheck, label: "Solicitações", path: "/aprovar-acesso", permissions: ["PERMITIR_ACESSO"] },
@@ -77,6 +79,7 @@ export function useVisibleMainNavItems() {
     );
 
     return mainNavItems.filter((item) => {
+      if (item.adminOnly && !permissionCodes.has("PERMITIR_ACESSO")) return false;
       if (item.path === "/contratos/kanban" && temContratosKanban) return true;
       if (!item.permissions?.length) return true;
       return item.permissions.some((permission) => permissionCodes.has(permission));

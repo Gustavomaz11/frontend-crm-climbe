@@ -3,8 +3,11 @@ import { isAxiosError } from "axios";
 import { api } from "@/api";
 import type { CommercialService } from "./commercialProposal";
 import type { PropostaServicoConfig } from "./usePropostas";
+import { semHistoricos, type DadosCadastrais } from "./empresaDadosCadastrais";
 
 export interface Empresa {
+  tipoEmpresa?: string;
+  dadosCadastrais?: DadosCadastrais;
   id: number;
   idEmpresa?: number;
   nome: string;
@@ -95,6 +98,8 @@ export function normalizeEmpresa(empresa: EmpresaApi): Empresa {
 }
 
 export interface CreateEmpresaDTO {
+  tipoEmpresa?: string;
+  dadosCadastrais?: DadosCadastrais;
   razaoSocial: string;
   nomeFantasia: string;
   cnpj: string;
@@ -116,6 +121,8 @@ export interface CreateEmpresaDTO {
 
 export function sanitizeEmpresaPayload(data: CreateEmpresaDTO): CreateEmpresaDTO {
   return {
+    ...(data.tipoEmpresa ? { tipoEmpresa: data.tipoEmpresa } : {}),
+    ...(data.dadosCadastrais ? { dadosCadastrais: semHistoricos(data.dadosCadastrais) } : {}),
     razaoSocial: data.razaoSocial.trim(),
     nomeFantasia: data.nomeFantasia.trim() || data.razaoSocial.trim(),
     cnpj: data.cnpj.trim(),
@@ -135,6 +142,8 @@ export function sanitizeEmpresaPayload(data: CreateEmpresaDTO): CreateEmpresaDTO
 
 export function empresaToForm(empresa: Empresa): CreateEmpresaDTO {
   return {
+    ...(empresa.tipoEmpresa ? { tipoEmpresa: empresa.tipoEmpresa } : {}),
+    ...(empresa.dadosCadastrais ? { dadosCadastrais: empresa.dadosCadastrais } : {}),
     razaoSocial: empresa.razaoSocial ?? "",
     nomeFantasia: empresa.nomeFantasia ?? "",
     cnpj: empresa.cnpj ?? "",

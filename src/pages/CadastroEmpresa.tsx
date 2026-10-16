@@ -14,6 +14,9 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { CreateEmpresaDTO, empresaToForm, useCreateEmpresa, useEmpresaById, useUpdateEmpresa } from "@/services";
 
 import { formatCnpj, isValidCnpj } from "@/lib/cnpj";
+import { useCnpjEmpresa } from "@/services/useCnpjEmpresa";
+import { EmpresaDadosCadastrais, EmpresaSituacaoAlerta } from "@/components/empresas/EmpresaDadosCadastrais";
+import { comContatosPrincipais, objetoCadastral, type DadosCadastrais } from "@/services/empresaDadosCadastrais";
 
 const UF_OPTIONS = [
   "AC","AL","AP","AM","BA","CE","DF","ES","GO","MA","MT","MS","MG",
@@ -111,6 +114,9 @@ const CadastroEmpresa = () => {
   const empresaId = Number(empresaIdParam);
   const isEditing = Boolean(empresaIdParam) && Number.isInteger(empresaId) && empresaId > 0;
   const hydratedEmpresaId = useRef<number | null>(null);
+  const cnpjSnapshot = useRef<CreateEmpresaDTO>(emptyForm);
+  const resolvedAddressCep = useRef("");
+  const { dados: dadosCnpj, consultando: cnpjLoading, erro: cnpjError, consultarNovamente } = useCnpjEmpresa(form.cnpj, !isEditing);
 
   const basicUserData = useAuthStore((state) => state.basicUserData);
   const userData = useAuthStore((state) => state.userData);
@@ -138,21 +144,63 @@ const CadastroEmpresa = () => {
     }
 
     setForm(empresaToForm(empresa));
+    resolvedAddressCep.current = empresa.cep?.replace(/\D/g, "") ?? "";
     hydratedEmpresaId.current = empresa.id;
   }, [empresa, isEditing]);
 
+  useEffect(() => {
+    if (!dadosCnpj) return;
+    const snapshot = cnpjSnapshot.current;
+    const fields = { ...dadosCnpj, cep: formatCep(dadosCnpj.cep || ""), telefone: formatPhone(dadosCnpj.telefone || "") };
+    const addressFields = new Set(["cep", "logradouro", "numero", "bairro", "cidade", "uf"]);
+    setForm((current) => {
+      const next = { ...current };
+      for (const [field, value] of Object.entries(fields)) {
+        const key = field as keyof CreateEmpresaDTO;
+        if (key === "cnpj" || key === "dadosCadastrais" || field === "avisos" || !value || current[key] !== snapshot[key]) continue;
+        if (addressFields.has(key) && current.cep !== snapshot.cep) continue;
+        if (typeof value === "string") Object.assign(next, { [key]: value });
+      }
+      if (dadosCnpj.dadosCadastrais) next.dadosCadastrais = comContatosPrincipais(dadosCnpj.dadosCadastrais, next.telefone, next.email);
+      if (fields.cep && next.cep === fields.cep) resolvedAddressCep.current = fields.cep.replace(/\D/g, "");
+      return next;
+    });
+    setCepMessage("");
+  }, [dadosCnpj]);
+
   function set(field: keyof CreateEmpresaDTO, value: string) {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    if (field === "cnpj") cnpjSnapshot.current = { ...form, tipoEmpresa: undefined, dadosCadastrais: undefined };
+    if (field === "cep") resolvedAddressCep.current = "";
+    setForm((prev) => {
+      const next = { ...prev, [field]: value };
+      if (field === "cnpj" && prev.cnpj.replace(/\D/g, "") !== value.replace(/\D/g, "")) {
+        next.dadosCadastrais = undefined;
+        next.tipoEmpresa = undefined;
+      }
+      if (prev.dadosCadastrais && ["telefone", "email"].includes(field)) next.dadosCadastrais = comContatosPrincipais(prev.dadosCadastrais, next.telefone, next.email);
+      return next;
+    });
     setErrorMessage("");
     if (field === "cep") {
       setCepMessage("");
     }
   }
 
+  const atualizarDados = (dados: DadosCadastrais) => {
+    const phones = Array.isArray(dados.phones) ? dados.phones : [];
+    const emails = Array.isArray(dados.emails) ? dados.emails : [];
+    const phone = objetoCadastral(phones[0]);
+    const email = objetoCadastral(emails[0]);
+    setForm(current => ({ ...current, dadosCadastrais: dados,
+      telefone: phone.number ? formatPhone(`${phone.area || ""}${phone.number}`) : current.telefone,
+      email: email.address ? String(email.address) : current.email,
+    }));
+  };
+
   useEffect(() => {
     const cep = form.cep.replace(/\D/g, "");
 
-    if (cep.length !== 8) {
+    if (cep.length !== 8 || cep === resolvedAddressCep.current || cnpjLoading) {
       setCepLoading(false);
       return;
     }
@@ -179,12 +227,14 @@ const CadastroEmpresa = () => {
           uf?: string;
         };
 
+        if (controller.signal.aborted) return;
+
         if (data.erro) {
           setCepMessage("CEP não encontrado.");
           return;
         }
 
-        setForm((prev) => ({
+        setForm((prev) => prev.cep.replace(/\D/g, "") !== cep || resolvedAddressCep.current === cep ? prev : ({
           ...prev,
           logradouro: data.logradouro || prev.logradouro,
           bairro: data.bairro || prev.bairro,
@@ -198,7 +248,7 @@ const CadastroEmpresa = () => {
         }
         setCepMessage("Não foi possível consultar o CEP.");
       } finally {
-        setCepLoading(false);
+        if (!controller.signal.aborted) setCepLoading(false);
       }
     }, 350);
 
@@ -206,7 +256,7 @@ const CadastroEmpresa = () => {
       controller.abort();
       window.clearTimeout(timer);
     };
-  }, [form.cep]);
+  }, [form.cep, cnpjLoading]);
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -314,6 +364,25 @@ const CadastroEmpresa = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="col-span-2">
                     <InputField
+                      label="CNPJ"
+                      required
+                      autoFocus={!isEditing}
+                      inputMode="numeric"
+                      aria-describedby={!isEditing ? "cnpj-consulta-status" : undefined}
+                      placeholder="00.000.000/0000-00"
+                      value={form.cnpj}
+                      onChange={(e) => set("cnpj", formatCnpj(e.target.value))}
+                    />
+                    {!isEditing && <div id="cnpj-consulta-status" role="status" aria-live="polite" className="mt-2 text-xs text-muted-foreground">
+                      {cnpjLoading ? "Consultando dados no CNPJá..." : cnpjError ? <>
+                        <p>{cnpjError}</p>
+                        <button type="button" onClick={consultarNovamente} className="mt-1 text-accent underline underline-offset-2">Tentar novamente</button>
+                      </> : dadosCnpj ? "Dados preenchidos pelo CNPJá. Confira e complete as informações." : form.cnpj.replace(/\D/g, "").length === 14 && !isValidCnpj(form.cnpj) ? "Informe um CNPJ válido para consultar os dados." : "Comece pelo CNPJ para preencher os dados da empresa automaticamente."}
+                    </div>}
+                    <div className="mt-3"><EmpresaSituacaoAlerta dados={form.dadosCadastrais} /></div>
+                  </div>
+                  <div className="col-span-2">
+                    <InputField
                       label="Razão Social"
                       required
                       placeholder="Ex: Empresa Ltda."
@@ -321,19 +390,12 @@ const CadastroEmpresa = () => {
                       onChange={(e) => set("razaoSocial", e.target.value)}
                     />
                   </div>
-                  <InputField
+                  <div className="col-span-2"><InputField
                     label="Nome Fantasia"
                     placeholder="Ex: Empresa"
                     value={form.nomeFantasia}
                     onChange={(e) => set("nomeFantasia", e.target.value)}
-                  />
-                  <InputField
-                    label="CNPJ"
-                    required
-                    placeholder="00.000.000/0000-00"
-                    value={form.cnpj}
-                    onChange={(e) => set("cnpj", formatCnpj(e.target.value))}
-                  />
+                  /></div>
                 </div>
               </motion.div>
 
@@ -441,6 +503,8 @@ const CadastroEmpresa = () => {
                 </div>
               </motion.div>
 
+              <EmpresaDadosCadastrais dados={form.dadosCadastrais} tipo={form.tipoEmpresa} onChange={atualizarDados} onTipoChange={tipoEmpresa => setForm(current => ({ ...current, tipoEmpresa }))} />
+
               {/* Representante Legal */}
               <motion.div
                 className="rounded-xl border border-border/25 bg-card/40 backdrop-blur-sm p-5 space-y-4"
@@ -493,7 +557,7 @@ const CadastroEmpresa = () => {
                 </motion.button>
                 <motion.button
                   type="submit"
-                  disabled={isPending || (isEditing && isEmpresaLoading)}
+                  disabled={isPending || cnpjLoading || (isEditing && isEmpresaLoading)}
                   className="h-9 px-6 rounded-lg bg-accent text-accent-foreground text-[13px] font-medium hover:bg-accent/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   whileTap={{ scale: 0.97 }}
                 >
@@ -536,6 +600,7 @@ const CadastroEmpresa = () => {
                   <p className="text-[12px] text-muted-foreground mt-1">
                     {form.nomeFantasia || form.razaoSocial} foi {isEditing ? "atualizada" : "registrada"} com sucesso.
                   </p>
+                  <p className="mt-2 text-xs text-muted-foreground">Os comprovantes estão sendo emitidos. Acompanhe em Ações → Visualizar comprovantes na empresa.</p>
                 </div>
                 <div className="flex gap-2">
                   {!isEditing && (

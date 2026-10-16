@@ -1,3 +1,5 @@
+import { EmpresaComprovantes } from "@/components/empresas/EmpresaComprovantes";
+import { EmpresaDadosCadastrais } from "@/components/empresas/EmpresaDadosCadastrais";
 import { AppMain } from "@/components/layout/AppMain";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { useState, useMemo } from "react";
@@ -5,7 +7,7 @@ import { useState, useMemo } from "react";
 import { useSidebarState } from "@/hooks/useSidebarState";
 import { motion, AnimatePresence } from "framer-motion";
 import { RateioTecnicoResumo } from "@/components/kanban/ContratoRateioTecnico";
-import { Building2, Search, Download, Eye, X, Plus, Pencil, Trash2, AlertTriangle } from "lucide-react";
+import { Building2, Search, X, Plus, Pencil, Trash2, AlertTriangle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { AppHeaderUser } from "@/components/layout/AppHeaderUser";
@@ -199,8 +201,7 @@ const Empresas = () => {
                   <div className="rounded-xl border border-border/20 bg-background/50 p-5 space-y-3">
                     <p className="text-[10px] text-muted-foreground font-medium tracking-[0.08em] uppercase">Ações</p>
                     <div className="space-y-2">
-                      <motion.button className="w-full h-10 rounded-lg border border-border/25 bg-card/40 text-[12px] text-foreground/70 flex items-center justify-center gap-2 hover:border-accent/30 hover:text-accent transition-colors" whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }}><Download className="w-4 h-4" /> Documentos</motion.button>
-                      <motion.button className="w-full h-10 rounded-lg border border-border/25 bg-card/40 text-[12px] text-foreground/70 flex items-center justify-center gap-2 hover:border-accent/30 hover:text-accent transition-colors" whileHover={{ y: -1 }} whileTap={{ scale: 0.98 }}><Eye className="w-4 h-4" /> Histórico</motion.button>
+                      <EmpresaComprovantes empresaId={selectedEmpresa.id} nome={selectedEmpresa.nome} />
                       <motion.button
                         type="button"
                         onClick={() => navigate(`/empresas/${selectedEmpresa.id}/editar`)}
@@ -222,6 +223,7 @@ const Empresas = () => {
                     </div>
                   </div>
                 </div>
+                <EmpresaDadosCadastrais dados={selectedEmpresa.dadosCadastrais} tipo={selectedEmpresa.tipoEmpresa} />
                 <div className="rounded-xl border border-border/20 bg-background/50 p-5">
                   <div className="mb-4 flex items-center justify-between gap-3">
                     <div>
