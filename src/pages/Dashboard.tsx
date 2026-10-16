@@ -2,7 +2,9 @@ import { AppSidebar } from "@/components/layout/AppSidebar";
 import { useContratoPermissions } from "@/hooks/useContratoPermissions";
 import { useCrudPermissions } from "@/hooks/useCrudPermissions";
 import { useDeferredValue, useMemo, useState } from "react";
-import { getReuniaoError } from "@/services/useReunioes";
+import { getReuniaoError, type Reuniao } from "@/services/useReunioes";
+import { ReunioesDiaModal, type DiaReunioesAberto } from "@/components/reunioes/ReunioesDiaModal";
+import { reunioesDoDia } from "@/components/reunioes/reuniaoPresentation";
 import { SalaReuniaoSelect } from "@/components/reunioes/SalaReuniaoSelect";
 import { ParticipantesReuniaoSelect } from "@/components/reunioes/ParticipantesReuniaoSelect";
 
@@ -55,6 +57,7 @@ interface PipelineRow {
 }
 
 interface Meeting {
+  reuniao: Reuniao;
   title: string;
   time: string;
   empresa: string;
@@ -357,6 +360,7 @@ const Dashboard = () => {
   const [empresaSearch, setEmpresaSearch] = useState("");
   const deferredEmpresaSearch = useDeferredValue(empresaSearch);
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  const [diaReunioesAberto, setDiaReunioesAberto] = useState<DiaReunioesAberto | null>(null);
   const [showAddMeeting, setShowAddMeeting] = useState(false);
   const [calendarDate, setCalendarDate] = useState(
     () => new Date(new Date().getFullYear(), new Date().getMonth(), 1),
@@ -712,6 +716,7 @@ const Dashboard = () => {
       }
 
       grouped[day].push({
+        reuniao,
         title: reuniao.titulo,
         time: formatTime(reuniao.dataHora),
         empresa: empresa?.nome ?? (reuniao.empresaId ? `Empresa #${reuniao.empresaId}` : "Reunião da equipe"),
@@ -1320,7 +1325,9 @@ const Dashboard = () => {
   };
 
   const selectCalendarDay = (day: number) => {
-    setSelectedDay(day === selectedDay ? null : day);
+    setSelectedDay(day);
+    const data = calendarDateInput(currentYear, currentMonth, day);
+    if (reunioesDoDia(reunioes, data).length) setDiaReunioesAberto({ data });
 
     if (showAddMeeting) {
       setMeetingForm((form) => ({
@@ -1419,8 +1426,11 @@ const Dashboard = () => {
           const isSelected = day === selectedDay;
 
           return (
-            <motion.div
+            <motion.button
               key={`${day}-${index}`}
+              type="button"
+              disabled={day === null}
+              aria-label={day ? `${String(day).padStart(2, "0")}/${String(currentMonth + 1).padStart(2, "0")}/${currentYear}${hasMeeting ? `, ${meetingsData[day].length} ${meetingsData[day].length === 1 ? "reunião" : "reuniões"}` : ", sem reuniões"}` : undefined}
               className={`relative flex cursor-pointer flex-col items-center justify-center rounded text-[10px] transition-colors ${
                 expanded ? "aspect-square min-h-[40px]" : "aspect-square"
               } ${
@@ -1447,7 +1457,7 @@ const Dashboard = () => {
               {hasMeeting && !isToday && !isSelected && (
                 <div className="absolute bottom-0.5 h-1 w-1 rounded-full bg-accent" />
               )}
-            </motion.div>
+            </motion.button>
           );
         })}
       </div>
@@ -1467,9 +1477,11 @@ const Dashboard = () => {
             </p>
 
             {meetingsData[selectedDay].map((meeting, index) => (
-              <motion.div
-                key={`${meeting.title}-${index}`}
-                className="space-y-1 rounded-lg border border-border/20 bg-background/50 p-3"
+              <motion.button
+                key={meeting.reuniao.id}
+                type="button"
+                onClick={() => setDiaReunioesAberto({ data: calendarDateInput(currentYear, currentMonth, selectedDay), reuniaoId: meeting.reuniao.id })}
+                className="w-full space-y-1 rounded-lg border border-border/20 bg-background/50 p-3 text-left transition-colors hover:border-accent/40"
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
@@ -1494,7 +1506,7 @@ const Dashboard = () => {
                     </span>
                   )}
                 </div>
-              </motion.div>
+              </motion.button>
             ))}
           </motion.div>
         )}
@@ -2054,6 +2066,8 @@ const Dashboard = () => {
       >
         {renderCalendar(true)}
       </MaximizeModal>
+
+      {diaReunioesAberto && <ReunioesDiaModal key={`${diaReunioesAberto.data}:${diaReunioesAberto.reuniaoId ?? "lista"}`} {...diaReunioesAberto} reunioes={reunioesDoDia(reunioes, diaReunioesAberto.data)} onClose={() => setDiaReunioesAberto(null)} />}
 
       <AnimatePresence>
         {selectedStage && (

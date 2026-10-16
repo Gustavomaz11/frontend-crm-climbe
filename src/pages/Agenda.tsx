@@ -13,6 +13,8 @@ import { AppHeaderUser } from "@/components/layout/AppHeaderUser";
 
 import { ParticipantesReuniaoSelect } from "@/components/reunioes/ParticipantesReuniaoSelect";
 import { SalaReuniaoSelect } from "@/components/reunioes/SalaReuniaoSelect";
+import { ReunioesDiaModal, type DiaReunioesAberto } from "@/components/reunioes/ReunioesDiaModal";
+import { reunioesDoDia } from "@/components/reunioes/reuniaoPresentation";
 import { useCreateReuniao, useDeleteReuniao, useEmpresas, useParticipantesReuniao, useReunioes, useUpdateReuniao } from "@/services";
 import { useAuthStore } from "@/store/useAuthStore";
 import { shouldShowAgendaReuniao } from "./agendaVisibility";
@@ -214,6 +216,7 @@ const Agenda = () => {
   const [showAddEvent, setShowAddEvent] = useState(false);
   const [visibleDate, setVisibleDate] = useState(() => new Date());
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
+  const [diaReunioesAberto, setDiaReunioesAberto] = useState<DiaReunioesAberto | null>(null);
   const [draggedCard, setDraggedCard] = useState<{ card: KanbanCard; fromCol: string } | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -379,6 +382,12 @@ const Agenda = () => {
   const goToPreviousMonth = () => {
     setVisibleDate((date) => new Date(date.getFullYear(), date.getMonth() - 1, 1));
     setSelectedDay(null);
+  };
+
+  const selectCalendarDay = (day: number) => {
+    setSelectedDay(day);
+    const data = eventDateInput(new Date(currentYear, currentMonth, day));
+    if (reunioesDoDia(reunioes, data).length) setDiaReunioesAberto({ data });
   };
 
   const goToNextMonth = () => {
@@ -627,7 +636,7 @@ const Agenda = () => {
                         const isToday = isViewingCurrentMonth && day === todayDay;
                         const isSelected = day === selectedDay;
                         return (
-                          <motion.div key={i} className={`min-h-[100px] border-b border-r border-border/10 p-1.5 cursor-pointer transition-colors duration-200 ${day === null ? "bg-muted/5" : isSelected ? "bg-accent/5 ring-1 ring-inset ring-accent/20" : isToday ? "bg-accent/[0.03]" : "hover:bg-muted/10"}`} onClick={() => day && setSelectedDay(day === selectedDay ? null : day)} whileTap={day ? { scale: 0.98 } : undefined}>
+                          <motion.div key={i} role={day ? "button" : undefined} tabIndex={day ? 0 : undefined} aria-label={day ? `Reuniões em ${String(day).padStart(2, "0")}/${String(currentMonth + 1).padStart(2, "0")}/${currentYear}` : undefined} onKeyDown={(event) => { if (day && (event.key === "Enter" || event.key === " ")) { event.preventDefault(); selectCalendarDay(day); } }} className={`min-h-[100px] border-b border-r border-border/10 p-1.5 cursor-pointer transition-colors duration-200 ${day === null ? "bg-muted/5" : isSelected ? "bg-accent/5 ring-1 ring-inset ring-accent/20" : isToday ? "bg-accent/[0.03]" : "hover:bg-muted/10"}`} onClick={() => day && selectCalendarDay(day)} whileTap={day ? { scale: 0.98 } : undefined}>
                             {day && (
                               <>
                                 <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] mb-1 ${isToday ? "bg-accent text-accent-foreground font-bold" : "text-foreground font-medium"}`}>{day}</div>
@@ -667,7 +676,7 @@ const Agenda = () => {
                           const has = day ? eventDays.has(day) : false;
                           const isT = isViewingCurrentMonth && day === todayDay;
                           const isS = day === selectedDay;
-                          return <div key={i} onClick={() => day && setSelectedDay(day === selectedDay ? null : day)} className={`aspect-square flex items-center justify-center text-[9px] rounded cursor-pointer transition-colors ${day === null ? "" : isS ? "bg-accent text-accent-foreground font-bold" : isT ? "bg-accent text-accent-foreground font-bold" : has ? "bg-accent/15 text-accent font-semibold" : "text-foreground hover:bg-muted/20"}`}>{day}</div>;
+                          return <button type="button" disabled={!day} aria-label={day ? `Selecionar dia ${day}` : undefined} key={i} onClick={() => day && selectCalendarDay(day)} className={`aspect-square flex items-center justify-center text-[9px] rounded cursor-pointer transition-colors ${day === null ? "" : isS ? "bg-accent text-accent-foreground font-bold" : isT ? "bg-accent text-accent-foreground font-bold" : has ? "bg-accent/15 text-accent font-semibold" : "text-foreground hover:bg-muted/20"}`}>{day}</button>;
                         })}
                       </div>
                     </div>
@@ -907,6 +916,8 @@ const Agenda = () => {
           </div>
         </main>
       </div>
+
+      {diaReunioesAberto && <ReunioesDiaModal key={diaReunioesAberto.data} {...diaReunioesAberto} reunioes={reunioesDoDia(reunioes, diaReunioesAberto.data)} onClose={() => setDiaReunioesAberto(null)} />}
 
       {/* Add Event Modal */}
       <AnimatePresence>

@@ -6,6 +6,12 @@ import {
   syncGoogleAccessToken,
 } from "@/lib/googleAccessToken";
 
+export interface PessoaReuniao {
+  id?: number | null;
+  nomeCompleto?: string | null;
+  email?: string | null;
+}
+
 export interface Reuniao {
   arquivadoEm?: string | null;
   id: number;
@@ -30,6 +36,11 @@ export interface Reuniao {
   status?: string;
   googleEventId?: string;
   linkMeet?: string;
+  dataHoraFim?: string | null;
+  googleEventUrl?: string | null;
+  organizador?: PessoaReuniao | null;
+  participantes?: PessoaReuniao[];
+  participantesOmitidos?: boolean;
   /** Evento de dia inteiro (ex.: Google Calendar com start.date). */
   diaInteiro?: boolean;
   dataCriacao?: string;
@@ -268,6 +279,15 @@ export function useReuniaoById(id: number) {
     queryKey: ["reunioes", id],
     queryFn: () => fetchReuniaoOne(id),
     enabled: !!id,
+  });
+}
+
+export function useReuniaoDetalhes(id: number) {
+  return useQuery<Reuniao>({
+    queryKey: ["reunioes", id, "detalhes"],
+    queryFn: async () => normalizeReuniao((await api.get<ReuniaoApi>(`/reunioes/${id}/detalhes`)).data),
+    enabled: id > 0,
+    retry: false,
   });
 }
 

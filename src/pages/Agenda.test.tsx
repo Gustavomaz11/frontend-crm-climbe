@@ -31,6 +31,19 @@ describe("reuniões da equipe na agenda", () => {
   });
   afterEach(cleanup);
 
+  it("abre a lista de reuniões ao clicar no dia do calendário", () => {
+    const today = new Date();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const data = `${today.getFullYear()}-${month}-19`;
+    mocks.reunioes = [{ id: 3, titulo: "Alinhamento interno", empresaId: null, dataHora: `${data}T10:00:00`, data, hora: "10:00", local: "Sala 1", presencial: true }];
+    setup();
+    fireEvent.click(screen.getByRole("button", { name: `Reuniões em 19/${month}/${today.getFullYear()}` }));
+    const dialog = within(screen.getByRole("dialog"));
+    expect(dialog.getByRole("button", { name: /Alinhamento interno/ })).toBeInTheDocument();
+    fireEvent.click(dialog.getByRole("button", { name: "Fechar reuniões do dia" }));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
   it("agenda sem cliente, com usuários e sala do Google", async () => {
     const { container } = setup();
     fireEvent.click(screen.getByRole("button", { name: "Agendar" }));
