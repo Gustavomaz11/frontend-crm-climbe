@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/api";
 
 export interface EmpresaComprovante { id: number; tipo: string; status: string; mensagem?: string; geradoEm?: string }
-export const COMPROVANTES: Record<string, string> = { RFB: "Receita Federal", SIMPLES: "Simples Nacional e MEI", CCC: "Cadastro de Contribuintes", SUFRAMA: "SUFRAMA" };
+export const COMPROVANTES: Record<string, string> = { RFB: "Cartão CNPJ", SIMPLES: "Simples Nacional e MEI", CCC: "Cadastro de Contribuintes", SUFRAMA: "SUFRAMA" };
 
 export const useEmpresaComprovantes = (empresaId: number, enabled: boolean) => useQuery({
   queryKey: ["empresa-comprovantes", empresaId], enabled,
@@ -13,7 +13,7 @@ export const useEmpresaComprovantes = (empresaId: number, enabled: boolean) => u
 export const useSolicitarEmpresaComprovantes = (empresaId: number) => {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: async (id?: number) => api.post(`/empresas/${empresaId}/comprovantes${id ? `/${id}/tentar-novamente` : ""}`),
+    mutationFn: async (solicitacao: { tipo: string } | { id: number }) => api.post(`/empresas/${empresaId}/comprovantes/${"tipo" in solicitacao ? `${solicitacao.tipo}/solicitar` : `${solicitacao.id}/tentar-novamente`}`),
     onSuccess: () => client.invalidateQueries({ queryKey: ["empresa-comprovantes", empresaId] }),
   });
 };

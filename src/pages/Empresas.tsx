@@ -15,6 +15,7 @@ import { AppHeaderUser } from "@/components/layout/AppHeaderUser";
 import { useAuthStore } from "@/store/useAuthStore";
 import { useAlterarVencimentoParcela, useDeleteEmpresa, useEmpresaFinanceiro, useEmpresas, Empresa } from "@/services";
 import { getProposalServicesLabel } from "@/services/proposalPayments";
+import { formatarData } from "@/lib/datas";
 import { toast } from "sonner";
 
 const Empresas = () => {
@@ -233,7 +234,7 @@ const Empresas = () => {
                     <div className="text-right">
                       <p className="text-[10px] text-muted-foreground">Próximo recebimento</p>
                       <p className="text-sm font-semibold text-accent">{financeiro?.proximoRecebimentoValor != null ? financeiro.proximoRecebimentoValor.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}</p>
-                      <p className="text-[10px] text-muted-foreground">{financeiro?.proximoRecebimentoData ? new Date(`${financeiro.proximoRecebimentoData}T12:00:00`).toLocaleDateString("pt-BR") : "Sem parcela pendente"}</p>
+                      <p className="text-[10px] text-muted-foreground">{financeiro?.proximoRecebimentoData ? formatarData(financeiro.proximoRecebimentoData) : "Sem parcela pendente"}</p>
                     </div>
                   </div>
                   {isLoadingFinanceiro ? (

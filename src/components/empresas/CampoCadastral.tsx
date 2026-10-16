@@ -1,4 +1,5 @@
 import { useId } from "react";
+import { dataParaInput, ehDataIso, formatarData, possuiHorario } from "@/lib/datas";
 import { modeloColecao, type DadosCadastrais, type ValorCadastral } from "@/services/empresaDadosCadastrais";
 
 const labels: Record<string, string> = {
@@ -23,14 +24,16 @@ export const CampoCadastral = ({ name, value, onChange, label }: { name: string;
   </fieldset>;
   if (value && typeof value === "object") return <fieldset className="min-w-0 space-y-3 rounded-lg border border-border/20 p-3">
     <legend className="px-1 text-xs font-medium">{title}</legend>
-    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">{Object.entries(value).filter(([key, item]) => !/history|historico|certificate|^links$/i.test(key) && !(key === "id" && typeof item === "string" && item.includes("-"))).map(([key, item]) => <CampoCadastral key={key} name={key} value={item} onChange={onChange ? next => onChange({ ...value, [key]: next } as DadosCadastrais) : undefined} />)}</div>
+    <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,14rem),1fr))] gap-3">{Object.entries(value).filter(([key, item]) => !/history|historico|certificate|^links$/i.test(key) && !(key === "id" && typeof item === "string" && item.includes("-"))).map(([key, item]) => <CampoCadastral key={key} name={key} value={item} onChange={onChange ? next => onChange({ ...value, [key]: next } as DadosCadastrais) : undefined} />)}</div>
   </fieldset>;
-  if (!onChange) return <div className="min-w-0"><p className="text-[10px] text-muted-foreground">{title}</p><p className="mt-1 break-words text-xs">{value == null || value === "" ? "Não informado" : typeof value === "boolean" ? value ? "Sim" : "Não" : String(value)}</p></div>;
+  const dateField = /Date$|^(founded|since|updated|expiration|start|end|date)$/.test(name) || typeof value === "string" && ehDataIso(value);
+  const dateTime = name === "updated" || typeof value === "string" && possuiHorario(value);
+  if (!onChange) return <div className="min-w-0"><p className="text-[10px] text-muted-foreground">{title}</p><p className="mt-1 break-words text-xs">{value == null || value === "" ? "Não informado" : dateField && typeof value === "string" ? formatarData(value) : typeof value === "boolean" ? value ? "Sim" : "Não" : String(value)}</p></div>;
   const boolean = typeof value === "boolean" || ["head", "optant", "enabled", "approved"].includes(name);
   const enumOptions: Record<string, string> | undefined = typeof value !== "string" ? undefined : ["NATURAL", "LEGAL", "FOREIGN"].includes(value) ? { NATURAL: "Pessoa física", LEGAL: "Pessoa jurídica", FOREIGN: "Estrangeiro" } : ["MOBILE", "LANDLINE"].includes(value) ? { MOBILE: "Celular", LANDLINE: "Telefone fixo" } : ["CORPORATE", "PERSONAL"].includes(value) ? { CORPORATE: "Corporativo", PERSONAL: "Pessoal" } : undefined;
   return <div className="min-w-0 space-y-1.5"><label htmlFor={id} className="block text-[11px] text-muted-foreground">{title}</label>
     {boolean ? <select id={id} value={value == null ? "" : String(value)} onChange={e => onChange(e.target.value === "" ? null : e.target.value === "true")} className={inputClass}><option value="">Não informado</option><option value="true">Sim</option><option value="false">Não</option></select>
       : enumOptions ? <select id={id} value={String(value)} onChange={e => onChange(e.target.value)} className={inputClass}>{Object.entries(enumOptions).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select>
-      : <input id={id} type={typeof value === "number" || name === "equity" ? "number" : /Date$|^founded$|^since$/.test(name) ? "date" : "text"} step="any" value={value == null ? "" : String(value)} onChange={e => onChange(typeof value === "number" || name === "equity" ? e.target.value === "" ? null : Number(e.target.value) : e.target.value)} className={inputClass} />}
+      : <input id={id} lang="pt-BR" type={dateField ? dateTime ? "datetime-local" : "date" : typeof value === "number" || name === "equity" ? "number" : "text"} step={dateField ? dateTime ? 1 : undefined : "any"} value={value == null ? "" : dateField ? dataParaInput(String(value)) : String(value)} onChange={e => onChange(typeof value === "number" || name === "equity" ? e.target.value === "" ? null : Number(e.target.value) : e.target.value)} className={inputClass} />}
   </div>;
 };

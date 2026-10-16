@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Eye, X, ArrowLeft, Loader2 } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
+import { formatarData } from "@/lib/datas";
 import { baixarEmpresaComprovante, COMPROVANTES, useEmpresaComprovantes, useSolicitarEmpresaComprovantes, type EmpresaComprovante } from "@/services/useEmpresaComprovantes";
 
 const ComprovantesModal = ({ empresaId, nome, onClose }: { empresaId: number; nome: string; onClose: () => void }) => {
@@ -47,15 +48,19 @@ const ComprovantesModal = ({ empresaId, nome, onClose }: { empresaId: number; no
     </header>
       <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-4">
         {selected ? <>{loading && <p role="status" className="flex items-center gap-2 text-sm"><Loader2 className="h-4 w-4 animate-spin" />Carregando PDF...</p>}{error && <p role="alert" className="text-sm text-destructive">{error}</p>}{pdf && <iframe src={pdf} title={`Comprovante ${COMPROVANTES[selected.tipo]}`} className="min-h-0 w-full flex-1 rounded-lg border border-border/30" />}</>
-          : <div className="space-y-3"><p className="text-xs text-muted-foreground">Os comprovantes são emitidos depois de salvar a empresa. Esta lista acompanha o processamento automaticamente.</p>
+          : <div className="space-y-3"><p className="text-xs text-muted-foreground">O cartão CNPJ é emitido ao salvar o cadastro. Gere os demais comprovantes quando precisar. Esta lista acompanha o processamento automaticamente.</p>
             {query.isLoading && <p role="status">Carregando comprovantes...</p>}
             {query.isError && <div role="alert" className="text-sm text-destructive">Não foi possível consultar os comprovantes. <button type="button" className="underline" onClick={() => void query.refetch()}>Tentar novamente</button></div>}
-            {query.data?.map(item => <div key={item.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-border/30 p-4">
-              <div className="min-w-0 flex-1"><p className="text-sm font-medium">{COMPROVANTES[item.tipo] || item.tipo}</p><p className="mt-1 text-xs text-muted-foreground">{({ PENDENTE: "Aguardando emissão", PROCESSANDO: "Emitindo comprovante...", DISPONIVEL: "Disponível para visualização", ERRO: "Falha na emissão", INDISPONIVEL: "Comprovante não disponível" } as Record<string, string>)[item.status] || item.status}</p>{item.mensagem && <p className="mt-1 text-xs text-muted-foreground">{item.mensagem}</p>}</div>
-              {item.status === "DISPONIVEL" && <button type="button" onClick={() => setSelected(item)} className="flex items-center gap-2 rounded-lg bg-accent px-3 py-2 text-xs text-accent-foreground"><Eye className="h-4 w-4" />Visualizar {COMPROVANTES[item.tipo]}</button>}
-              {["ERRO", "INDISPONIVEL"].includes(item.status) && <button type="button" disabled={solicitar.isPending} onClick={() => solicitar.mutate(item.id)} className="rounded border border-border/30 px-3 py-2 text-xs text-accent">Tentar novamente {COMPROVANTES[item.tipo]}</button>}
-            </div>)}
-            {query.data?.length === 0 && <button type="button" disabled={solicitar.isPending} onClick={() => solicitar.mutate(undefined)} className="rounded-lg bg-accent px-4 py-2 text-sm text-accent-foreground">Buscar comprovantes</button>}
+            {query.data && Object.entries(COMPROVANTES).map(([tipo, nome]) => {
+              const item = query.data.find(registro => registro.tipo === tipo);
+              const status = item?.status || "NAO_SOLICITADO";
+              return <div key={tipo} className="flex flex-col gap-3 rounded-xl border border-border/30 p-4 sm:flex-row sm:items-center">
+                <div className="min-w-0 flex-1"><p className="text-sm font-medium">{nome}</p><p className="mt-1 text-xs text-muted-foreground">{({ NAO_SOLICITADO: "Ainda não gerado", PENDENTE: "Aguardando emissão", PROCESSANDO: "Emitindo comprovante...", DISPONIVEL: "Disponível para visualização", ERRO: "Falha na emissão", INDISPONIVEL: "Comprovante não disponível" } as Record<string, string>)[status] || status}</p>{item?.geradoEm && <p className="mt-1 text-xs text-muted-foreground">Emitido em <time dateTime={item.geradoEm}>{formatarData(item.geradoEm)}</time></p>}{item?.mensagem && <p className="mt-1 text-xs text-muted-foreground">{item.mensagem}</p>}</div>
+                {status === "NAO_SOLICITADO" && <button type="button" disabled={solicitar.isPending} onClick={() => solicitar.mutate({ tipo })} className="rounded-lg bg-accent px-3 py-2 text-xs text-accent-foreground disabled:opacity-50">Gerar {nome}</button>}
+                {status === "DISPONIVEL" && item && <button type="button" onClick={() => setSelected(item)} className="flex items-center gap-2 rounded-lg bg-accent px-3 py-2 text-xs text-accent-foreground"><Eye className="h-4 w-4" />Visualizar {nome}</button>}
+                {["ERRO", "INDISPONIVEL"].includes(status) && item && <button type="button" disabled={solicitar.isPending} onClick={() => solicitar.mutate({ id: item.id })} className="rounded border border-border/30 px-3 py-2 text-xs text-accent disabled:opacity-50">Tentar novamente {nome}</button>}
+              </div>;
+            })}
             {solicitar.isError && <p role="alert" className="text-xs text-destructive">Não foi possível solicitar a emissão. Tente novamente.</p>}
           </div>}
       </div>
