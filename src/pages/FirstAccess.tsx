@@ -409,7 +409,7 @@ const FirstAccess = () => {
               <motion.button
                 type="submit"
                 disabled={isPending}
-                className="w-full mt-6 bg-accent hover:bg-accent/90 text-white font-medium py-2.5 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 group"
+                className="w-full mt-6 bg-accent hover:bg-accent/90 text-accent-foreground font-medium py-2.5 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 group"
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >

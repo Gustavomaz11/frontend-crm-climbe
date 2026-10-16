@@ -17,14 +17,15 @@ export interface Reuniao {
   data?: string;
   hora?: string;
   local: string;
-  empresaId: number;
+  salaEmail?: string | null;
+  empresaId?: number | null;
   empresa?: {
     id?: number;
     idEmpresa?: number;
     nome?: string;
     nomeFantasia?: string;
     razaoSocial?: string;
-  };
+  } | null;
   presencial?: boolean;
   status?: string;
   googleEventId?: string;
@@ -47,7 +48,8 @@ export interface CreateReuniaoDTO {
   hora: string;
   presencial: boolean;
   local?: string;
-  empresaId: number;
+  salaEmail?: string | null;
+  empresaId?: number | null;
   status?: string;
   participanteIds?: number[];
 }
@@ -142,7 +144,7 @@ function normalizeReuniao(reuniao: ReuniaoApi): Reuniao {
     reuniao.empresaId ??
     reuniao.empresa?.id ??
     reuniao.empresa?.idEmpresa ??
-    0;
+    null;
 
   return {
     ...reuniao,
@@ -172,12 +174,13 @@ function buildCreatePayload(data: CreateReuniaoDTO) {
     hora: data.hora,
     presencial: data.presencial,
     local: data.local,
-    empresaId: data.empresaId,
+    salaEmail: data.salaEmail ?? null,
+    empresaId: data.empresaId ?? null,
     status: data.status ?? "AGENDADA",
-    participanteIds: data.participanteIds ?? [],
-    empresa: {
+    participanteIds: data.participanteIds,
+    empresa: data.empresaId ? {
       idEmpresa: data.empresaId,
-    },
+    } : null,
   };
 }
 
@@ -241,6 +244,22 @@ export function useReunioes() {
     queryFn: () => fetchReuniaoList("/reunioes"),
     refetchOnWindowFocus: false,
     staleTime: 60000,
+  });
+}
+
+export interface SalaReuniao {
+  email: string;
+  nome: string;
+  capacidade?: number | null;
+}
+
+export function useSalasReuniao(enabled: boolean) {
+  return useQuery<SalaReuniao[]>({
+    queryKey: ["salas-reuniao"],
+    queryFn: async () => (await api.get<SalaReuniao[]>("/reunioes/salas")).data,
+    enabled,
+    staleTime: 60000,
+    retry: false,
   });
 }
 

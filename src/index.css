@@ -4,13 +4,12 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Required fields only pulse after an attempted submission. */
+/* Validation remains visible without a persistent attention loop. */
 [data-field-error="true"],
 label:has(> input[type="file"][data-field-error="true"]) {
-  border-color: #f43f5e !important;
-  outline: 2px solid #f43f5e !important;
+  border-color: hsl(var(--destructive)) !important;
+  outline: 2px solid hsl(var(--destructive)) !important;
   outline-offset: 1px;
-  animation: required-field-pulse 1.4s ease-in-out infinite;
 }
 
 .form-validation-summary {
@@ -33,11 +32,6 @@ label:has(> input[type="file"][data-field-error="true"]) {
   flex-wrap: wrap;
 }
 
-@keyframes required-field-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgb(244 63 94 / 0.2); }
-  50% { box-shadow: 0 0 0 5px rgb(244 63 94 / 0.3); }
-}
-
 @media (prefers-reduced-motion: reduce) {
   [data-field-error="true"], label:has(> input[type="file"][data-field-error="true"]) { animation: none; }
 }
@@ -46,7 +40,7 @@ label:has(> input[type="file"][data-field-error="true"]) {
   :root {
     --background: 210 20% 98%;
     --foreground: 216 28% 12%;
-    --card: 210 18% 96%;
+    --card: 0 0% 100%;
     --card-foreground: 216 28% 12%;
     --popover: 0 0% 100%;
     --popover-foreground: 216 28% 12%;
@@ -64,6 +58,12 @@ label:has(> input[type="file"][data-field-error="true"]) {
     --input: 215 16% 80%;
     --ring: 195 60% 28%;
     --radius: 0.5rem;
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+    --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+    --duration-feedback: 120ms;
+    --duration-popover: 180ms;
+    --duration-dialog: 250ms;
 
     --climb-teal: 178 42% 32%;
     --climb-navy: 210 25% 20%;
@@ -82,7 +82,7 @@ label:has(> input[type="file"][data-field-error="true"]) {
   .dark {
     --background: 216 28% 7%;
     --foreground: 210 15% 88%;
-    --card: 216 25% 10%;
+    --card: 216 23% 11%;
     --card-foreground: 210 15% 88%;
     --popover: 216 25% 10%;
     --popover-foreground: 210 15% 88%;
@@ -93,26 +93,26 @@ label:has(> input[type="file"][data-field-error="true"]) {
     --muted: 216 18% 15%;
     /* Secondary copy and icons must remain readable on the dark surface. */
     --muted-foreground: 215 16% 72%;
-    --accent: 178 35% 40%;
+    --accent: 178 40% 55%;
     --accent-foreground: 216 28% 7%;
-    --destructive: 0 55% 45%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 216 18% 18%;
-    --input: 216 18% 18%;
+    --destructive: 0 75% 68%;
+    --destructive-foreground: 216 28% 7%;
+    --border: 216 18% 26%;
+    --input: 216 18% 32%;
     --ring: 190 45% 45%;
 
-    --climb-teal: 178 35% 40%;
+    --climb-teal: 178 40% 55%;
     --climb-navy: 216 28% 7%;
     --surface: 216 25% 9%;
 
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-background: 216 25% 9%;
+    --sidebar-foreground: 210 15% 88%;
+    --sidebar-primary: 178 40% 55%;
+    --sidebar-primary-foreground: 216 28% 7%;
+    --sidebar-accent: 216 18% 15%;
+    --sidebar-accent-foreground: 210 15% 88%;
+    --sidebar-border: 216 18% 26%;
+    --sidebar-ring: 178 40% 55%;
   }
 }
 
@@ -124,6 +124,96 @@ label:has(> input[type="file"][data-field-error="true"]) {
     @apply bg-background text-foreground antialiased;
     font-family: 'Inter', system-ui, sans-serif;
   }
+  :root { color-scheme: light; }
+  :root.dark { color-scheme: dark; }
+  ::selection { background: hsl(var(--accent) / 0.25); color: hsl(var(--foreground)); }
+  input, textarea { caret-color: hsl(var(--accent)); }
+  button:focus-visible, a:focus-visible, [role="button"]:focus-visible, summary:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 3px;
+  }
+  a { text-underline-offset: 3px; }
+}
+
+@layer components {
+  .app-main { min-width: 0; flex: 1; }
+  .app-sidebar { display: none; }
+  .app-main > header {
+    gap: 1rem;
+    border-color: hsl(var(--border) / 0.6);
+    background: hsl(var(--background) / 0.96);
+  }
+  .app-main > header > div:has(input) { min-width: 0; flex-shrink: 1; }
+  .app-main > header input { min-width: 0; width: 100%; }
+  .app-nav-link, .app-nav-action {
+    transition: color var(--duration-feedback) ease, background-color var(--duration-feedback) ease;
+  }
+  .app-nav-action {
+    @apply flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-[13px] font-medium text-muted-foreground hover:bg-muted/50 hover:text-foreground;
+  }
+  .app-icon-button {
+    @apply flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-border/60 bg-card text-muted-foreground hover:bg-muted/50 hover:text-foreground;
+    transition: color var(--duration-feedback) ease, background-color var(--duration-feedback) ease;
+  }
+  .login-page { display: grid; grid-template-rows: auto 1fr auto; }
+  .login-input {
+    @apply min-h-12 w-full rounded-lg border border-input bg-card px-4 text-base text-foreground placeholder:text-muted-foreground;
+    transition: border-color var(--duration-feedback) ease, box-shadow var(--duration-feedback) ease;
+  }
+  .login-link { @apply inline-flex min-h-6 items-center text-muted-foreground hover:text-accent hover:underline; }
+  .login-submit, .login-google {
+    transition: background-color var(--duration-feedback) ease, border-color var(--duration-feedback) ease;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .login-submit:not(:disabled):hover { background: hsl(var(--accent) / 0.88); }
+    .login-google:not(:disabled):hover { background: hsl(var(--muted) / 0.5); border-color: hsl(var(--accent) / 0.5); }
+  }
+  @media (min-width: 1024px) {
+    .app-sidebar {
+      position: fixed; inset: 0 auto 0 0; z-index: 30; display: flex; width: 240px;
+      flex-direction: column; border-right: 1px solid hsl(var(--sidebar-border) / 0.6);
+      background: hsl(var(--sidebar-background));
+    }
+    .app-sidebar[data-collapsed="true"] { width: 76px; }
+    .app-main { margin-left: 240px; }
+    .app-main[data-collapsed="true"] { margin-left: 76px; }
+  }
+  @media (max-width: 639px) {
+    .app-main > header { gap: 0.5rem; padding-inline: 1rem; }
+    .app-main > header > div:has(input) { padding-inline: 0.625rem; }
+    .app-main > div.p-6, .app-main > main.p-6 { padding: 1rem; }
+    .app-main > div.px-6 { padding-inline: 1rem; }
+  }
+}
+
+/* Native dialog provides focus containment, Escape and focus restoration. */
+.app-mobile-navigation {
+  position: fixed; inset: 0 auto 0 0; margin: 0; padding: 0;
+  width: min(320px, calc(100vw - 48px)); max-width: none; height: 100dvh; max-height: none;
+  border: 0; border-right: 1px solid hsl(var(--border));
+  background: hsl(var(--sidebar-background)); color: hsl(var(--foreground));
+  opacity: 0; transform: translateX(-100%);
+  transition: transform var(--duration-dialog) var(--ease-drawer), opacity var(--duration-dialog) var(--ease-out),
+    display var(--duration-dialog) allow-discrete, overlay var(--duration-dialog) allow-discrete;
+}
+.app-mobile-navigation[open] { opacity: 1; transform: translateX(0); }
+.app-mobile-navigation[data-instant="true"], .app-mobile-navigation[data-instant="true"]::backdrop { transition-duration: 0ms; }
+:root:has(.app-mobile-navigation[open]) { overflow: hidden; }
+.app-mobile-navigation nav { overscroll-behavior: contain; }
+.app-mobile-navigation::backdrop {
+  background: hsl(var(--background) / 0.75); opacity: 0;
+  transition: opacity var(--duration-dialog) var(--ease-out), display var(--duration-dialog) allow-discrete, overlay var(--duration-dialog) allow-discrete;
+}
+.app-mobile-navigation[open]::backdrop { opacity: 1; }
+@starting-style {
+  .app-mobile-navigation[open] { opacity: 0; transform: translateX(-100%); }
+  .app-mobile-navigation[open]::backdrop { opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .app-mobile-navigation { transform: none; transition-duration: 120ms; }
+  @starting-style { .app-mobile-navigation[open] { transform: none; } }
+  .animate-pulse, .animate-spin { animation: none; }
+  [class*="animate-in"], [class*="animate-out"] { --tw-enter-scale: 1; --tw-exit-scale: 1; --tw-enter-translate-x: 0; --tw-enter-translate-y: 0; --tw-exit-translate-x: 0; --tw-exit-translate-y: 0; }
 }
 
 @layer utilities {

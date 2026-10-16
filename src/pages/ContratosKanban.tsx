@@ -1,54 +1,20 @@
+import { AppSidebar } from "@/components/layout/AppSidebar";
 import { FormValidation } from "@/components/ui/form-validation";
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-  AlertCircle,
-  CheckCircle2,
-  ChevronLeft,
-  ChevronRight,
-  LayoutDashboard,
-  LogOut,
-  Moon,
-  Plus,
-  Save,
-  Search,
-  Sun,
-  Trash2,
-  X,
-} from "lucide-react";
-import ClimbLogo from "@/components/login/ClimbLogo";
+import { AlertCircle, CheckCircle2, LayoutDashboard, Plus, Save, Search, Trash2, X } from "lucide-react";
+
 import { KanbanTaskCard } from "@/components/kanban/KanbanTaskCard";
 import { KanbanArquivados, KanbanArquivarButton } from "@/components/kanban/KanbanArquivados";
 import { KanbanTaskDialog, type KanbanTaskDraft } from "@/components/kanban/KanbanTaskDialog";
 import { KanbanTaskEditDialog } from "@/components/kanban/KanbanTaskEditDialog";
 import { AppHeaderUser } from "@/components/layout/AppHeaderUser";
-import { AppSidebarNav } from "@/components/layout/AppSidebarNav";
+
 import { useSidebarState } from "@/hooks/useSidebarState";
-import { useTheme } from "@/hooks/use-theme";
+
 import { useAuthStore } from "@/store/useAuthStore";
-import {
-  useContratoKanban,
-  useContratoKanbanAbertura,
-  useContratoEquipe,
-  useContratosKanbanDisponiveis,
-  useUsuarios,
-  useCreateKanbanSubtarefa,
-  useCreateKanbanRaia,
-  useCreateKanbanTask,
-  useDeleteKanbanSubtarefa,
-  useDeleteKanbanRaia,
-  useDeleteKanbanTask,
-  useMoveKanbanTask,
-  useToggleKanbanSubtarefa,
-  useUpdateKanbanSubtarefa,
-  useUpdateKanbanRaia,
-  useUpdateKanbanTask,
-  type ContratoKanbanResumo,
-  type ContratoKanbanSubtarefa,
-  type ContratoKanbanTask,
-  type KanbanTaskDTO,
-} from "@/services";
+import { useContratoKanban, useContratoKanbanAbertura, useContratoEquipe, useContratosKanbanDisponiveis, useUsuarios, useCreateKanbanSubtarefa, useCreateKanbanRaia, useCreateKanbanTask, useDeleteKanbanSubtarefa, useDeleteKanbanRaia, useDeleteKanbanTask, useMoveKanbanTask, useToggleKanbanSubtarefa, useUpdateKanbanSubtarefa, useUpdateKanbanRaia, useUpdateKanbanTask, type ContratoKanbanResumo, type ContratoKanbanSubtarefa, type ContratoKanbanTask, type KanbanTaskDTO } from "@/services";
 import { ContratoEquipeDialog } from "@/components/kanban/ContratoEquipeDialog";
 import { ContratoRateioTecnicoPanel } from "@/components/kanban/ContratoRateioTecnico";
 import { getProposalServicesLabel } from "@/services/proposalPayments";
@@ -75,7 +41,6 @@ function getContratoLabel(contrato: ContratoKanbanResumo) {
 }
 
 const ContratosKanban = () => {
-  const { isDark, setIsDark } = useTheme();
   const [sidebarCollapsed, setSidebarCollapsed] = useSidebarState();
   const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
@@ -443,34 +408,17 @@ const ContratosKanban = () => {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background text-foreground transition-colors duration-500">
+    <div className="app-layout relative min-h-screen overflow-hidden bg-background text-foreground transition-colors duration-500">
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse 60% 50% at 0% 0%, hsl(var(--accent) / 0.04) 0%, transparent 50%), radial-gradient(ellipse 50% 40% at 100% 100%, hsl(var(--primary) / 0.03) 0%, transparent 50%)` }} />
       </div>
 
       <div className="relative z-10 flex min-h-screen">
-        <motion.aside className={`fixed left-0 top-0 bottom-0 z-30 flex flex-col border-r border-border/30 bg-card/60 backdrop-blur-xl transition-all duration-300 ${sidebarCollapsed ? "w-[72px]" : "w-[220px]"}`} initial={false} animate={{ x: 0, opacity: 1 }}>
-          <div className={`flex h-16 items-center border-b border-border/20 ${sidebarCollapsed ? "justify-center px-2" : "px-5"}`}>
-            {sidebarCollapsed ? <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent/10 text-xs font-bold text-accent">C</div> : <ClimbLogo className="h-[16px] text-foreground" />}
-          </div>
-          <nav className="min-h-0 flex-1 overflow-y-auto px-2 py-4">
-            <AppSidebarNav collapsed={sidebarCollapsed} />
-          </nav>
-          <div className="space-y-1 border-t border-border/20 px-2 py-3">
-            <motion.button onClick={() => setIsDark(!isDark)} className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground transition-all hover:bg-muted/30 hover:text-foreground ${sidebarCollapsed ? "justify-center" : ""}`} whileTap={{ scale: 0.98 }}>
-              <AnimatePresence mode="wait"><motion.div key={isDark ? "s" : "m"} initial={{ opacity: 0, rotate: -30 }} animate={{ opacity: 1, rotate: 0 }} exit={{ opacity: 0, rotate: 30 }}>{isDark ? <Sun className="h-[18px] w-[18px]" /> : <Moon className="h-[18px] w-[18px]" />}</motion.div></AnimatePresence>
-              {!sidebarCollapsed && <span className="text-[13px] font-medium">{isDark ? "Modo claro" : "Modo escuro"}</span>}
-            </motion.button>
-            <Link to="/"><motion.button className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground transition-all hover:bg-destructive/5 hover:text-destructive ${sidebarCollapsed ? "justify-center" : ""}`} whileTap={{ scale: 0.98 }}><LogOut className="h-[18px] w-[18px]" />{!sidebarCollapsed && <span className="text-[13px] font-medium">Sair</span>}</motion.button></Link>
-          </div>
-          <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)} className="absolute -right-3 top-20 flex h-6 w-6 items-center justify-center rounded-full border border-border/40 bg-card text-muted-foreground shadow-sm transition-all hover:border-accent/40 hover:text-foreground">
-            {sidebarCollapsed ? <ChevronRight className="h-3 w-3" /> : <ChevronLeft className="h-3 w-3" />}
-          </button>
-        </motion.aside>
+        <AppSidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />
 
-        <main className={`flex-1 transition-all duration-300 ${sidebarCollapsed ? "ml-[72px]" : "ml-[220px]"}`}>
+        <main className="app-main" data-collapsed={sidebarCollapsed}>
           <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border/20 bg-background/80 px-6 backdrop-blur-xl">
-            <div className="flex h-9 w-[280px] items-center gap-2 rounded-lg border border-border/25 bg-card/30 px-3 text-muted-foreground backdrop-blur-sm">
+            <div className="flex h-9 w-full min-w-0 max-w-[300px] items-center gap-2 rounded-lg border border-border/25 bg-card/30 px-3 text-muted-foreground backdrop-blur-sm">
               <Search className="h-3.5 w-3.5" />
               <input type="text" placeholder="Buscar contratos..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="flex-1 bg-transparent text-[12px] text-foreground outline-none placeholder:text-muted-foreground" />
             </div>
@@ -566,7 +514,7 @@ const ContratosKanban = () => {
                       onDragOver={(event) => handleRaiaDragOver(event, raia.id)}
                       onDragLeave={() => setDragOverRaiaId((current) => current === raia.id ? null : current)}
                       onDrop={() => handleRaiaDrop(raia.id)}
-                      className={`flex w-[320px] shrink-0 flex-col rounded-lg border bg-card/40 transition-all duration-200 ${dragOverRaiaId === raia.id ? "scale-[1.01] border-accent/45 bg-accent/[0.04]" : "border-border/25"}`}
+                      className={`flex w-[320px] shrink-0 flex-col rounded-lg border bg-card/40 transition-colors duration-200 ${dragOverRaiaId === raia.id ? "scale-[1.01] border-accent/45 bg-accent/[0.04]" : "border-border/25"}`}
                     >
                       <div className="flex items-center justify-between gap-2 border-b border-border/15 px-3 py-2">
                         {editingRaiaId === raia.id ? (

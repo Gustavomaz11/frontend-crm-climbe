@@ -1,26 +1,17 @@
+import { AppSidebar } from "@/components/layout/AppSidebar";
 import { FormValidation } from "@/components/ui/form-validation";
 import { useEffect, useRef, useState } from "react";
-import { useTheme } from "@/hooks/use-theme";
+
 import { useSidebarState } from "@/hooks/useSidebarState";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Home, FileText, Calendar as CalendarIcon, Shield, Building2, Settings,
-  LogOut, Sun, Moon, ChevronLeft, ChevronRight, UserCheck, ArrowLeft,
-  CheckCircle2, ScrollText, AlertCircle,
-} from "lucide-react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import ClimbLogo from "@/components/login/ClimbLogo";
+import { ArrowLeft, CheckCircle2, AlertCircle } from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
+
 import { AppHeaderUser } from "@/components/layout/AppHeaderUser";
-import { AppSidebarNav } from "@/components/layout/AppSidebarNav";
+
 import { useAuthStore } from "@/store/useAuthStore";
-import {
-  CreateEmpresaDTO,
-  empresaToForm,
-  useCreateEmpresa,
-  useEmpresaById,
-  useUpdateEmpresa,
-} from "@/services";
-import { FileCheck } from "lucide-react";
+import { CreateEmpresaDTO, empresaToForm, useCreateEmpresa, useEmpresaById, useUpdateEmpresa } from "@/services";
+
 import { formatCnpj, isValidCnpj } from "@/lib/cnpj";
 
 const UF_OPTIONS = [
@@ -42,7 +33,7 @@ function InputField({
         {...props}
         required={required}
         aria-label={label}
-        className="h-9 rounded-lg border border-border/30 bg-background/50 px-3 text-[13px] text-foreground placeholder:text-muted-foreground outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all"
+        className="h-9 rounded-lg border border-border/30 bg-background/50 px-3 text-[13px] text-foreground placeholder:text-muted-foreground outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-colors"
       />
     </div>
   );
@@ -63,7 +54,7 @@ function SelectField({
         {...props}
         required={required}
         aria-label={label}
-        className="h-9 rounded-lg border border-border/30 bg-background/50 px-3 text-[13px] text-foreground outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-all"
+        className="h-9 rounded-lg border border-border/30 bg-background/50 px-3 text-[13px] text-foreground outline-none focus:border-accent/50 focus:ring-1 focus:ring-accent/20 transition-colors"
       >
         {children}
       </select>
@@ -108,7 +99,6 @@ function formatPhone(v: string) {
 }
 
 const CadastroEmpresa = () => {
-  const { isDark, setIsDark } = useTheme();
   const [sidebarCollapsed, setSidebarCollapsed] = useSidebarState();
   const [form, setForm] = useState<CreateEmpresaDTO>(emptyForm);
   const [success, setSuccess] = useState(false);
@@ -242,7 +232,7 @@ const CadastroEmpresa = () => {
   }
 
   return (
-    <div className="relative min-h-screen bg-background text-foreground transition-colors duration-500 overflow-hidden">
+    <div className="app-layout relative min-h-screen bg-background text-foreground transition-colors duration-500 overflow-hidden">
       <div className="fixed inset-0 pointer-events-none">
         <div
           className="absolute inset-0"
@@ -255,63 +245,12 @@ const CadastroEmpresa = () => {
 
       <div className="relative z-10 flex min-h-screen">
         {/* Sidebar */}
-        <motion.aside
-          className={`fixed left-0 top-0 bottom-0 z-30 flex flex-col border-r border-border/30 bg-card/60 backdrop-blur-xl transition-all duration-300 ${sidebarCollapsed ? "w-[72px]" : "w-[220px]"}`}
-          initial={false}
-          animate={{ x: 0, opacity: 1 }}
-        >
-          <div className={`flex items-center h-16 border-b border-border/20 ${sidebarCollapsed ? "justify-center px-2" : "px-5"}`}>
-            {sidebarCollapsed ? (
-              <motion.div className="w-7 h-7 rounded-lg bg-accent/10 flex items-center justify-center">
-                <span className="text-accent font-bold text-xs">C</span>
-              </motion.div>
-            ) : (
-              <ClimbLogo className="h-[16px] text-foreground" />
-            )}
-          </div>
-
-          <nav className="min-h-0 flex-1 overflow-y-auto py-4 px-2">
-            <AppSidebarNav collapsed={sidebarCollapsed} />
-          </nav>
-
-          <div className="border-t border-border/20 py-3 px-2 space-y-1">
-            <motion.button
-              onClick={() => setIsDark(!isDark)}
-              className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-all ${sidebarCollapsed ? "justify-center" : ""}`}
-              whileTap={{ scale: 0.98 }}
-            >
-              <AnimatePresence mode="wait">
-                <motion.div key={isDark ? "s" : "m"} initial={{ opacity: 0, rotate: -30 }} animate={{ opacity: 1, rotate: 0 }} exit={{ opacity: 0, rotate: 30 }}>
-                  {isDark ? <Sun className="w-[18px] h-[18px]" /> : <Moon className="w-[18px] h-[18px]" />}
-                </motion.div>
-              </AnimatePresence>
-              {!sidebarCollapsed && <span className="text-[13px] font-medium">{isDark ? "Modo claro" : "Modo escuro"}</span>}
-            </motion.button>
-            <Link to="/">
-              <motion.button
-                className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-all ${sidebarCollapsed ? "justify-center" : ""}`}
-                whileTap={{ scale: 0.98 }}
-              >
-                <LogOut className="w-[18px] h-[18px]" />
-                {!sidebarCollapsed && <span className="text-[13px] font-medium">Sair</span>}
-              </motion.button>
-            </Link>
-          </div>
-
-          <button
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-card border border-border/40 flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-accent/40 transition-all shadow-sm"
-          >
-            {sidebarCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
-          </button>
-        </motion.aside>
+        <AppSidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />
 
         {/* Main */}
-        <main className={`flex-1 transition-all duration-300 ${sidebarCollapsed ? "ml-[72px]" : "ml-[220px]"}`}>
-          <motion.header
+        <main className="app-main" data-collapsed={sidebarCollapsed}>
+          <header
             className="sticky top-0 z-20 h-16 flex items-center justify-between px-6 border-b border-border/20 bg-background/80 backdrop-blur-xl"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
           >
             <motion.button
               onClick={() => navigate("/empresas")}
@@ -324,7 +263,7 @@ const CadastroEmpresa = () => {
             </motion.button>
 
             <AppHeaderUser name={userName} photoUrl={userPhoto} />
-          </motion.header>
+          </header>
 
           <div className="px-6 pt-6 pb-8 max-w-3xl mx-auto">
             <div className="mb-6">
@@ -546,7 +485,7 @@ const CadastroEmpresa = () => {
                 <motion.button
                   type="button"
                   onClick={() => navigate("/empresas")}
-                  className="h-9 px-5 rounded-lg border border-border/30 text-[13px] text-muted-foreground hover:text-foreground hover:border-border/60 transition-all"
+                  className="h-9 px-5 rounded-lg border border-border/30 text-[13px] text-muted-foreground hover:text-foreground hover:border-border/60 transition-colors"
                   whileTap={{ scale: 0.97 }}
                 >
                   Cancelar
@@ -554,7 +493,7 @@ const CadastroEmpresa = () => {
                 <motion.button
                   type="submit"
                   disabled={isPending || (isEditing && isEmpresaLoading)}
-                  className="h-9 px-6 rounded-lg bg-accent text-white text-[13px] font-medium hover:bg-accent/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="h-9 px-6 rounded-lg bg-accent text-accent-foreground text-[13px] font-medium hover:bg-accent/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                   whileTap={{ scale: 0.97 }}
                 >
                   {isPending
@@ -601,7 +540,7 @@ const CadastroEmpresa = () => {
                   {!isEditing && (
                     <motion.button
                       onClick={() => { setSuccess(false); setForm(emptyForm); }}
-                      className="flex-1 h-9 rounded-lg border border-border/30 text-[12px] text-muted-foreground hover:text-foreground transition-all"
+                      className="flex-1 h-9 rounded-lg border border-border/30 text-[12px] text-muted-foreground hover:text-foreground transition-colors"
                       whileTap={{ scale: 0.97 }}
                     >
                       Cadastrar outra
@@ -609,7 +548,7 @@ const CadastroEmpresa = () => {
                   )}
                   <motion.button
                     onClick={() => navigate("/empresas")}
-                    className="flex-1 h-9 rounded-lg bg-accent text-white text-[12px] font-medium hover:bg-accent/90 transition-all"
+                    className="flex-1 h-9 rounded-lg bg-accent text-accent-foreground text-[12px] font-medium hover:bg-accent/90 transition-colors"
                     whileTap={{ scale: 0.97 }}
                   >
                     Ver empresas

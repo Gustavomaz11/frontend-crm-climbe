@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
 import { BriefcaseBusiness, ChevronDown, Settings } from "lucide-react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 import { cn } from "@/lib/utils";
 import { preloadRoute } from "@/routes/lazyPages";
@@ -12,6 +11,7 @@ import {
 
 interface AppSidebarNavProps {
   collapsed: boolean;
+  onNavigate?: () => void;
 }
 
 const commercialPaths = new Set([
@@ -21,6 +21,8 @@ const commercialPaths = new Set([
   "/pipeline-vendas/campanhas",
   "/pipeline-vendas/scripts",
   "/pipeline-vendas/funis",
+  "/pipeline-vendas/cadastros",
+  "/pipeline-pre-vendas",
 ]);
 
 const settingsPaths = new Set(["/permissoes", "/cargos", "/cargos/hierarquia"]);
@@ -33,9 +35,8 @@ function routeIsActive(currentPath: string, itemPath: string) {
   return currentPath === itemPath || currentPath.startsWith(`${itemPath}/`);
 }
 
-export function AppSidebarNav({ collapsed }: AppSidebarNavProps) {
+export function AppSidebarNav({ collapsed, onNavigate }: AppSidebarNavProps) {
   const items = useVisibleMainNavItems();
-  const navigate = useNavigate();
   const { pathname } = useLocation();
   const commercialActive = [...commercialPaths].some((path) => routeIsActive(pathname, path));
   const settingsActive = settingsPaths.has(pathname);
@@ -58,29 +59,29 @@ export function AppSidebarNav({ collapsed }: AppSidebarNavProps) {
   const renderItem = (item: MainNavItem, child = false) => {
     const active = routeIsActive(pathname, item.path);
     return (
-      <motion.button
+      <Link
         key={item.path}
-        type="button"
+        to={item.path}
         onMouseEnter={() => preloadRoute(item.path)}
         onFocus={() => preloadRoute(item.path)}
-        onClick={() => navigate(item.path)}
+        onClick={onNavigate}
+        aria-label={item.label}
+        aria-current={active ? "page" : undefined}
         title={collapsed ? item.label : undefined}
         className={cn(
-          "group relative flex w-full items-center gap-3 rounded-lg py-2.5 text-left transition-all",
+          "app-nav-link group relative flex min-h-11 w-full items-center gap-3 rounded-lg py-2.5 text-left",
           collapsed ? "justify-center px-2" : child ? "pl-9 pr-3" : "px-3",
           active
             ? "bg-accent/10 text-accent"
             : "text-muted-foreground hover:bg-muted/30 hover:text-foreground",
         )}
-        whileHover={{ x: collapsed ? 0 : 2 }}
-        whileTap={{ scale: 0.98 }}
       >
         {active && (
           <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-accent" />
         )}
         <item.icon className="h-[18px] w-[18px] shrink-0" />
         {!collapsed && <span className="truncate text-[13px] font-medium">{item.label}</span>}
-      </motion.button>
+      </Link>
     );
   };
 
@@ -99,9 +100,11 @@ export function AppSidebarNav({ collapsed }: AppSidebarNavProps) {
         <button
           type="button"
           onClick={toggle}
+          aria-label={label}
+          aria-expanded={open}
           title={collapsed ? label : undefined}
           className={cn(
-            "flex w-full items-center gap-3 rounded-lg py-2.5 transition-colors",
+            "app-nav-link flex min-h-11 w-full items-center gap-3 rounded-lg py-2.5",
             collapsed ? "justify-center px-2" : "px-3",
             active
               ? "bg-accent/10 text-accent"

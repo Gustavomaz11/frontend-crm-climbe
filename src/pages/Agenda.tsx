@@ -1,29 +1,19 @@
+import { AppSidebar } from "@/components/layout/AppSidebar";
 import { FormValidation } from "@/components/ui/form-validation";
 import { KanbanArquivados, KanbanArquivarButton } from "@/components/kanban/KanbanArquivados";
 import { useEffect, useRef, useState, useMemo } from "react";
-import { useTheme } from "@/hooks/use-theme";
+
 import { useSidebarState } from "@/hooks/useSidebarState";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Home, FileText, Calendar as CalendarIcon, Shield, Building2, Settings,
-  LogOut, Sun, Moon, ChevronLeft, ChevronRight, Plus, Search,
-  Clock, MapPin, X, GripVertical, Video, FileCheck, UserCheck, ScrollText
-} from "lucide-react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Calendar as CalendarIcon, Building2, ChevronLeft, ChevronRight, Plus, Search, Clock, MapPin, X, GripVertical, Video } from "lucide-react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { getReuniaoError } from "@/services/useReunioes";
-import ClimbLogo from "@/components/login/ClimbLogo";
+
 import { AppHeaderUser } from "@/components/layout/AppHeaderUser";
-import { AppSidebarNav } from "@/components/layout/AppSidebarNav";
-import { UserIdentity } from "@/components/users/UserSelect";
-import {
-  useCreateReuniao,
-  useDeleteReuniao,
-  useEmpresas,
-  useParticipantesReuniao,
-  useReunioes,
-  useUpdateReuniao,
-  useUsuarios,
-} from "@/services";
+
+import { ParticipantesReuniaoSelect } from "@/components/reunioes/ParticipantesReuniaoSelect";
+import { SalaReuniaoSelect } from "@/components/reunioes/SalaReuniaoSelect";
+import { useCreateReuniao, useDeleteReuniao, useEmpresas, useParticipantesReuniao, useReunioes, useUpdateReuniao } from "@/services";
 import { useAuthStore } from "@/store/useAuthStore";
 import { shouldShowAgendaReuniao } from "./agendaVisibility";
 
@@ -36,11 +26,12 @@ interface AgendaEvent {
   diaInteiro?: boolean;
   empresa: string;
   local?: string;
+  salaEmail?: string | null;
   type: "virtual" | "presencial";
   color: string;
   data?: string;
   hora?: string;
-  empresaId?: number;
+  empresaId?: number | null;
   pauta?: string;
   presencial: boolean;
   dateKey: string;
@@ -210,6 +201,7 @@ const initialEventForm = () => ({
   data: toDateInputValue(),
   hora: "",
   local: "",
+  salaEmail: "",
   pauta: "",
   presencial: true,
   status: "AGENDADA",
@@ -217,7 +209,6 @@ const initialEventForm = () => ({
 });
 
 const Agenda = () => {
-  const { isDark, setIsDark } = useTheme();
   const [sidebarCollapsed, setSidebarCollapsed] = useSidebarState();
   const [activeView, setActiveView] = useState<"mes" | "semana" | "lista" | "kanban">("mes");
   const [showAddEvent, setShowAddEvent] = useState(false);
@@ -226,7 +217,6 @@ const Agenda = () => {
   const [draggedCard, setDraggedCard] = useState<{ card: KanbanCard; fromCol: string } | null>(null);
   const [dragOverCol, setDragOverCol] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [participantSearchQuery, setParticipantSearchQuery] = useState("");
   const [eventForm, setEventForm] = useState(initialEventForm);
   const [eventError, setEventError] = useState("");
   const [editingEventId, setEditingEventId] = useState<number | null>(null);
@@ -235,7 +225,6 @@ const Agenda = () => {
   const openedMeeting = useRef<number>();
   const { data: reunioes = [] } = useReunioes();
   const { data: empresas = [] } = useEmpresas();
-  const { data: usuarios = [] } = useUsuarios();
   const { data: participantesReuniao = [] } = useParticipantesReuniao();
   const { mutateAsync: createReuniao, isPending: creatingReuniao } = useCreateReuniao();
   const { mutateAsync: updateReuniao, isPending: updatingReuniao } = useUpdateReuniao();
@@ -305,7 +294,7 @@ const Agenda = () => {
           reuniao.empresa?.nomeFantasia ||
           reuniao.empresa?.razaoSocial ||
           empresas.find((item) => item.id === reuniao.empresaId)?.nome ||
-          `Empresa #${reuniao.empresaId}`;
+          (reuniao.empresaId ? `Empresa #${reuniao.empresaId}` : "Reunião da equipe");
 
         const diaInteiro = Boolean(reuniao.diaInteiro);
         const timeLabel = diaInteiro ? "Dia inteiro" : formatEventTime(reuniao.dataHora);
@@ -318,6 +307,7 @@ const Agenda = () => {
           diaInteiro,
           empresa,
           local: reuniao.presencial ? reuniao.local : reuniao.linkMeet || reuniao.local,
+          salaEmail: reuniao.salaEmail,
           type: reuniao.presencial ? "presencial" : "virtual",
           color: reuniao.googleEventId ? "accent" : "primary",
           data: reuniao.data ?? eventDateInput(date),
@@ -338,20 +328,6 @@ const Agenda = () => {
     () => agendaEvents.filter((event) => matchesSearch(event, searchQuery)),
     [agendaEvents, searchQuery],
   );
-
-  const filteredUsuarios = useMemo(() => {
-    const normalize = (value: string) =>
-      value
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .toLowerCase();
-    const query = normalize(participantSearchQuery.trim());
-    if (!query) return usuarios;
-
-    return usuarios.filter((usuario) =>
-      normalize(`${usuario.nomeCompleto ?? ""} ${usuario.email ?? ""}`).includes(query),
-    );
-  }, [participantSearchQuery, usuarios]);
 
   const dynamicMonthEvents = useMemo<Record<number, AgendaEvent[]>>(() => {
     const grouped: Record<number, AgendaEvent[]> = {};
@@ -421,7 +397,6 @@ const Agenda = () => {
   const openCreateEventModal = () => {
     setEditingEventId(null);
     setEventError("");
-    setParticipantSearchQuery("");
     setEventForm(initialEventForm());
     setShowAddEvent(true);
   };
@@ -429,7 +404,6 @@ const Agenda = () => {
   const closeEventModal = () => {
     setEditingEventId(null);
     setEventError("");
-    setParticipantSearchQuery("");
     setShowAddEvent(false);
     if (searchParams.has("reuniaoId")) {
       const next = new URLSearchParams(searchParams); next.delete("reuniaoId"); setSearchParams(next, { replace: true });
@@ -437,7 +411,7 @@ const Agenda = () => {
   };
 
   const updateEventStatus = async (event: AgendaEvent, status: string) => {
-    if (!isPersistedAgendaEvent(event) || !event.empresaId || !event.data || !event.hora) {
+    if (!isPersistedAgendaEvent(event) || !event.data || !event.hora) {
       setEventError("Não foi possível atualizar o status da reunião.");
       return;
     }
@@ -450,6 +424,7 @@ const Agenda = () => {
         data: event.data,
         hora: event.hora,
         local: event.local ?? "",
+        salaEmail: event.salaEmail ?? null,
         pauta: event.pauta ?? "",
         presencial: event.presencial,
         status,
@@ -468,7 +443,7 @@ const Agenda = () => {
 
     const targetColumn = kanbanColumns.find((column) => column.id === colId);
     const event = draggedCard.card.event;
-    if (!targetColumn || !event || !isPersistedAgendaEvent(event) || !event.empresaId || !event.data || !event.hora) {
+    if (!targetColumn || !event || !isPersistedAgendaEvent(event) || !event.data || !event.hora) {
       setDraggedCard(null);
       setDragOverCol(null);
       return;
@@ -487,18 +462,19 @@ const Agenda = () => {
   const handleCreateEvent = async () => {
     setEventError("");
 
-    if (!eventForm.titulo.trim() || !eventForm.empresaId || !eventForm.data || !eventForm.hora) {
-      setEventError("Preencha pauta, empresa, data e horário.");
+    if (!eventForm.titulo.trim() || !eventForm.data || !eventForm.hora) {
+      setEventError("Preencha pauta, data e horário.");
       return;
     }
 
     try {
       const payload = {
         titulo: eventForm.titulo.trim(),
-        empresaId: Number(eventForm.empresaId),
+        empresaId: eventForm.empresaId ? Number(eventForm.empresaId) : null,
         data: eventForm.data,
         hora: eventForm.hora,
         local: eventForm.local.trim(),
+        salaEmail: eventForm.presencial && eventForm.salaEmail ? eventForm.salaEmail : null,
         pauta: eventForm.pauta.trim(),
         presencial: eventForm.presencial,
         status: eventForm.status,
@@ -541,13 +517,13 @@ const Agenda = () => {
       data: event.data ?? toDateInputValue(),
       hora: event.hora ?? "",
       local: event.presencial ? event.local ?? "" : "",
+      salaEmail: event.salaEmail ?? "",
       pauta: event.pauta ?? "",
       presencial: event.presencial,
       status: event.status,
       participanteIds,
     });
     setEventError("");
-    setParticipantSearchQuery("");
     setShowAddEvent(true);
   };
 
@@ -577,7 +553,6 @@ const Agenda = () => {
   const todayDay = today.getDate();
   const isViewingCurrentMonth = currentMonth === today.getMonth() && currentYear === today.getFullYear();
 
-
   useEffect(() => {
     const id = Number(searchParams.get("reuniaoId"));
     if (!id) { openedMeeting.current = undefined; return; }
@@ -590,7 +565,7 @@ const Agenda = () => {
   }, [searchParams, agendaEvents, participantesReuniao]);
 
   return (
-    <div className="relative min-h-screen bg-background text-foreground transition-colors duration-500 overflow-hidden">
+    <div className="app-layout relative min-h-screen bg-background text-foreground transition-colors duration-500 overflow-hidden">
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse 60% 50% at 0% 0%, hsl(var(--accent) / 0.04) 0%, transparent 50%), radial-gradient(ellipse 50% 40% at 100% 100%, hsl(var(--primary) / 0.03) 0%, transparent 50%)` }} />
         <motion.div className="absolute top-0 right-0 w-[600px] h-[600px] rounded-full" style={{ background: "radial-gradient(circle, hsl(var(--accent) / 0.03) 0%, transparent 60%)", filter: "blur(80px)" }} animate={{ opacity: [0.3, 0.6, 0.3], scale: [0.95, 1.05, 0.95] }} transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }} />
@@ -598,28 +573,11 @@ const Agenda = () => {
 
       <div className="relative z-10 flex min-h-screen">
         {/* Sidebar */}
-        <motion.aside className={`fixed left-0 top-0 bottom-0 z-30 flex flex-col border-r border-border/30 bg-card/60 backdrop-blur-xl transition-all duration-300 ${sidebarCollapsed ? "w-[72px]" : "w-[220px]"}`} initial={false} animate={{ x: 0, opacity: 1 }}>
-          <div className={`flex items-center h-16 border-b border-border/20 ${sidebarCollapsed ? "justify-center px-2" : "px-5"}`}>
-            {sidebarCollapsed ? <motion.div className="w-7 h-7 rounded-lg bg-accent/10 flex items-center justify-center" whileHover={{ scale: 1.05 }}><span className="text-accent font-bold text-xs">C</span></motion.div> : <ClimbLogo className="h-[16px] text-foreground" />}
-          </div>
-          <nav className="min-h-0 flex-1 overflow-y-auto py-4 px-2">
-            <AppSidebarNav collapsed={sidebarCollapsed} />
-          </nav>
-          <div className="border-t border-border/20 py-3 px-2 space-y-1">
-            <motion.button onClick={() => setIsDark(!isDark)} className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-all ${sidebarCollapsed ? "justify-center" : ""}`} whileTap={{ scale: 0.98 }}>
-              <AnimatePresence mode="wait"><motion.div key={isDark ? "s" : "m"} initial={{ opacity: 0, rotate: -30 }} animate={{ opacity: 1, rotate: 0 }} exit={{ opacity: 0, rotate: 30 }} transition={{ duration: 0.2 }}>{isDark ? <Sun className="w-[18px] h-[18px]" /> : <Moon className="w-[18px] h-[18px]" />}</motion.div></AnimatePresence>
-              {!sidebarCollapsed && <span className="text-[13px] font-medium">{isDark ? "Modo claro" : "Modo escuro"}</span>}
-            </motion.button>
-            <Link to="/"><motion.button className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-all ${sidebarCollapsed ? "justify-center" : ""}`} whileTap={{ scale: 0.98 }}><LogOut className="w-[18px] h-[18px]" />{!sidebarCollapsed && <span className="text-[13px] font-medium">Sair</span>}</motion.button></Link>
-          </div>
-          <button onClick={() => setSidebarCollapsed(!sidebarCollapsed)} className="absolute -right-3 top-20 w-6 h-6 rounded-full bg-card border border-border/40 flex items-center justify-center text-muted-foreground hover:text-foreground hover:border-accent/40 transition-all shadow-sm">
-            {sidebarCollapsed ? <ChevronRight className="w-3 h-3" /> : <ChevronLeft className="w-3 h-3" />}
-          </button>
-        </motion.aside>
+        <AppSidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />
 
         {/* Main */}
-        <main className={`flex-1 transition-all duration-300 ${sidebarCollapsed ? "ml-[72px]" : "ml-[220px]"}`}>
-          <motion.header className="sticky top-0 z-20 h-16 flex items-center justify-between px-6 border-b border-border/20 bg-background/80 backdrop-blur-xl" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
+        <main className="app-main" data-collapsed={sidebarCollapsed}>
+          <header className="sticky top-0 z-20 h-16 flex items-center justify-between px-6 border-b border-border/20 bg-background/80 backdrop-blur-xl">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 h-9 px-3 rounded-lg border border-border/25 bg-card/30 backdrop-blur-sm text-muted-foreground w-[240px]">
                 <Search className="w-3.5 h-3.5" />
@@ -629,7 +587,7 @@ const Agenda = () => {
             <div className="flex items-center gap-3">
               <div className="flex items-center h-9 rounded-lg border border-border/25 bg-card/30 backdrop-blur-sm overflow-hidden">
                 {(["mes", "semana", "lista", "kanban"] as const).map(v => (
-                  <motion.button key={v} onClick={() => setActiveView(v)} className={`h-full px-4 text-[12px] font-medium transition-all ${activeView === v ? "bg-accent/15 text-accent" : "text-muted-foreground hover:text-foreground"}`} whileTap={{ scale: 0.97 }}>
+                  <motion.button key={v} onClick={() => setActiveView(v)} className={`h-full px-4 text-[12px] font-medium transition-colors ${activeView === v ? "bg-accent/15 text-accent" : "text-muted-foreground hover:text-foreground"}`} whileTap={{ scale: 0.97 }}>
                     {v === "mes" ? "Mês" : v === "semana" ? "Semana" : v === "lista" ? "Lista" : "Kanban"}
                   </motion.button>
                 ))}
@@ -639,7 +597,7 @@ const Agenda = () => {
               </motion.button>
               <AppHeaderUser name={userName} photoUrl={userPhoto} />
             </div>
-          </motion.header>
+          </header>
 
           <div className="px-6 pt-6 pb-2">
             <h1 className="text-[22px] font-bold text-foreground tracking-tight">Agenda de Eventos</h1>
@@ -658,7 +616,7 @@ const Agenda = () => {
                         <h3 className="text-[15px] font-semibold text-foreground capitalize">{currentMonthLabel}</h3>
                         <motion.button onClick={goToNextMonth} className="w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/20" whileTap={{ scale: 0.9 }}><ChevronRight className="w-4 h-4" /></motion.button>
                       </div>
-                      <button onClick={goToToday} className="h-7 px-3 rounded-md text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted/20 border border-border/25 transition-all">Hoje</button>
+                      <button onClick={goToToday} className="h-7 px-3 rounded-md text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted/20 border border-border/25 transition-colors">Hoje</button>
                     </div>
                     <div className="grid grid-cols-7 border-b border-border/10">
                       {DOW.map(d => <div key={d} className="text-center py-2.5 text-[10px] font-medium text-muted-foreground tracking-wider uppercase">{d}</div>)}
@@ -669,7 +627,7 @@ const Agenda = () => {
                         const isToday = isViewingCurrentMonth && day === todayDay;
                         const isSelected = day === selectedDay;
                         return (
-                          <motion.div key={i} className={`min-h-[100px] border-b border-r border-border/10 p-1.5 cursor-pointer transition-all duration-200 ${day === null ? "bg-muted/5" : isSelected ? "bg-accent/5 ring-1 ring-inset ring-accent/20" : isToday ? "bg-accent/[0.03]" : "hover:bg-muted/10"}`} onClick={() => day && setSelectedDay(day === selectedDay ? null : day)} whileTap={day ? { scale: 0.98 } : undefined}>
+                          <motion.div key={i} className={`min-h-[100px] border-b border-r border-border/10 p-1.5 cursor-pointer transition-colors duration-200 ${day === null ? "bg-muted/5" : isSelected ? "bg-accent/5 ring-1 ring-inset ring-accent/20" : isToday ? "bg-accent/[0.03]" : "hover:bg-muted/10"}`} onClick={() => day && setSelectedDay(day === selectedDay ? null : day)} whileTap={day ? { scale: 0.98 } : undefined}>
                             {day && (
                               <>
                                 <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[11px] mb-1 ${isToday ? "bg-accent text-accent-foreground font-bold" : "text-foreground font-medium"}`}>{day}</div>
@@ -692,7 +650,7 @@ const Agenda = () => {
                   </div>
 
                   {/* Right sidebar */}
-                  <div className="w-[280px] space-y-4 shrink-0">
+                  <div className="w-full min-w-0 max-w-[300px] space-y-4 shrink-0">
                     <div className="rounded-xl border border-border/25 bg-card/40 backdrop-blur-sm p-4">
                       <div className="flex items-center justify-between mb-3">
                         <h4 className="text-[13px] font-semibold text-foreground capitalize">{currentMonthLabel}</h4>
@@ -709,7 +667,7 @@ const Agenda = () => {
                           const has = day ? eventDays.has(day) : false;
                           const isT = isViewingCurrentMonth && day === todayDay;
                           const isS = day === selectedDay;
-                          return <div key={i} onClick={() => day && setSelectedDay(day === selectedDay ? null : day)} className={`aspect-square flex items-center justify-center text-[9px] rounded cursor-pointer transition-all ${day === null ? "" : isS ? "bg-accent text-accent-foreground font-bold" : isT ? "bg-accent text-accent-foreground font-bold" : has ? "bg-accent/15 text-accent font-semibold" : "text-foreground hover:bg-muted/20"}`}>{day}</div>;
+                          return <div key={i} onClick={() => day && setSelectedDay(day === selectedDay ? null : day)} className={`aspect-square flex items-center justify-center text-[9px] rounded cursor-pointer transition-colors ${day === null ? "" : isS ? "bg-accent text-accent-foreground font-bold" : isT ? "bg-accent text-accent-foreground font-bold" : has ? "bg-accent/15 text-accent font-semibold" : "text-foreground hover:bg-muted/20"}`}>{day}</div>;
                         })}
                       </div>
                     </div>
@@ -776,7 +734,7 @@ const Agenda = () => {
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
                       <motion.button onClick={goToPreviousWeek} className="w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/20 border border-border/20" whileTap={{ scale: 0.9 }}><ChevronLeft className="w-4 h-4" /></motion.button>
-                      <button onClick={goToToday} className="h-7 px-3 rounded-md text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted/20 border border-border/25 transition-all">Hoje</button>
+                      <button onClick={goToToday} className="h-7 px-3 rounded-md text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted/20 border border-border/25 transition-colors">Hoje</button>
                       <motion.button onClick={goToNextWeek} className="w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/20 border border-border/20" whileTap={{ scale: 0.9 }}><ChevronRight className="w-4 h-4" /></motion.button>
                     </div>
                     <p className="text-[12px] text-muted-foreground capitalize">{weekLabel}</p>
@@ -806,7 +764,7 @@ const Agenda = () => {
                             {dayEvents.map((ev, ei) => (
                               <motion.div
                                 key={ev.id}
-                                className={`rounded-lg p-3 cursor-pointer transition-all ${ev.type === "virtual" ? "bg-accent/8 border border-accent/15 hover:bg-accent/15" : "bg-primary/8 border border-primary/15 hover:bg-primary/15"}`}
+                                className={`rounded-lg p-3 cursor-pointer transition-colors ${ev.type === "virtual" ? "bg-accent/8 border border-accent/15 hover:bg-accent/15" : "bg-primary/8 border border-primary/15 hover:bg-primary/15"}`}
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 transition={{ delay: i * 0.06 + ei * 0.05 }}
@@ -872,7 +830,7 @@ const Agenda = () => {
                 <motion.div key="kanban" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="grid grid-cols-4 gap-4">
                   <div className="col-span-full flex justify-end"><KanbanArquivados<{ idReuniao: number }> contexto={{ tipo: "REUNIAO" }} canRestore onOpen={item => { const event = agendaEvents.find(e => e.id === String(item.idReuniao)); if (event) handleEditEvent(event); }} /></div>
                   {kanbanColumns.map((col, colIndex) => (
-                    <motion.div key={col.id} className={`rounded-xl border bg-card/40 backdrop-blur-sm overflow-hidden flex flex-col transition-all duration-300 ${dragOverCol === col.id ? "border-accent/40 bg-accent/[0.03] scale-[1.01]" : "border-border/25"}`} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: colIndex * 0.08 }} onDragOver={e => handleDragOver(e, col.id)} onDragLeave={() => setDragOverCol(null)} onDrop={() => handleDrop(col.id)}>
+                    <motion.div key={col.id} className={`rounded-xl border bg-card/40 backdrop-blur-sm overflow-hidden flex flex-col transition-colors duration-300 ${dragOverCol === col.id ? "border-accent/40 bg-accent/[0.03] scale-[1.01]" : "border-border/25"}`} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: colIndex * 0.08 }} onDragOver={e => handleDragOver(e, col.id)} onDragLeave={() => setDragOverCol(null)} onDrop={() => handleDrop(col.id)}>
                       <div className="px-4 py-3 border-b border-border/15 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <motion.div className="w-2 h-2 rounded-full" style={{ backgroundColor: `hsl(var(--${col.color}))` }} animate={{ scale: [1, 1.3, 1] }} transition={{ duration: 2, repeat: Infinity, delay: colIndex * 0.5 }} />
@@ -887,7 +845,7 @@ const Agenda = () => {
                               key={card.id}
                               draggable={!updatingReuniao}
                               onDragStart={() => handleDragStart(card, col.id)}
-                              className="rounded-lg border border-border/20 bg-background/60 p-3 cursor-grab active:cursor-grabbing hover:border-accent/20 transition-all group"
+                              className="rounded-lg border border-border/20 bg-background/60 p-3 cursor-grab active:cursor-grabbing hover:border-accent/20 transition-colors group"
                               initial={{ opacity: 0, scale: 0.9, y: 10 }}
                               animate={{ opacity: 1, scale: 1, y: 0 }}
                               exit={{ opacity: 0, scale: 0.9, y: -10 }}
@@ -966,80 +924,25 @@ const Agenda = () => {
                   <input required type="text" placeholder="Pauta da reunião..." value={eventForm.titulo} onChange={(e) => setEventForm((prev) => ({ ...prev, titulo: e.target.value }))} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 transition-colors placeholder:text-muted-foreground" />
                 </div>
                 <div>
-                  <label className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Empresa *</label>
-                  <select required value={eventForm.empresaId} onChange={(e) => setEventForm((prev) => ({ ...prev, empresaId: e.target.value }))} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 transition-colors">
-                    <option value="">Selecione</option>
+                  <label htmlFor="reuniao-cliente" className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Cliente (opcional)</label>
+                  <select id="reuniao-cliente" value={eventForm.empresaId} onChange={(e) => setEventForm((prev) => ({ ...prev, empresaId: e.target.value }))} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 transition-colors">
+                    <option value="">Sem cliente (reunião da equipe)</option>
                     {empresas.map((empresa) => <option key={empresa.id} value={empresa.id}>{empresa.nome}</option>)}
                   </select>
                 </div>
-                <div>
-                  <label className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Participantes</label>
-                  <div className="mb-2 flex h-9 items-center gap-2 rounded-lg border border-border/25 bg-background/50 px-3 text-muted-foreground transition-colors focus-within:border-accent/40">
-                    <Search className="h-3.5 w-3.5 shrink-0" />
-                    <input
-                      type="text"
-                      value={participantSearchQuery}
-                      onChange={(e) => setParticipantSearchQuery(e.target.value)}
-                      placeholder="Filtrar por nome ou e-mail"
-                      className="min-w-0 flex-1 bg-transparent text-[12px] text-foreground outline-none placeholder:text-muted-foreground"
-                    />
-                    {participantSearchQuery && (
-                      <button
-                        type="button"
-                        onClick={() => setParticipantSearchQuery("")}
-                        className="flex h-5 w-5 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/20 hover:text-foreground"
-                        aria-label="Limpar filtro de participantes"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    )}
-                  </div>
-                  <div className="max-h-32 overflow-y-auto rounded-lg border border-border/25 bg-background/50 p-2 space-y-1.5">
-                    {usuarios.length === 0 ? (
-                      <p className="px-2 py-2 text-[11px] text-muted-foreground">Nenhum usuario cadastrado.</p>
-                    ) : filteredUsuarios.length > 0 ? filteredUsuarios.map((usuario) => {
-                      const obrigatorio = usuario.email?.toLowerCase() === "contato@climbe.com.br";
-                      const checked = obrigatorio || eventForm.participanteIds.includes(usuario.id);
-                      return (
-                        <label key={usuario.id} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-[12px] text-foreground/75 transition-colors hover:bg-muted/20">
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            disabled={obrigatorio}
-                            onChange={(e) => {
-                              setEventForm((prev) => ({
-                                ...prev,
-                                participanteIds: e.target.checked
-                                  ? [...prev.participanteIds, usuario.id]
-                                  : prev.participanteIds.filter((id) => id !== usuario.id),
-                              }));
-                            }}
-                            className="h-3.5 w-3.5 rounded border-border/40 accent-[hsl(var(--accent))]"
-                          />
-                          <UserIdentity user={usuario} className="min-w-0 flex-1" />
-                        </label>
-                      );
-                    }) : (
-                      <p className="px-2 py-2 text-[11px] text-muted-foreground">Nenhum participante encontrado para este filtro.</p>
-                    )}
-                  </div>
-                  <p className="mt-1 text-[10px] text-muted-foreground">
-                    {eventForm.participanteIds.length > 0
-                      ? `${eventForm.participanteIds.length} participante(s) selecionado(s).`
-                      : "Selecione os usuarios que participarao da reuniao."}
-                  </p>
-                </div>
+                <ParticipantesReuniaoSelect value={eventForm.participanteIds} onChange={(participanteIds) => setEventForm((prev) => ({ ...prev, participanteIds }))} />
                 <div className="grid grid-cols-2 gap-3">
                   <div><label className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Data *</label><input required type="date" value={eventForm.data} onChange={(e) => setEventForm((prev) => ({ ...prev, data: e.target.value }))} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 text-foreground" /></div>
                   <div><label className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Horário *</label><input required type="time" value={eventForm.hora} onChange={(e) => setEventForm((prev) => ({ ...prev, hora: e.target.value }))} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 text-foreground" /></div>
                 </div>
+                {eventForm.presencial && <SalaReuniaoSelect email={eventForm.salaEmail} local={eventForm.local} onChange={(salaEmail, local) => setEventForm((prev) => ({ ...prev, salaEmail, local }))} />}
                 <div>
-                  <label className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Local{eventForm.presencial ? " *" : ""}</label>
-                  <input required={eventForm.presencial} type="text" placeholder="Sala ou endereço" value={eventForm.local} disabled={!eventForm.presencial} onChange={(e) => setEventForm((prev) => ({ ...prev, local: e.target.value }))} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 transition-colors placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-45" />
+                  <label htmlFor="reuniao-local" className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Local{eventForm.presencial ? " *" : ""}</label>
+                  <input id="reuniao-local" required={eventForm.presencial && !eventForm.salaEmail} type="text" placeholder="Endereço da reunião" value={eventForm.local} disabled={!eventForm.presencial || !!eventForm.salaEmail} onChange={(e) => setEventForm((prev) => ({ ...prev, local: e.target.value }))} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 transition-colors placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-45" />
                   {!eventForm.presencial && editingEventId && reunioes.find(r => r.id === editingEventId)?.linkMeet && <a href={reunioes.find(r => r.id === editingEventId)?.linkMeet} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-xs text-accent underline">Entrar no Google Meet</a>}
                 </div>
                 <div className="flex items-center gap-3">
-                  <label className="flex items-center gap-2 cursor-pointer"><input type="radio" name="tipo-modal" checked={!eventForm.presencial} onChange={() => setEventForm((prev) => ({ ...prev, presencial: false, local: "" }))} className="accent-[hsl(var(--accent))]" /><span className="text-[12px] text-foreground/70">Virtual</span></label>
+                  <label className="flex items-center gap-2 cursor-pointer"><input type="radio" name="tipo-modal" checked={!eventForm.presencial} onChange={() => setEventForm((prev) => ({ ...prev, presencial: false, local: "", salaEmail: "" }))} className="accent-[hsl(var(--accent))]" /><span className="text-[12px] text-foreground/70">Virtual</span></label>
                   <label className="flex items-center gap-2 cursor-pointer"><input type="radio" name="tipo-modal" checked={eventForm.presencial} onChange={() => setEventForm((prev) => ({ ...prev, presencial: true }))} className="accent-[hsl(var(--accent))]" /><span className="text-[12px] text-foreground/70">Presencial</span></label>
                 </div>
                 {eventError && <p className="text-[11px] text-destructive">{eventError}</p>}

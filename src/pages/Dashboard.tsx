@@ -1,68 +1,24 @@
+import { AppSidebar } from "@/components/layout/AppSidebar";
 import { useContratoPermissions } from "@/hooks/useContratoPermissions";
 import { useCrudPermissions } from "@/hooks/useCrudPermissions";
-import { useDeferredValue, useMemo, useContext, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import { getReuniaoError } from "@/services/useReunioes";
-import { useTheme } from "@/hooks/use-theme";
-import { useSidebarState } from "@/hooks/useSidebarState";
-import { useNavigate, Link, useLocation } from "react-router-dom";
-import { AuthContext } from "@/context/provider";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  Home,
-  FileText,
-  Calendar as CalendarIcon,
-  Shield,
-  Building2,
-  Settings,
-  LogOut,
-  Sun,
-  Moon,
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-  Bell,
-  Search,
-  ArrowUpRight,
-  ArrowDownRight,
-  Clock,
-  CheckCircle2,
-  AlertCircle,
-  TrendingUp,
-  Users,
-  Maximize2,
-  X,
-  Download,
-  Briefcase,
-  MapPin,
-  FileCheck,
-  UserCheck,
-  ScrollText,
-} from "lucide-react";
+import { SalaReuniaoSelect } from "@/components/reunioes/SalaReuniaoSelect";
+import { ParticipantesReuniaoSelect } from "@/components/reunioes/ParticipantesReuniaoSelect";
 
-import ClimbLogo from "@/components/login/ClimbLogo";
+import { useSidebarState } from "@/hooks/useSidebarState";
+import { useNavigate, useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import { FileText, Calendar as CalendarIcon, Building2, ChevronLeft, ChevronRight, Plus, Bell, Search, ArrowUpRight, ArrowDownRight, Clock, CheckCircle2, AlertCircle, TrendingUp, Users, Maximize2, X, Download, Briefcase, MapPin, FileCheck, ScrollText } from "lucide-react";
+
 import { AppHeaderUser } from "@/components/layout/AppHeaderUser";
-import { AppSidebarNav } from "@/components/layout/AppSidebarNav";
 
 // ajuste estes imports se sua pasta estiver diferente
-import {
-  getContratoDownloadUrl,
-  getDocumentoDownloadUrl,
-  getPropostaDownloadUrl,
-  getPropostaFileNameFromUrl,
-  useContratos,
-  useCreateReuniao,
-  useEmpresas,
-  useReunioes,
-  useDocumentos,
-  usePropostas,
-} from "@/services";
+import { getContratoDownloadUrl, getDocumentoDownloadUrl, getPropostaDownloadUrl, getPropostaFileNameFromUrl, useContratos, useCreateReuniao, useEmpresas, useReunioes, useDocumentos, usePropostas } from "@/services";
 
 import { useAuthStore } from "@/store/useAuthStore";
 import { getNotificacaoDestino, useLerNotificacao, useMinhasNotificacoes } from "@/services/useNotificacoes";
-import {
-  calendarDateInput,
-  shiftDashboardCalendarMonth,
-} from "./dashboardCalendar";
+import { calendarDateInput, shiftDashboardCalendarMonth } from "./dashboardCalendar";
 
 /* ══════════════════════════════════════════════════
    TYPES
@@ -128,6 +84,8 @@ interface DashboardMeetingForm {
   data: string;
   hora: string;
   local: string;
+  salaEmail: string;
+  participanteIds: number[];
 }
 
 /* ══════════════════════════════════════════════════
@@ -141,25 +99,14 @@ const badgeStyles: Record<PipelineRow["badge"], string> = {
   direct: "bg-muted text-muted-foreground border-border/30",
 };
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.06, delayChildren: 0.1 },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 16 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-};
-
 const initialDashboardMeetingForm = (date = new Date()): DashboardMeetingForm => ({
   titulo: "",
   empresaId: "",
   data: calendarDateInput(date.getFullYear(), date.getMonth(), date.getDate()),
   hora: "",
   local: "",
+  salaEmail: "",
+  participanteIds: [],
 });
 
 /* ══════════════════════════════════════════════════
@@ -291,7 +238,7 @@ const MaximizeModal = ({
   <AnimatePresence>
     {isOpen && (
       <motion.div
-        className="fixed inset-0 z-50 flex items-center justify-center p-6"
+        className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -310,7 +257,7 @@ const MaximizeModal = ({
           initial={{ scale: 0.92, opacity: 0, y: 20 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.92, opacity: 0, y: 20 }}
-          transition={{ duration: 0.3, ease: "easeOut" }}
+          transition={{ duration: 0.25, ease: [0.23, 1, 0.32, 1] }}
         >
           <div className="flex items-center justify-between border-b border-border/20 p-5">
             <h2 className="text-[16px] font-semibold text-foreground">
@@ -319,6 +266,7 @@ const MaximizeModal = ({
 
             <motion.button
               onClick={onClose}
+              aria-label="Fechar janela"
               className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/20 hover:text-foreground"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -347,8 +295,8 @@ const SectionHeader = ({
   isMaximized?: boolean;
   extra?: React.ReactNode;
 }) => (
-  <div className="flex items-center justify-between border-b border-border/15 p-5 pb-4">
-    <div>
+  <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/40 p-5 pb-4">
+    <div className="min-w-0">
       <h3 className="text-[14px] font-semibold tracking-tight text-foreground">
         {title}
       </h3>
@@ -359,16 +307,17 @@ const SectionHeader = ({
       )}
     </div>
 
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       {extra}
 
       {!isMaximized && (
         <motion.button
           onClick={onMaximize}
-          className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-all hover:bg-muted/20 hover:text-foreground"
+          className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted/20 hover:text-foreground"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           title="Maximizar"
+          aria-label={`Ampliar ${title}`}
         >
           <Maximize2 className="h-3.5 w-3.5" />
         </motion.button>
@@ -382,10 +331,8 @@ const SectionHeader = ({
    ══════════════════════════════════════════════════ */
 
 const Dashboard = () => {
-  const { isDark, setIsDark } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
-  const authContext = useContext(AuthContext);
 
   const basicUserData = useAuthStore((state) => state.basicUserData);
   const userData = useAuthStore((state) => state.userData);
@@ -491,7 +438,6 @@ const Dashboard = () => {
     userData?.fotoPerfil ||
     userData?.pessoa?.fotoPerfil ||
     null;
-
 
   const today = useMemo(() => new Date(), []);
   const currentMonth = calendarDate.getMonth();
@@ -768,7 +714,7 @@ const Dashboard = () => {
       grouped[day].push({
         title: reuniao.titulo,
         time: formatTime(reuniao.dataHora),
-        empresa: empresa?.nome ?? `Empresa #${reuniao.empresaId}`,
+        empresa: empresa?.nome ?? (reuniao.empresaId ? `Empresa #${reuniao.empresaId}` : "Reunião da equipe"),
                 local: reuniao.linkMeet || reuniao.local,
       });
     });
@@ -981,7 +927,7 @@ const Dashboard = () => {
     <>
       {showSearch && (
         <div className="border-b border-border/10 px-5 py-3">
-          <div className="flex h-9 items-center gap-2 rounded-lg border border-border/25 bg-background/50 px-3 text-muted-foreground">
+          <div className="flex h-9 items-center gap-2 rounded-lg border border-border/60 bg-background/50 px-3 text-muted-foreground">
             <Search className="h-3.5 w-3.5 text-muted-foreground" />
             <input
               type="text"
@@ -1041,8 +987,9 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="divide-y divide-border/10">
-        <div className="grid grid-cols-[1fr_80px_110px_120px_70px] px-5 py-2.5 text-[10px] font-medium uppercase tracking-[0.06em] text-muted-foreground">
+      <div className="overflow-x-auto" tabIndex={0} role="region" aria-label="Tabela de contratos">
+      <div className="min-w-[580px] divide-y divide-border/20">
+        <div className="grid grid-cols-[1fr_80px_110px_120px_70px] px-5 py-2.5 text-[11px] font-medium text-muted-foreground">
           <span>Empresa</span>
           <span>Tipo</span>
           <span>Resp.</span>
@@ -1081,17 +1028,19 @@ const Dashboard = () => {
           </motion.div>
         ))}
 
+      </div>
+      </div>
         {data.length === 0 && (
           <div className="px-5 py-8 text-center text-[12px] text-muted-foreground">
             Nenhuma empresa encontrada
           </div>
         )}
-      </div>
     </>
   );
 
   const renderNotifications = (items: NotificationItem[]) => (
     <div className="divide-y divide-border/10">
+      {items.length === 0 && <p className="px-5 py-8 text-center text-xs text-muted-foreground">Nenhuma notificação no momento.</p>}
       {items.map((notif, index) => (
         <motion.div
           key={`${notif.text}-${index}`}
@@ -1142,7 +1091,7 @@ const Dashboard = () => {
               </p>
               {notif.status && (
                 <span
-                  className={`shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.04em] ${notif.statusClass ?? "border-border/25 bg-muted/20 text-muted-foreground"}`}
+                  className={`shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.04em] ${notif.statusClass ?? "border-border/60 bg-muted/20 text-muted-foreground"}`}
                 >
                   {notif.status}
                 </span>
@@ -1190,7 +1139,7 @@ const Dashboard = () => {
       docsResumo.length > 0 ? Math.round((validatedCount / docsResumo.length) * 100) : 0;
 
     const emptyState = (label: string) => (
-      <div className="rounded-lg border border-dashed border-border/25 px-3 py-4 text-center text-[12px] text-muted-foreground">
+      <div className="rounded-lg border border-dashed border-border/60 px-3 py-4 text-center text-[12px] text-muted-foreground">
         Nenhum {label} vinculado.
       </div>
     );
@@ -1271,7 +1220,7 @@ const Dashboard = () => {
                   <button
                     onClick={() => handleDownloadVinculo("documento", doc.id)}
                     disabled={!doc.caminho}
-                    className="flex h-8 items-center gap-1.5 rounded-md border border-border/25 px-2.5 text-[11px] text-foreground/65 transition-colors hover:border-accent/30 hover:text-accent disabled:cursor-not-allowed disabled:opacity-35"
+                    className="flex h-8 items-center gap-1.5 rounded-md border border-border/60 px-2.5 text-[11px] text-foreground/65 transition-colors hover:border-accent/30 hover:text-accent disabled:cursor-not-allowed disabled:opacity-35"
                   >
                     <Download className="h-3.5 w-3.5" /> Download
                   </button>
@@ -1295,7 +1244,7 @@ const Dashboard = () => {
                   <button
                     onClick={() => handleDownloadVinculo("contrato", contrato.id)}
                     disabled={!contrato.urlPdf}
-                    className="flex h-8 items-center gap-1.5 rounded-md border border-border/25 px-2.5 text-[11px] text-foreground/65 transition-colors hover:border-accent/30 hover:text-accent disabled:cursor-not-allowed disabled:opacity-35"
+                    className="flex h-8 items-center gap-1.5 rounded-md border border-border/60 px-2.5 text-[11px] text-foreground/65 transition-colors hover:border-accent/30 hover:text-accent disabled:cursor-not-allowed disabled:opacity-35"
                   >
                     <Download className="h-3.5 w-3.5" /> Download
                   </button>
@@ -1322,7 +1271,7 @@ const Dashboard = () => {
                   <button
                     onClick={() => handleDownloadVinculo("proposta", proposta.idProposta)}
                     disabled={!proposta.url}
-                    className="flex h-8 items-center gap-1.5 rounded-md border border-border/25 px-2.5 text-[11px] text-foreground/65 transition-colors hover:border-accent/30 hover:text-accent disabled:cursor-not-allowed disabled:opacity-35"
+                    className="flex h-8 items-center gap-1.5 rounded-md border border-border/60 px-2.5 text-[11px] text-foreground/65 transition-colors hover:border-accent/30 hover:text-accent disabled:cursor-not-allowed disabled:opacity-35"
                   >
                     <Download className="h-3.5 w-3.5" /> Download
                   </button>
@@ -1386,21 +1335,27 @@ const Dashboard = () => {
 
     if (
       !meetingForm.titulo.trim() ||
-      !meetingForm.empresaId ||
       !meetingForm.data ||
       !meetingForm.hora
     ) {
-      setMeetingError("Preencha título, empresa, data e horário.");
+      setMeetingError("Preencha título, data e horário.");
+      return;
+    }
+
+    if (!meetingForm.salaEmail && !meetingForm.local.trim()) {
+      setMeetingError("Escolha uma sala ou informe o local da reunião.");
       return;
     }
 
     try {
       await createReuniao({
         titulo: meetingForm.titulo.trim(),
-        empresaId: Number(meetingForm.empresaId),
+        empresaId: meetingForm.empresaId ? Number(meetingForm.empresaId) : null,
         data: meetingForm.data,
         hora: meetingForm.hora,
         local: meetingForm.local.trim(),
+        salaEmail: meetingForm.salaEmail || null,
+        participanteIds: meetingForm.participanteIds,
         presencial: true,
         status: "AGENDADA",
       });
@@ -1466,7 +1421,7 @@ const Dashboard = () => {
           return (
             <motion.div
               key={`${day}-${index}`}
-              className={`relative flex cursor-pointer flex-col items-center justify-center rounded text-[10px] transition-all ${
+              className={`relative flex cursor-pointer flex-col items-center justify-center rounded text-[10px] transition-colors ${
                 expanded ? "aspect-square min-h-[40px]" : "aspect-square"
               } ${
                 day === null
@@ -1551,7 +1506,7 @@ const Dashboard = () => {
             <motion.button
               type="button"
               onClick={openMeetingForm}
-              className="flex h-9 w-full items-center justify-center gap-2 rounded-lg border border-dashed border-accent/30 text-[12px] font-medium text-accent transition-all hover:bg-accent/5"
+              className="flex h-9 w-full items-center justify-center gap-2 rounded-lg border border-dashed border-accent/30 text-[12px] font-medium text-accent transition-colors hover:bg-accent/5"
               whileHover={{ y: -1 }}
               whileTap={{ scale: 0.98 }}
             >
@@ -1574,19 +1529,19 @@ const Dashboard = () => {
                 onChange={(event) =>
                   setMeetingForm((form) => ({ ...form, titulo: event.target.value }))
                 }
-                className="h-9 w-full rounded-lg border border-border/25 bg-background/50 px-3 text-[12px] outline-none transition-colors placeholder:text-muted-foreground focus:border-accent/40"
+                className="h-9 w-full rounded-lg border border-border/60 bg-background/50 px-3 text-[12px] outline-none transition-colors placeholder:text-muted-foreground focus:border-accent/40"
               />
 
               <div className="grid grid-cols-2 gap-3">
                 <select
-                  aria-label="Empresa"
+                  aria-label="Cliente (opcional)"
                   value={meetingForm.empresaId}
                   onChange={(event) =>
                     setMeetingForm((form) => ({ ...form, empresaId: event.target.value }))
                   }
-                  className="h-9 rounded-lg border border-border/25 bg-background/50 px-3 text-[12px] outline-none transition-colors placeholder:text-muted-foreground focus:border-accent/40"
+                  className="h-9 rounded-lg border border-border/60 bg-background/50 px-3 text-[12px] outline-none transition-colors placeholder:text-muted-foreground focus:border-accent/40"
                 >
-                  <option value="">Selecione a empresa</option>
+                  <option value="">Sem cliente (reunião da equipe)</option>
                   {empresas.map((empresa) => (
                     <option key={empresa.id} value={empresa.id}>
                       {empresa.nome}
@@ -1600,7 +1555,7 @@ const Dashboard = () => {
                   onChange={(event) =>
                     setMeetingForm((form) => ({ ...form, hora: event.target.value }))
                   }
-                  className="h-9 rounded-lg border border-border/25 bg-background/50 px-3 text-[12px] outline-none transition-colors placeholder:text-muted-foreground focus:border-accent/40"
+                  className="h-9 rounded-lg border border-border/60 bg-background/50 px-3 text-[12px] outline-none transition-colors placeholder:text-muted-foreground focus:border-accent/40"
                 />
               </div>
 
@@ -1609,17 +1564,21 @@ const Dashboard = () => {
                 aria-label="Data"
                 value={meetingForm.data}
                 onChange={(event) => setMeetingForm((form) => ({ ...form, data: event.target.value }))}
-                className="h-9 w-full rounded-lg border border-border/25 bg-background/50 px-3 text-[12px] outline-none transition-colors focus:border-accent/40"
+                className="h-9 w-full rounded-lg border border-border/60 bg-background/50 px-3 text-[12px] outline-none transition-colors focus:border-accent/40"
               />
 
+              <ParticipantesReuniaoSelect value={meetingForm.participanteIds} onChange={(participanteIds) => setMeetingForm((form) => ({ ...form, participanteIds }))} />
+              <SalaReuniaoSelect email={meetingForm.salaEmail} local={meetingForm.local} onChange={(salaEmail, local) => setMeetingForm((form) => ({ ...form, salaEmail, local }))} />
               <input
                 type="text"
-                placeholder="Local / Link"
+                aria-label="Local"
+                placeholder="Endereço da reunião"
+                disabled={!!meetingForm.salaEmail}
                 value={meetingForm.local}
                 onChange={(event) =>
                   setMeetingForm((form) => ({ ...form, local: event.target.value }))
                 }
-                className="h-9 w-full rounded-lg border border-border/25 bg-background/50 px-3 text-[12px] outline-none transition-colors placeholder:text-muted-foreground focus:border-accent/40"
+                className="h-9 w-full rounded-lg border border-border/60 bg-background/50 px-3 text-[12px] outline-none transition-colors placeholder:text-muted-foreground focus:border-accent/40 disabled:opacity-45"
               />
 
               {meetingError && (
@@ -1684,131 +1643,18 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-background text-foreground transition-colors duration-500">
-      <div className="pointer-events-none fixed inset-0">
-        <div
-          className="absolute inset-0"
-          style={{
-            background: `
-              radial-gradient(ellipse 60% 50% at 0% 0%, hsl(var(--accent) / 0.04) 0%, transparent 50%),
-              radial-gradient(ellipse 50% 40% at 100% 100%, hsl(var(--primary) / 0.03) 0%, transparent 50%)
-            `,
-          }}
-        />
+    <div className="app-layout relative min-h-screen overflow-hidden bg-background text-foreground transition-colors duration-500">
+<div className="relative z-10 flex min-h-screen">
+        <AppSidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />
 
-        <motion.div
-          className="absolute right-0 top-0 h-[600px] w-[600px] rounded-full"
-          style={{
-            background:
-              "radial-gradient(circle, hsl(var(--accent) / 0.03) 0%, transparent 60%)",
-            filter: "blur(80px)",
-          }}
-          animate={{ opacity: [0.3, 0.6, 0.3], scale: [0.95, 1.05, 0.95] }}
-          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-        />
-      </div>
-
-      <div className="relative z-10 flex min-h-screen">
-        <motion.aside
-          className={`fixed bottom-0 left-0 top-0 z-30 flex flex-col border-r border-border/30 bg-card/60 backdrop-blur-xl transition-all duration-300 ${
-            sidebarCollapsed ? "w-[72px]" : "w-[220px]"
-          }`}
-          initial={false}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ duration: 0.5 }}
+        <main className="app-main" data-collapsed={sidebarCollapsed}
         >
-          <div
-            className={`flex h-16 items-center border-b border-border/20 ${
-              sidebarCollapsed ? "justify-center px-2" : "px-5"
-            }`}
-          >
-            {sidebarCollapsed ? (
-              <motion.div
-                className="flex h-7 w-7 items-center justify-center rounded-lg bg-accent/10"
-                whileHover={{ scale: 1.05 }}
-              >
-                <span className="text-xs font-bold text-accent">C</span>
-              </motion.div>
-            ) : (
-              <ClimbLogo className="h-[16px] text-foreground" />
-            )}
-          </div>
-
-          <nav className="min-h-0 flex-1 overflow-y-auto px-2 py-4">
-            <AppSidebarNav collapsed={sidebarCollapsed} />
-          </nav>
-
-          <div className="space-y-1 border-t border-border/20 px-2 py-3">
-            <motion.button
-              onClick={() => setIsDark(!isDark)}
-              className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground transition-all duration-200 hover:bg-muted/30 hover:text-foreground ${
-                sidebarCollapsed ? "justify-center" : ""
-              }`}
-              whileTap={{ scale: 0.98 }}
-            >
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={isDark ? "sun" : "moon"}
-                  initial={{ opacity: 0, rotate: -30 }}
-                  animate={{ opacity: 1, rotate: 0 }}
-                  exit={{ opacity: 0, rotate: 30 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  {isDark ? (
-                    <Sun className="h-[18px] w-[18px]" />
-                  ) : (
-                    <Moon className="h-[18px] w-[18px]" />
-                  )}
-                </motion.div>
-              </AnimatePresence>
-
-              {!sidebarCollapsed && (
-                <span className="text-[13px] font-medium">
-                  {isDark ? "Modo claro" : "Modo escuro"}
-                </span>
-              )}
-            </motion.button>
-
-            <motion.button
-              onClick={() => authContext?.signOut()}
-              className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-muted-foreground transition-all duration-200 hover:bg-destructive/5 hover:text-destructive ${
-                sidebarCollapsed ? "justify-center" : ""
-              }`}
-              whileTap={{ scale: 0.98 }}
-            >
-              <LogOut className="h-[18px] w-[18px]" />
-              {!sidebarCollapsed && (
-                <span className="text-[13px] font-medium">Sair</span>
-              )}
-            </motion.button>
-          </div>
-
-          <button
-            onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-            className="absolute -right-3 top-20 flex h-6 w-6 items-center justify-center rounded-full border border-border/40 bg-card text-muted-foreground shadow-sm transition-all duration-200 hover:border-accent/40 hover:text-foreground"
-          >
-            {sidebarCollapsed ? (
-              <ChevronRight className="h-3 w-3" />
-            ) : (
-              <ChevronLeft className="h-3 w-3" />
-            )}
-          </button>
-        </motion.aside>
-
-        <main
-          className={`flex-1 transition-all duration-300 ${
-            sidebarCollapsed ? "ml-[72px]" : "ml-[220px]"
-          }`}
-        >
-          <motion.header
+          <header
             className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border/20 bg-background/80 px-6 backdrop-blur-xl"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
           >
             <div>
-              <p className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-                bem-vindo de volta
+              <p className="text-xs text-muted-foreground">
+                Bem-vindo de volta
               </p>
               <h2 className="text-[15px] font-semibold tracking-tight text-foreground">
                 {userName}
@@ -1819,13 +1665,10 @@ const Dashboard = () => {
 
               <AppHeaderUser name={userName} photoUrl={userPhoto} />
             </div>
-          </motion.header>
+          </header>
 
           <motion.div
-            className="space-y-6 p-6"
-            variants={containerVariants}
-            initial="hidden"
-            animate="visible"
+            className="dashboard-content space-y-6 p-4 sm:p-6 lg:p-8"
           >
             {hasPartialError && (
               <div
@@ -1838,7 +1681,6 @@ const Dashboard = () => {
 
             <motion.div
               className="flex items-center justify-between"
-              variants={itemVariants}
             >
               <div className="flex items-center gap-3">
                 {contractAccess.canCreateWithUpload && (<motion.button
@@ -1850,7 +1692,7 @@ const Dashboard = () => {
                   <Plus className="h-3.5 w-3.5" /> Novo Contrato
                 </motion.button>)}
 
-                <div className="flex h-9 items-center gap-2 rounded-lg border border-border/25 bg-card/20 px-3 text-[12px] text-muted-foreground">
+                <div className="flex h-9 items-center gap-2 rounded-lg border border-border/60 bg-card/20 px-3 text-[12px] text-muted-foreground">
                   <CalendarIcon className="h-3.5 w-3.5" />
                   {today.toLocaleDateString("pt-BR", {
                     day: "2-digit",
@@ -1863,24 +1705,12 @@ const Dashboard = () => {
 
             <motion.div
               className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4"
-              variants={itemVariants}
             >
-              {stats.map((stat, index) => (
+              {stats.map((stat) => (
                 <motion.div
                   key={stat.label}
-                  className="group relative overflow-hidden rounded-xl border border-border/25 bg-card/40 p-5 backdrop-blur-sm transition-all duration-300 hover:border-accent/20 hover:bg-card/60"
-                  whileHover={{ y: -2 }}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: 0.1 + index * 0.08 }}
+                  className="relative overflow-hidden rounded-xl border border-border/60 bg-card p-5"
                 >
-                  <div
-                    className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100"
-                    style={{
-                      background:
-                        "radial-gradient(circle at 50% 0%, hsl(var(--accent) / 0.04), transparent 70%)",
-                    }}
-                  />
 
                   <div className="relative z-10">
                     <div className="mb-3 flex items-center justify-between">
@@ -1903,12 +1733,6 @@ const Dashboard = () => {
 
                     <motion.p
                       className="mb-1.5 text-[28px] font-bold leading-none tracking-tight text-foreground"
-                      initial={{ opacity: 0, scale: 0.9 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{
-                        duration: 0.5,
-                        delay: 0.3 + index * 0.1,
-                      }}
                     >
                       {stat.value}
                     </motion.p>
@@ -1929,8 +1753,7 @@ const Dashboard = () => {
 
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-5">
               <motion.div
-                className="overflow-hidden rounded-xl border border-border/25 bg-card/40 backdrop-blur-sm xl:col-span-3"
-                variants={itemVariants}
+                className="overflow-hidden rounded-xl border border-border/60 bg-card backdrop-blur-sm xl:col-span-3"
               >
                 <SectionHeader
                   title="Pipeline dos Contratos"
@@ -1943,7 +1766,7 @@ const Dashboard = () => {
                           <button
                             key={filter}
                             onClick={() => setPipelineFilter(filter)}
-                            className={`h-7 rounded-md px-2.5 text-[10px] font-medium transition-all duration-200 ${
+                            className={`h-7 rounded-md px-2.5 text-[10px] font-medium transition-colors duration-200 ${
                               filter === pipelineFilter
                                 ? "border border-accent/20 bg-accent/10 text-accent"
                                 : "text-muted-foreground hover:bg-muted/20 hover:text-foreground"
@@ -1974,8 +1797,7 @@ const Dashboard = () => {
               </motion.div>
 
               <motion.div
-                className="overflow-hidden rounded-xl border border-border/25 bg-card/40 backdrop-blur-sm xl:col-span-2"
-                variants={itemVariants}
+                className="overflow-hidden rounded-xl border border-border/60 bg-card backdrop-blur-sm xl:col-span-2"
               >
                 <SectionHeader
                   title="Notificações Recentes"
@@ -1996,8 +1818,7 @@ const Dashboard = () => {
 
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-5">
               <motion.div
-                className="overflow-hidden rounded-xl border border-border/25 bg-card/40 backdrop-blur-sm xl:col-span-3"
-                variants={itemVariants}
+                className="overflow-hidden rounded-xl border border-border/60 bg-card backdrop-blur-sm xl:col-span-3"
               >
                 <SectionHeader
                   title="Empresas"
@@ -2059,8 +1880,7 @@ const Dashboard = () => {
               </motion.div>
 
               <motion.div
-                className="overflow-hidden rounded-xl border border-border/25 bg-card/40 backdrop-blur-sm xl:col-span-2"
-                variants={itemVariants}
+                className="overflow-hidden rounded-xl border border-border/60 bg-card backdrop-blur-sm xl:col-span-2"
               >
                 <SectionHeader
                   title="Calendário"
@@ -2126,7 +1946,7 @@ const Dashboard = () => {
             <button
               key={filter}
               onClick={() => setPipelineFilter(filter)}
-              className={`h-7 rounded-md px-2.5 text-[10px] font-medium transition-all ${
+              className={`h-7 rounded-md px-2.5 text-[10px] font-medium transition-colors ${
                 filter === pipelineFilter
                   ? "border border-accent/20 bg-accent/10 text-accent"
                   : "text-muted-foreground hover:bg-muted/20 hover:text-foreground"

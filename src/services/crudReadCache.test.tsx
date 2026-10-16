@@ -11,14 +11,14 @@ vi.mock("@/api", () => ({ api: { get: vi.fn() } }));
 
 describe("revogação da leitura", () => {
   it.each([
-    { name: "contratos", key: ["contratos"], hook: () => useContratos(false) },
-    { name: "documentos", key: ["documentos"], hook: () => useDocumentos(false) },
-    { name: "propostas", key: ["propostas", null, null], hook: () => usePropostas({}, false) },
-  ])("oculta $name em cache e não consulta a API quando a leitura está desabilitada", ({ key, hook }) => {
+    { name: "contratos", key: ["contratos"], useData: () => useContratos(false) },
+    { name: "documentos", key: ["documentos"], useData: () => useDocumentos(false) },
+    { name: "propostas", key: ["propostas", null, null], useData: () => usePropostas({}, false) },
+  ])("oculta $name em cache e não consulta a API quando a leitura está desabilitada", ({ key, useData }) => {
     const client = new QueryClient();
     client.setQueryData(key, [{ id: 1, descricao: "Dado armazenado anteriormente" }]);
     const wrapper = ({ children }: PropsWithChildren) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
-    const { result } = renderHook(() => hook().data, { wrapper });
+    const { result } = renderHook(() => useData().data, { wrapper });
     expect(result.current).toBeUndefined();
     expect(api.get).not.toHaveBeenCalled();
     client.clear();

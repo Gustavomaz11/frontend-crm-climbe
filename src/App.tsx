@@ -1,5 +1,6 @@
 import PipelineCadastros from "@/pages/PipelineCadastros";
 import { lazy, Suspense } from "react";
+import { MotionConfig } from "framer-motion";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Analytics } from "@vercel/analytics/react";
@@ -47,6 +48,7 @@ import {
 const PipelinePreVendas = lazy(() => import("@/pages/PipelinePreVendas"));
 
 const App = () => (
+  <MotionConfig reducedMotion="user" transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}>
   <QueryProvider>
     <BrowserRouter>
       <TooltipProvider>
@@ -297,6 +299,7 @@ const App = () => (
       </TooltipProvider>
     </BrowserRouter>
   </QueryProvider>
+  </MotionConfig>
 );
 
 export default App;
