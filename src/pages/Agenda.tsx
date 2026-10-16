@@ -309,7 +309,7 @@ const Agenda = () => {
           endTime: diaInteiro ? "--" : addOneHour(formatEventTime(reuniao.dataHora)),
           diaInteiro,
           empresa,
-          local: reuniao.presencial ? reuniao.local : reuniao.linkMeet || reuniao.local,
+          local: reuniao.local,
           salaEmail: reuniao.salaEmail,
           type: reuniao.presencial ? "presencial" : "virtual",
           color: reuniao.googleEventId ? "accent" : "primary",

@@ -34,7 +34,7 @@ export const ReuniaoDetalhes = ({ reuniao }: { reuniao: Reuniao }) => {
       <Campo label="Tipo">{detalhes.presencial ? "Presencial" : "Virtual"}</Campo>
       <Campo label="Status">{reuniaoStatus(detalhes.status)}</Campo>
       <Campo label="Cliente">{reuniaoCliente(detalhes)}</Campo>
-      <Campo label="Local">{detalhes.local || (detalhes.presencial ? "Não informado" : "Google Meet")}</Campo>
+      <Campo label="Local">{detalhes.local || "Não informado"}</Campo>
       <Campo label="Organizador">{detalhes.organizador ? <Pessoa pessoa={detalhes.organizador} /> : "Não informado"}</Campo>
     </dl>
     <section aria-label="Pauta da reunião" className="space-y-2">

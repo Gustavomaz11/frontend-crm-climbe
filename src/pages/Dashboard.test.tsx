@@ -71,6 +71,19 @@ describe("responsáveis exibidos na Home", () => {
 });
 
 describe("reuniões por dia no Dashboard", () => {
+  it("exibe o local físico mesmo quando a reunião também tem Meet", () => {
+    const today = new Date();
+    const date = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-19`;
+    const nome = "Escritório Climbe Cont - Hermes Fontes-2-Sala de Reunião - Climbe Cont (6)";
+    mocks.reunioes = [{ id: -3, titulo: "Treinamento CRM", data: date, dataHora: `${date}T11:00:00`, local: nome, linkMeet: "https://meet.google.com/abc-defg-hij", presencial: false }];
+    abrir();
+    fireEvent.click(screen.getByRole("button", { name: /19\/.*1 reunião$/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Fechar reuniões do dia" }));
+    const calendario = within(screen.getByText("Calendário").closest<HTMLElement>(".rounded-xl")!);
+    expect(calendario.getByText(nome)).toBeInTheDocument();
+    expect(calendario.queryByText(mocks.reunioes[0].linkMeet!)).not.toBeInTheDocument();
+  });
+
   it.each([false, true])("abre a lista do dia no calendário ampliado=%s e reabre o mesmo dia", (ampliado) => {
     const today = new Date();
     const date = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-19`;

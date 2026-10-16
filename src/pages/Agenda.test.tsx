@@ -53,7 +53,7 @@ describe("reuniões da equipe na agenda", () => {
     fireEvent.change(formElement.querySelector('input[type="time"]')!, { target: { value: "10:00" } });
     fireEvent.click(form.getByRole("checkbox"));
     await screen.findByRole("option", { name: "Sala 1" });
-    fireEvent.change(screen.getByLabelText("Sala no Google"), { target: { value: "sala@resource.calendar.google.com" } });
+    fireEvent.change(screen.getByLabelText("Sala física"), { target: { value: "sala@resource.calendar.google.com" } });
     expect(screen.getByLabelText("Cliente (opcional)")).toHaveValue("");
     fireEvent.click(form.getByRole("button", { name: "Confirmar Agendamento" }));
     await waitFor(() => expect(mocks.create).toHaveBeenCalledWith(expect.objectContaining({ empresaId: null, participanteIds: [2], salaEmail: "sala@resource.calendar.google.com", local: "Sala 1" })));

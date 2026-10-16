@@ -720,7 +720,7 @@ const Dashboard = () => {
         title: reuniao.titulo,
         time: formatTime(reuniao.dataHora),
         empresa: empresa?.nome ?? (reuniao.empresaId ? `Empresa #${reuniao.empresaId}` : "Reunião da equipe"),
-                local: reuniao.linkMeet || reuniao.local,
+        local: reuniao.local,
       });
     });
 
