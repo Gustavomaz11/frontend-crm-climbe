@@ -1,3 +1,4 @@
+import { AppMain } from "@/components/layout/AppMain";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { FormValidation } from "@/components/ui/form-validation";
 import { useEffect, useRef, useState } from "react";
@@ -248,7 +249,7 @@ const CadastroEmpresa = () => {
         <AppSidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />
 
         {/* Main */}
-        <main className="app-main" data-collapsed={sidebarCollapsed}>
+        <AppMain collapsed={sidebarCollapsed}>
           <header
             className="sticky top-0 z-20 h-16 flex items-center justify-between px-6 border-b border-border/20 bg-background/80 backdrop-blur-xl"
           >
@@ -505,7 +506,7 @@ const CadastroEmpresa = () => {
               </motion.div>
             </FormValidation>
           </div>
-        </main>
+        </AppMain>
       </div>
 
       {/* Success overlay */}

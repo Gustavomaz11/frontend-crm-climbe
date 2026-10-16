@@ -1,3 +1,4 @@
+import { AppMain } from "@/components/layout/AppMain";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { FormValidation } from "@/components/ui/form-validation";
 import { useEffect, useMemo, useState } from "react";
@@ -416,7 +417,7 @@ const ContratosKanban = () => {
       <div className="relative z-10 flex min-h-screen">
         <AppSidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />
 
-        <main className="app-main" data-collapsed={sidebarCollapsed}>
+        <AppMain collapsed={sidebarCollapsed}>
           <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border/20 bg-background/80 px-6 backdrop-blur-xl">
             <div className="flex h-9 w-full min-w-0 max-w-[300px] items-center gap-2 rounded-lg border border-border/25 bg-card/30 px-3 text-muted-foreground backdrop-blur-sm">
               <Search className="h-3.5 w-3.5" />
@@ -583,7 +584,7 @@ const ContratosKanban = () => {
               {board && selectedContratoId && <ContratoRateioTecnicoPanel key={selectedContratoId} contratoId={selectedContratoId} />}
             </section>
           </div>
-        </main>
+        </AppMain>
       </div>
 
       <AnimatePresence>

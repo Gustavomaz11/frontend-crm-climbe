@@ -181,9 +181,49 @@ label:has(> input[type="file"][data-field-error="true"]) {
   @media (max-width: 639px) {
     .app-main > header { gap: 0.5rem; padding-inline: 1rem; }
     .app-main > header > div:has(input) { padding-inline: 0.625rem; }
-    .app-main > div.p-6, .app-main > main.p-6 { padding: 1rem; }
+    .app-main > div.p-6, .app-main > main.p-6, .app-main > .app-fade-enter > .p-6 { padding: 1rem; }
     .app-main > div.px-6 { padding-inline: 1rem; }
   }
+}
+
+/* Short entrances restore continuity without delaying any interaction. */
+@keyframes app-enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes app-fade-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.app-enter { animation: app-enter var(--duration-dialog) var(--ease-out) both; }
+.app-fade-enter { animation: app-fade-enter var(--duration-popover) var(--ease-out) both; }
+.app-nav-label { animation: app-fade-enter var(--duration-feedback) var(--ease-out); }
+.dashboard-stats > :nth-child(2) { animation-delay: 40ms; }
+.dashboard-stats > :nth-child(3) { animation-delay: 80ms; }
+.dashboard-stats > :nth-child(4) { animation-delay: 120ms; }
+.dashboard-content > .grid:not(.dashboard-stats) > .app-enter { animation-delay: 80ms; }
+.dashboard-content > .grid:not(.dashboard-stats) > .app-enter:nth-child(2) { animation-delay: 120ms; }
+.login-illustration { animation-delay: 80ms; }
+.app-nav-chevron { transition: transform var(--duration-popover) var(--ease-out); }
+.app-nav-action, .app-icon-button, .app-sidebar-toggle, .login-submit, .login-google {
+  transition-property: color, background-color, border-color, transform;
+  transition-duration: var(--duration-feedback);
+  transition-timing-function: var(--ease-out);
+}
+:is(.app-nav-action, .app-icon-button, .app-sidebar-toggle, .login-submit, .login-google):not(:disabled):active {
+  transform: scale(0.97);
+}
+.app-dialog::backdrop {
+  opacity: 1;
+  transition: opacity var(--duration-dialog) var(--ease-out);
+}
+.app-dialog[data-closing="true"]::backdrop { opacity: 0; }
+@starting-style { .app-dialog[open]::backdrop { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .app-enter { animation-name: app-fade-enter; animation-duration: var(--duration-feedback); animation-delay: 0ms !important; }
+  .app-nav-chevron { transition: none; }
+  :is(.app-nav-action, .app-icon-button, .app-sidebar-toggle, .login-submit, .login-google):not(:disabled):active { transform: none; }
+  .app-dialog::backdrop { transition-duration: var(--duration-feedback); }
 }
 
 /* Native dialog provides focus containment, Escape and focus restoration. */

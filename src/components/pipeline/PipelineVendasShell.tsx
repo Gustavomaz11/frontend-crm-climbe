@@ -1,3 +1,4 @@
+import { AppMain } from "@/components/layout/AppMain";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import type { PropsWithChildren } from "react";
 
@@ -29,13 +30,13 @@ export const PipelineVendasShell = ({ search, onSearchChange, searchPlaceholder 
       <div className="relative z-10 flex min-h-screen">
         <AppSidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />
 
-        <main className="app-main" data-collapsed={sidebarCollapsed}>
+        <AppMain collapsed={sidebarCollapsed}>
           <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border/20 bg-background/80 px-6 backdrop-blur-xl">
             <div className="flex h-9 w-full min-w-0 max-w-[300px] items-center gap-2 rounded-lg border border-border/25 bg-card/30 px-3"><Search className="h-3.5 w-3.5 text-muted-foreground" /><input aria-label={searchPlaceholder} type="search" value={search} onChange={(event) => onSearchChange(event.target.value)} placeholder={searchPlaceholder} className="min-w-0 flex-1 bg-transparent text-[12px] outline-none placeholder:text-muted-foreground" /></div>
             <AppHeaderUser name={userName} photoUrl={userPhoto} />
           </header>
           {children}
-        </main>
+        </AppMain>
       </div>
     </div>
   );

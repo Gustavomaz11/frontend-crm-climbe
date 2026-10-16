@@ -1,3 +1,4 @@
+import { AppMain } from "@/components/layout/AppMain";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { FormValidation } from "@/components/ui/form-validation";
 import { KanbanArquivados, KanbanArquivarButton } from "@/components/kanban/KanbanArquivados";
@@ -7,7 +8,7 @@ import { useSidebarState } from "@/hooks/useSidebarState";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar as CalendarIcon, Building2, ChevronLeft, ChevronRight, Plus, Search, Clock, MapPin, X, GripVertical, Video } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { getReuniaoError } from "@/services/useReunioes";
+import { getReuniaoError, isReuniaoPresencial } from "@/services/useReunioes";
 
 import { AppHeaderUser } from "@/components/layout/AppHeaderUser";
 
@@ -311,13 +312,13 @@ const Agenda = () => {
           empresa,
           local: reuniao.local,
           salaEmail: reuniao.salaEmail,
-          type: reuniao.presencial ? "presencial" : "virtual",
+          type: isReuniaoPresencial(reuniao) ? "presencial" : "virtual",
           color: reuniao.googleEventId ? "accent" : "primary",
           data: reuniao.data ?? eventDateInput(date),
           hora: reuniao.hora ?? formatInputTime(date),
           empresaId: reuniao.empresaId,
           pauta: reuniao.pauta ?? reuniao.descricao,
-          presencial: Boolean(reuniao.presencial),
+          presencial: isReuniaoPresencial(reuniao),
           dateKey: dateKey(date),
           status: reuniao.status ?? "AGENDADA",
           arquivadoEm: reuniao.arquivadoEm,
@@ -585,7 +586,7 @@ const Agenda = () => {
         <AppSidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />
 
         {/* Main */}
-        <main className="app-main" data-collapsed={sidebarCollapsed}>
+        <AppMain collapsed={sidebarCollapsed}>
           <header className="sticky top-0 z-20 h-16 flex items-center justify-between px-6 border-b border-border/20 bg-background/80 backdrop-blur-xl">
             <div className="flex items-center gap-4">
               <div className="flex items-center gap-2 h-9 px-3 rounded-lg border border-border/25 bg-card/30 backdrop-blur-sm text-muted-foreground w-[240px]">
@@ -914,7 +915,7 @@ const Agenda = () => {
               )}
             </AnimatePresence>
           </div>
-        </main>
+        </AppMain>
       </div>
 
       {diaReunioesAberto && <ReunioesDiaModal key={diaReunioesAberto.data} {...diaReunioesAberto} reunioes={reunioesDoDia(reunioes, diaReunioesAberto.data)} onClose={() => setDiaReunioesAberto(null)} />}
@@ -950,7 +951,7 @@ const Agenda = () => {
                 <div>
                   <label htmlFor="reuniao-local" className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Local{eventForm.presencial ? " *" : ""}</label>
                   <input id="reuniao-local" required={eventForm.presencial && !eventForm.salaEmail} type="text" placeholder="Endereço da reunião" value={eventForm.local} disabled={!eventForm.presencial || !!eventForm.salaEmail} onChange={(e) => setEventForm((prev) => ({ ...prev, local: e.target.value }))} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 transition-colors placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-45" />
-                  {!eventForm.presencial && editingEventId && reunioes.find(r => r.id === editingEventId)?.linkMeet && <a href={reunioes.find(r => r.id === editingEventId)?.linkMeet} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-xs text-accent underline">Entrar no Google Meet</a>}
+                  {editingEventId && reunioes.find(r => r.id === editingEventId)?.linkMeet && <a href={reunioes.find(r => r.id === editingEventId)?.linkMeet} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-xs text-accent underline">Entrar no Google Meet</a>}
                 </div>
                 <div className="flex items-center gap-3">
                   <label className="flex items-center gap-2 cursor-pointer"><input type="radio" name="tipo-modal" checked={!eventForm.presencial} onChange={() => setEventForm((prev) => ({ ...prev, presencial: false, local: "", salaEmail: "" }))} className="accent-[hsl(var(--accent))]" /><span className="text-[12px] text-foreground/70">Virtual</span></label>

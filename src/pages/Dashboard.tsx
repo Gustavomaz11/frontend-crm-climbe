@@ -1,3 +1,4 @@
+import { AppMain } from "@/components/layout/AppMain";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { useContratoPermissions } from "@/hooks/useContratoPermissions";
 import { useCrudPermissions } from "@/hooks/useCrudPermissions";
@@ -1656,10 +1657,10 @@ const Dashboard = () => {
 
   return (
     <div className="app-layout relative min-h-screen overflow-hidden bg-background text-foreground transition-colors duration-500">
-<div className="relative z-10 flex min-h-screen">
+      <div className="relative z-10 flex min-h-screen">
         <AppSidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />
 
-        <main className="app-main" data-collapsed={sidebarCollapsed}
+        <AppMain collapsed={sidebarCollapsed}
         >
           <header
             className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border/20 bg-background/80 px-6 backdrop-blur-xl"
@@ -1692,7 +1693,7 @@ const Dashboard = () => {
             )}
 
             <motion.div
-              className="flex items-center justify-between"
+              className="app-enter flex items-center justify-between"
             >
               <div className="flex items-center gap-3">
                 {contractAccess.canCreateWithUpload && (<motion.button
@@ -1716,12 +1717,12 @@ const Dashboard = () => {
             </motion.div>
 
             <motion.div
-              className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4"
+              className="dashboard-stats grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4"
             >
               {stats.map((stat) => (
                 <motion.div
                   key={stat.label}
-                  className="relative overflow-hidden rounded-xl border border-border/60 bg-card p-5"
+                  className="app-enter relative overflow-hidden rounded-xl border border-border/60 bg-card p-5"
                 >
 
                   <div className="relative z-10">
@@ -1765,7 +1766,7 @@ const Dashboard = () => {
 
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-5">
               <motion.div
-                className="overflow-hidden rounded-xl border border-border/60 bg-card backdrop-blur-sm xl:col-span-3"
+                className="app-enter overflow-hidden rounded-xl border border-border/60 bg-card backdrop-blur-sm xl:col-span-3"
               >
                 <SectionHeader
                   title="Pipeline dos Contratos"
@@ -1809,7 +1810,7 @@ const Dashboard = () => {
               </motion.div>
 
               <motion.div
-                className="overflow-hidden rounded-xl border border-border/60 bg-card backdrop-blur-sm xl:col-span-2"
+                className="app-enter overflow-hidden rounded-xl border border-border/60 bg-card backdrop-blur-sm xl:col-span-2"
               >
                 <SectionHeader
                   title="Notificações Recentes"
@@ -1830,7 +1831,7 @@ const Dashboard = () => {
 
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-5">
               <motion.div
-                className="overflow-hidden rounded-xl border border-border/60 bg-card backdrop-blur-sm xl:col-span-3"
+                className="app-enter overflow-hidden rounded-xl border border-border/60 bg-card backdrop-blur-sm xl:col-span-3"
               >
                 <SectionHeader
                   title="Empresas"
@@ -1892,7 +1893,7 @@ const Dashboard = () => {
               </motion.div>
 
               <motion.div
-                className="overflow-hidden rounded-xl border border-border/60 bg-card backdrop-blur-sm xl:col-span-2"
+                className="app-enter overflow-hidden rounded-xl border border-border/60 bg-card backdrop-blur-sm xl:col-span-2"
               >
                 <SectionHeader
                   title="Calendário"
@@ -1918,7 +1919,7 @@ const Dashboard = () => {
                       className="mb-4 flex items-center gap-3 rounded-lg border border-accent/15 bg-accent/5 p-3"
                       initial={{ opacity: 0, y: -5 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.5 }}
+                      transition={{ duration: 0.2 }}
                     >
                       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent/10">
                         <CalendarIcon className="h-4 w-4 text-accent" />
@@ -1945,7 +1946,7 @@ const Dashboard = () => {
               </motion.div>
             </div>
           </motion.div>
-        </main>
+        </AppMain>
       </div>
 
       <MaximizeModal

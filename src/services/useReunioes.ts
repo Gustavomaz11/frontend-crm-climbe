@@ -47,6 +47,9 @@ export interface Reuniao {
   dataAtualizacao?: string;
 }
 
+export const isReuniaoPresencial = (reuniao: Pick<Reuniao, "local" | "presencial">) =>
+  Boolean(reuniao.local?.trim()) || Boolean(reuniao.presencial);
+
 export function getReuniaoError(error: unknown) {
   if (isAxiosError(error)) return error.response?.data?.message || "Não foi possível confirmar o agendamento.";
   return error instanceof Error ? error.message : "Não foi possível confirmar o agendamento.";
@@ -165,6 +168,7 @@ function normalizeReuniao(reuniao: ReuniaoApi): Reuniao {
     dataHora: buildDataHora(reuniao),
     descricao: reuniao.descricao ?? reuniao.pauta ?? "",
     local: reuniao.local ?? "",
+    presencial: isReuniaoPresencial(reuniao),
   };
 }
 

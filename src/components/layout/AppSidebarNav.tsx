@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { AnimatePresence, motion, useIsPresent, useReducedMotion } from "framer-motion";
 import { BriefcaseBusiness, ChevronDown, Settings } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
@@ -33,6 +34,24 @@ function routeIsActive(currentPath: string, itemPath: string) {
   if (itemPath === "/pipeline-vendas") return currentPath === itemPath;
   if (itemPath === "/cargos") return currentPath === itemPath;
   return currentPath === itemPath || currentPath.startsWith(`${itemPath}/`);
+}
+
+function NavGroupContent({ children }: { children: ReactNode }) {
+  const content = useRef<HTMLDivElement>(null);
+  const present = useIsPresent();
+  const reduceMotion = useReducedMotion();
+
+  useLayoutEffect(() => { content.current?.toggleAttribute("inert", !present); }, [present]);
+
+  return <motion.div
+    ref={content}
+    aria-hidden={!present}
+    className="overflow-hidden"
+    initial={{ height: 0, opacity: 0 }}
+    animate={{ height: "auto", opacity: 1 }}
+    exit={{ height: 0, opacity: 0 }}
+    transition={{ duration: reduceMotion ? 0 : 0.18 }}
+  ><div className="space-y-1">{children}</div></motion.div>;
 }
 
 export function AppSidebarNav({ collapsed, onNavigate }: AppSidebarNavProps) {
@@ -80,7 +99,7 @@ export function AppSidebarNav({ collapsed, onNavigate }: AppSidebarNavProps) {
           <span className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-r-full bg-accent" />
         )}
         <item.icon className="h-[18px] w-[18px] shrink-0" />
-        {!collapsed && <span className="truncate text-[13px] font-medium">{item.label}</span>}
+        {!collapsed && <span className="app-nav-label truncate text-[13px] font-medium">{item.label}</span>}
       </Link>
     );
   };
@@ -115,11 +134,13 @@ export function AppSidebarNav({ collapsed, onNavigate }: AppSidebarNavProps) {
           {!collapsed && (
             <>
               <span className="flex-1 text-left text-[13px] font-medium">{label}</span>
-              <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-180")} />
+              <ChevronDown className={cn("app-nav-chevron h-3.5 w-3.5", open && "rotate-180")} />
             </>
           )}
         </button>
-        {open && <div className="space-y-1">{groupItems.map((item) => renderItem(item, true))}</div>}
+        <AnimatePresence initial={false}>
+          {open && <NavGroupContent key={label}>{groupItems.map((item) => renderItem(item, true))}</NavGroupContent>}
+        </AnimatePresence>
       </div>
     );
   };

@@ -31,7 +31,7 @@ describe("reuniões da equipe na agenda", () => {
   });
   afterEach(cleanup);
 
-  it("abre a lista de reuniões ao clicar no dia do calendário", () => {
+  it("abre a lista de reuniões ao clicar no dia do calendário", async () => {
     const today = new Date();
     const month = String(today.getMonth() + 1).padStart(2, "0");
     const data = `${today.getFullYear()}-${month}-19`;
@@ -41,7 +41,7 @@ describe("reuniões da equipe na agenda", () => {
     const dialog = within(screen.getByRole("dialog"));
     expect(dialog.getByRole("button", { name: /Alinhamento interno/ })).toBeInTheDocument();
     fireEvent.click(dialog.getByRole("button", { name: "Fechar reuniões do dia" }));
-    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   });
 
   it("agenda sem cliente, com usuários e sala do Google", async () => {
@@ -60,11 +60,13 @@ describe("reuniões da equipe na agenda", () => {
   });
 
   it("edita reunião sem cliente e remove a sala ao mudar para virtual", async () => {
-    mocks.reunioes = [{ id: 3, titulo: "Alinhamento interno", empresaId: null, dataHora: "2026-10-20T10:00:00", data: "2026-10-20", hora: "10:00", local: "Sala 1", presencial: true, salaEmail: "sala@resource.calendar.google.com" }];
+    mocks.reunioes = [{ id: 3, titulo: "Alinhamento interno", empresaId: null, dataHora: "2026-10-20T10:00:00", data: "2026-10-20", hora: "10:00", local: "Sala 1", presencial: false, salaEmail: "sala@resource.calendar.google.com", linkMeet: "https://meet.google.com/abc-defg-hij" }];
     setup();
     fireEvent.click(screen.getByRole("button", { name: "Kanban" }));
     fireEvent.click(await screen.findByRole("button", { name: "Editar" }));
     expect(screen.getByLabelText("Cliente (opcional)")).toHaveValue("");
+    expect(within(document.querySelector('[data-form-validation]')!).getByRole("radio", { name: "Presencial" })).toBeChecked();
+    expect(screen.getByRole("link", { name: "Entrar no Google Meet" })).toHaveAttribute("href", "https://meet.google.com/abc-defg-hij");
     fireEvent.click(within(document.querySelector('[data-form-validation]')!).getByRole("radio", { name: "Virtual" }));
     fireEvent.click(within(document.querySelector('[data-form-validation]')!).getByRole("button", { name: "Confirmar Agendamento" }));
     await waitFor(() => expect(mocks.update).toHaveBeenCalledWith({ id: 3, data: expect.objectContaining({ empresaId: null, presencial: false, salaEmail: null, local: "" }) }));

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "@/api";
 import type { Reuniao } from "@/services/useReunioes";
@@ -13,6 +13,15 @@ const setup = (reunioes = [reuniao], onClose = vi.fn()) => render(<QueryClientPr
 describe("consulta das reuniões do dia", () => {
   beforeEach(() => { vi.clearAllMocks(); vi.mocked(api.get).mockResolvedValue({ data: detalhes }); });
   afterEach(cleanup);
+
+  it("classifica reunião com local como presencial na lista e nos detalhes mantendo o Meet", () => {
+    setup([{ ...detalhes, id: -3, presencial: false }]);
+    expect(screen.getByRole("button", { name: /Alinhamento da equipe/ })).toHaveTextContent("Presencial");
+    fireEvent.click(screen.getByRole("button", { name: /Alinhamento da equipe/ }));
+    expect(screen.getByText("Presencial", { exact: true })).toBeInTheDocument();
+    expect(screen.queryByText("Virtual", { exact: true })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Entrar no Google Meet" })).toHaveAttribute("href", detalhes.linkMeet);
+  });
 
   it("abre a lista, consulta todos os detalhes ao selecionar e permite voltar", async () => {
     setup([reuniao, { ...reuniao, id: 4, titulo: "Revisão com cliente" }]);
@@ -52,13 +61,20 @@ describe("consulta das reuniões do dia", () => {
     expect(api.get).not.toHaveBeenCalled();
   });
 
-  it("fecha com Escape e restaura a rolagem ao desmontar", () => {
+  it("mantém o diálogo durante a saída e restaura o foco e a rolagem ao fechar com Escape", async () => {
     const onClose = vi.fn();
+    render(<button>Abrir reuniões</button>);
+    const trigger = screen.getByRole("button", { name: "Abrir reuniões" });
+    trigger.focus();
     const { unmount } = setup([reuniao], onClose);
+    screen.getByRole("button", { name: "Fechar reuniões do dia" }).focus();
     expect(document.body.style.overflow).toBe("hidden");
     fireEvent(screen.getByRole("dialog"), new Event("cancel", { cancelable: true }));
-    expect(onClose).toHaveBeenCalledOnce();
+    expect(screen.getByRole("dialog")).toHaveAttribute("open");
+    expect(document.body.style.overflow).toBe("hidden");
+    await waitFor(() => expect(onClose).toHaveBeenCalledOnce());
     unmount();
     expect(document.body.style.overflow).toBe("");
+    expect(trigger).toHaveFocus();
   });
 });

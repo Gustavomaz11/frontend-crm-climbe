@@ -39,7 +39,7 @@ export const LoginView = ({ email, password, showPassword, errorMessage, isPendi
       </header>
       <main className="flex items-center px-6 py-8 sm:px-10 lg:px-14">
         <div className="mx-auto grid w-full max-w-6xl items-center gap-16 lg:grid-cols-[minmax(0,400px)_minmax(0,1fr)] xl:gap-24">
-          <div className="mx-auto w-full max-w-[400px]">
+          <div className="app-enter mx-auto w-full max-w-[400px]">
             <h1 className="text-[2rem] font-semibold leading-tight tracking-[-0.03em] sm:text-4xl">Acesso ao ambiente interno</h1>
             <p className="mb-8 mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">
               Plataforma restrita para operações, análises e gestão patrimonial.
@@ -88,7 +88,7 @@ export const LoginView = ({ email, password, showPassword, errorMessage, isPendi
               </form>
             </FormValidation>
           </div>
-          <div className="hidden self-stretch border-l border-border/60 pl-12 lg:flex xl:pl-20"><InvestmentGraphics /></div>
+          <div className="app-enter login-illustration hidden self-stretch border-l border-border/60 pl-12 lg:flex xl:pl-20"><InvestmentGraphics /></div>
         </div>
       </main>
       <footer className="flex flex-wrap items-center justify-between gap-2 px-6 py-5 text-[11px] text-muted-foreground sm:px-10 lg:px-14">

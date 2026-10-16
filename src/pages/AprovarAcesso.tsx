@@ -1,3 +1,4 @@
+import { AppMain } from "@/components/layout/AppMain";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -272,7 +273,7 @@ const AprovarAcesso = () => {
       <div className="relative z-10 flex min-h-screen">
         <AppSidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />
 
-        <main className="app-main" data-collapsed={sidebarCollapsed}
+        <AppMain collapsed={sidebarCollapsed}
         >
           <header
             className="sticky top-0 z-20 h-16 flex items-center justify-end px-6 border-b border-border/20 bg-background/80 backdrop-blur-xl"
@@ -583,7 +584,7 @@ const AprovarAcesso = () => {
           ) : (
             <GerenciamentoAcessos usuarioAtualId={usuarioAtualId} />
           )}
-        </main>
+        </AppMain>
       </div>
 
       <AnimatePresence>

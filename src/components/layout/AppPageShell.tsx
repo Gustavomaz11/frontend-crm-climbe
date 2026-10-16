@@ -1,3 +1,4 @@
+import { AppMain } from "@/components/layout/AppMain";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import type { ReactNode } from "react";
 
@@ -24,7 +25,7 @@ export function AppPageShell({ children }: AppPageShellProps) {
       <div className="relative z-10 flex min-h-screen">
         <AppSidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />
 
-        <main className="app-main" data-collapsed={sidebarCollapsed}>
+        <AppMain collapsed={sidebarCollapsed}>
           <header className="sticky top-0 z-20 flex h-16 items-center justify-end border-b border-border/20 bg-background/80 px-6 backdrop-blur-xl">
             <div className="flex items-center gap-3">
               <div className="hidden text-right sm:block">
@@ -34,8 +35,8 @@ export function AppPageShell({ children }: AppPageShellProps) {
               <AppHeaderUser name={userName} photoUrl={userPhoto} />
             </div>
           </header>
-          {children}
-        </main>
+          <div className="app-fade-enter">{children}</div>
+        </AppMain>
       </div>
     </div>
   );

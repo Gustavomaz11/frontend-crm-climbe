@@ -1,3 +1,4 @@
+import { AppMain } from "@/components/layout/AppMain";
 import { AppSidebar } from "@/components/layout/AppSidebar";
 import { useState, useMemo } from "react";
 
@@ -81,7 +82,7 @@ const Empresas = () => {
         <AppSidebar collapsed={sidebarCollapsed} onCollapsedChange={setSidebarCollapsed} />
 
         {/* Main */}
-        <main className="app-main" data-collapsed={sidebarCollapsed}>
+        <AppMain collapsed={sidebarCollapsed}>
           <header className="sticky top-0 z-20 h-16 flex items-center justify-between px-6 border-b border-border/20 bg-background/80 backdrop-blur-xl">
             <div className="flex items-center gap-2 h-9 px-3 rounded-lg border border-border/25 bg-card/30 backdrop-blur-sm text-muted-foreground w-full min-w-0 max-w-[300px]">
               <Search className="w-3.5 h-3.5" />
@@ -169,7 +170,7 @@ const Empresas = () => {
               </div>
             </motion.div>
           </div>
-        </main>
+        </AppMain>
       </div>
 
       {/* Detail modal */}

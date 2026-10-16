@@ -13,6 +13,17 @@ const data = { titulo: "Alinhamento", data: "2026-10-20", hora: "10:00", presenc
 describe("agendamento de reuniões", () => {
   beforeEach(() => vi.clearAllMocks());
 
+  it("normaliza reunião com local como presencial e preserva o link do Meet recebido", async () => {
+    const linkMeet = "https://meet.google.com/abc-defg-hij";
+    vi.mocked(api.post).mockResolvedValue({ data: { ...data, idReuniao: 1, presencial: false, local: "Sala 1", linkMeet } });
+    const { result } = renderHook(() => useCreateReuniao(), { wrapper });
+    await act(async () => {
+      const criada = await result.current.mutateAsync(data);
+      expect(criada.presencial).toBe(true);
+      expect(criada.linkMeet).toBe(linkMeet);
+    });
+  });
+
   it("envia reunião da equipe sem empresa e preserva sala e usuários selecionados", async () => {
     vi.mocked(api.post).mockResolvedValue({ data: { ...data, idReuniao: 1, empresa: null } });
     const { result } = renderHook(() => useCreateReuniao(), { wrapper });

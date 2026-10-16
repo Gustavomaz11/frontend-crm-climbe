@@ -14,6 +14,14 @@ vi.mock("@/hooks/useVisibleMainNavItems", () => ({ useVisibleMainNavItems: () =>
 vi.mock("@/routes/lazyPages", () => ({ preloadRoute: vi.fn() }));
 
 describe("navegação do sistema", () => {
+  it("retira os links da navegação por teclado assim que um grupo começa a fechar", () => {
+    render(<MemoryRouter initialEntries={["/pipeline-vendas/cadastros"]}><AppSidebarNav collapsed={false} /></MemoryRouter>);
+    const link = screen.getByRole("link", { name: "Tags e campos" });
+    fireEvent.click(screen.getByRole("button", { name: "Comercial" }));
+    expect(screen.queryByRole("link", { name: "Tags e campos" })).not.toBeInTheDocument();
+    expect(!link.isConnected || link.closest("[inert]") !== null).toBe(true);
+  });
+
   it("agrupa pré-vendas e cadastros no Comercial e identifica a rota atual", () => {
     const onNavigate = vi.fn();
     render(<MemoryRouter initialEntries={["/pipeline-vendas/cadastros"]}><AppSidebarNav collapsed={false} onNavigate={onNavigate} /></MemoryRouter>);
