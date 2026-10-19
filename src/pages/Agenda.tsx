@@ -587,8 +587,8 @@ const Agenda = () => {
     if (!evento) return;
     openedMeeting.current = id;
     setVisibleDate(new Date(`${evento.data}T12:00:00`));
-    handleEditEvent(evento);
-  }, [searchParams, agendaEvents, participantesReuniao]);
+    setDiaReunioesAberto({ data: evento.data ?? evento.dateKey, reuniaoId: id });
+  }, [searchParams, agendaEvents]);
 
   return (
     <div className="app-layout relative min-h-screen bg-background text-foreground transition-colors duration-500 overflow-hidden">
@@ -934,7 +934,12 @@ const Agenda = () => {
         </AppMain>
       </div>
 
-      {diaReunioesAberto && <ReunioesDiaModal key={diaReunioesAberto.data} {...diaReunioesAberto} reunioes={reunioesDoDia(reunioes, diaReunioesAberto.data)} onClose={() => setDiaReunioesAberto(null)} />}
+      {diaReunioesAberto && <ReunioesDiaModal key={`${diaReunioesAberto.data}:${diaReunioesAberto.reuniaoId ?? "lista"}`} {...diaReunioesAberto} reunioes={reunioesDoDia(reunioes, diaReunioesAberto.data)} onClose={() => {
+        setDiaReunioesAberto(null);
+        if (searchParams.has("reuniaoId")) {
+          const next = new URLSearchParams(searchParams); next.delete("reuniaoId"); setSearchParams(next, { replace: true });
+        }
+      }} />}
 
       {/* Add Event Modal */}
       <AnimatePresence>

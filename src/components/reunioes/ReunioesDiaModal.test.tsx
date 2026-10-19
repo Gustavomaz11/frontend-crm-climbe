@@ -5,7 +5,7 @@ import { api } from "@/api";
 import type { Reuniao } from "@/services/useReunioes";
 import { ReunioesDiaModal } from "./ReunioesDiaModal";
 
-vi.mock("@/api", () => ({ api: { get: vi.fn() } }));
+vi.mock("@/api", () => ({ api: { get: vi.fn(), post: vi.fn() } }));
 const reuniao: Reuniao = { id: 3, titulo: "Alinhamento da equipe", dataHora: "2026-10-19T10:00:00", data: "2026-10-19", local: "Sala principal", presencial: true };
 const detalhes = { ...reuniao, idReuniao: 3, dataHoraFim: "2026-10-19T11:00:00", status: "CONFIRMADA", pauta: "Revisar entregas\nDefinir responsáveis", participantes: [{ id: 1, nomeCompleto: "Ana", email: "ana@example.test" }], organizador: { id: 2, nomeCompleto: "Bruno", email: "bruno@example.test" }, linkMeet: "https://meet.google.com/abc-defg-hij" };
 const setup = (reunioes = [reuniao], onClose = vi.fn()) => render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><ReunioesDiaModal data="2026-10-19" reunioes={reunioes} onClose={onClose} /></QueryClientProvider>);
@@ -13,6 +13,21 @@ const setup = (reunioes = [reuniao], onClose = vi.fn()) => render(<QueryClientPr
 describe("consulta das reuniões do dia", () => {
   beforeEach(() => { vi.clearAllMocks(); vi.mocked(api.get).mockResolvedValue({ data: detalhes }); });
   afterEach(cleanup);
+
+  it("permite ao convidado aceitar pelos detalhes e exibe a confirmação", async () => {
+    const pendente: Reuniao = { ...detalhes, data: "2099-10-19", dataHora: "2099-10-19T10:00:00", dataHoraFim: "2099-10-19T11:00:00", minhaResposta: "PENDENTE" };
+    vi.mocked(api.get).mockResolvedValue({ data: pendente });
+    vi.mocked(api.post).mockImplementation(async () => {
+      const aceito = { ...pendente, minhaResposta: "ACEITA" };
+      vi.mocked(api.get).mockResolvedValue({ data: aceito });
+      return { data: aceito };
+    });
+    setup([pendente]); fireEvent.click(screen.getByRole("button", { name: /Alinhamento da equipe/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "Aceitar reunião" }));
+    expect(await screen.findByText("Participação confirmada")).toBeInTheDocument();
+    expect(api.post).toHaveBeenCalledWith("/reunioes/3/aceitar");
+    expect(screen.queryByRole("button", { name: "Aceitar reunião" })).not.toBeInTheDocument();
+  });
 
   it("classifica reunião com local como presencial na lista e nos detalhes mantendo o Meet", () => {
     setup([{ ...detalhes, id: -3, presencial: false }]);

@@ -22,7 +22,7 @@ vi.mock("@/components/kanban/KanbanArquivados", () => ({ KanbanArquivados: () =>
 vi.mock("@/hooks/useSidebarState", () => ({ useSidebarState: () => [false, vi.fn()] }));
 vi.mock("@/store/useAuthStore", () => ({ useAuthStore: (selector: (state: object) => unknown) => selector({}) }));
 
-const setup = () => render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><MemoryRouter><Agenda /></MemoryRouter></QueryClientProvider>);
+const setup = (path = "/agenda") => render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><MemoryRouter initialEntries={[path]}><Agenda /></MemoryRouter></QueryClientProvider>);
 
 describe("reuniões da equipe na agenda", () => {
   beforeEach(() => {
@@ -31,6 +31,16 @@ describe("reuniões da equipe na agenda", () => {
     vi.mocked(api.post).mockResolvedValue({ data: { salas: [{ email: "sala@resource.calendar.google.com", disponivel: true }], participantes: [{ id: 2, disponivel: true }], localDisponivel: true } });
   });
   afterEach(cleanup);
+
+  it("abre o convite pelos detalhes para aceitar sem entrar no formulário de edição", async () => {
+    const reuniao = { id: 3, titulo: "Convite da equipe", dataHora: "2099-10-20T10:00:00", dataHoraFim: "2099-10-20T11:00:00", data: "2099-10-20", hora: "10:00", local: "Sala 1", minhaResposta: "PENDENTE" };
+    mocks.reunioes = [reuniao];
+    vi.mocked(api.get).mockResolvedValue({ data: reuniao });
+    setup("/agenda?reuniaoId=3");
+    expect(await screen.findByRole("button", { name: "Aceitar reunião" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Convite da equipe" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Confirmar Agendamento" })).not.toBeInTheDocument();
+  });
 
   it("abre a lista de reuniões ao clicar no dia do calendário", async () => {
     const today = new Date();

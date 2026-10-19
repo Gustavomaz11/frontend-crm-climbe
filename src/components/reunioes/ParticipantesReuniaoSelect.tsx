@@ -42,5 +42,6 @@ export const ParticipantesReuniaoSelect = ({ value, onChange, disponibilidade = 
         }) : <p className="px-2 py-2 text-[11px] text-muted-foreground">Nenhum participante encontrado.</p>}
     </div>
     <p className="mt-1 text-[10px] text-muted-foreground">{value.length ? `${value.length} participante(s) selecionado(s).` : "Selecione os usuários que participarão da reunião."}</p>
+    <p className="mt-1 text-[10px] text-muted-foreground">Você também pode convidar usuários ocupados.</p>
   </div>;
 };

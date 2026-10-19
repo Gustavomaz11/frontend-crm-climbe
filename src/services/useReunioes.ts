@@ -13,6 +13,9 @@ export interface PessoaReuniao {
 }
 
 export interface Reuniao {
+  minhaResposta?: "PENDENTE" | "ACEITA" | null;
+  conviteId?: number | null;
+  respondidoEm?: string | null;
   arquivadoEm?: string | null;
   id: number;
   idReuniao?: number;
@@ -296,6 +299,31 @@ export function useReuniaoDetalhes(id: number) {
     retry: false,
   });
 }
+
+export const useConvitesReuniaoPendentes = (usuarioId?: number) => useQuery({
+  queryKey: ["reunioes", "convites", usuarioId],
+  queryFn: async () => (await api.get<ReuniaoApi[]>("/reunioes/convites/pendentes")).data.map(normalizeReuniao),
+  enabled: !!usuarioId,
+  refetchInterval: 5_000,
+  refetchIntervalInBackground: true,
+  staleTime: 0,
+});
+
+export const useAceitarReuniao = () => {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => normalizeReuniao((await api.post<ReuniaoApi>(`/reunioes/${id}/aceitar`)).data),
+    onSuccess: (reuniao) => {
+      client.setQueryData<Reuniao>(["reunioes", reuniao.id, "detalhes"], atual => atual
+        ? { ...atual, minhaResposta: reuniao.minhaResposta, respondidoEm: reuniao.respondidoEm } : undefined);
+      client.setQueriesData<Reuniao[]>({ queryKey: ["reunioes", "convites"] }, atuais => atuais?.filter(r => r.id !== reuniao.id));
+      void client.invalidateQueries({ queryKey: ["reunioes"] });
+      void client.invalidateQueries({ queryKey: ["participantes-reuniao"] });
+      void client.invalidateQueries({ queryKey: ["reuniao-disponibilidade"] });
+      void client.invalidateQueries({ queryKey: ["notificacoes"] });
+    },
+  });
+};
 
 export function useReunioesByEmpresa(empresaId: number) {
   return useQuery<Reuniao[]>({

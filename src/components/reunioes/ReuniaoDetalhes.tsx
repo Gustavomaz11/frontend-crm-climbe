@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { ExternalLink, Video } from "lucide-react";
 import { isReuniaoPresencial, useReuniaoDetalhes, type PessoaReuniao, type Reuniao } from "@/services/useReunioes";
 import { reuniaoCliente, reuniaoDateKey, reuniaoHorario, reuniaoLink, reuniaoStatus } from "./reuniaoPresentation";
+import { AceitarReuniaoButton } from "./AceitarReuniaoButton";
 
 const Campo = ({ label, children }: { label: string; children: ReactNode }) => <div className="min-w-0 space-y-1">
   <dt className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">{label}</dt>
@@ -28,6 +29,7 @@ export const ReuniaoDetalhes = ({ reuniao }: { reuniao: Reuniao }) => {
   const date = reuniaoDateKey(detalhes);
 
   return <div className="space-y-6">
+    <AceitarReuniaoButton reuniao={detalhes} />
     <dl className="grid grid-cols-1 gap-5 rounded-xl border border-border/30 bg-background/40 p-4 sm:grid-cols-2">
       <Campo label="Data">{date ? new Date(`${date}T12:00:00`).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" }) : "Não informada"}</Campo>
       <Campo label="Horário">{reuniaoHorario(detalhes)}</Campo>
