@@ -7,7 +7,7 @@ export const EmpresaSituacaoAlerta = ({ dados }: { dados?: DadosCadastrais }) =>
   return <div role="alert" className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive"><strong>Atenção: empresa {status.texto.toLowerCase()} na Receita Federal.</strong><p className="mt-1 text-xs">Confira a situação cadastral antes de concluir o cadastro.</p></div>;
 };
 
-export const EmpresaDadosCadastrais = ({ dados, tipo, onChange, onTipoChange }: { dados?: DadosCadastrais; tipo?: string; onChange?: (dados: DadosCadastrais) => void; onTipoChange?: (tipo: string) => void }) => {
+export const EmpresaDadosCadastrais = ({ dados, tipo, onChange, onTipoChange }: { dados?: DadosCadastrais | null; tipo?: string; onChange?: (dados: DadosCadastrais) => void; onTipoChange?: (tipo: string) => void }) => {
   const data = completarDadosCadastrais(dados);
   const company = objetoCadastral(data.company);
   const address = objetoCadastral(data.address);

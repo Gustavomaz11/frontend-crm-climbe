@@ -60,6 +60,7 @@ export interface CreateReuniaoDTO {
   pauta?: string;
   data: string;
   hora: string;
+  horaFim?: string;
   presencial: boolean;
   local?: string;
   salaEmail?: string | null;
@@ -187,6 +188,7 @@ function buildCreatePayload(data: CreateReuniaoDTO) {
     pauta: data.pauta,
     data: data.data,
     hora: data.hora,
+    horaFim: data.horaFim,
     presencial: data.presencial,
     local: data.local,
     salaEmail: data.salaEmail ?? null,
@@ -324,6 +326,7 @@ export function useCreateReuniao() {
       queryClient.invalidateQueries({ queryKey: ["reunioes"] });
       queryClient.invalidateQueries({ queryKey: ["participantes-reuniao"] });
       queryClient.invalidateQueries({ queryKey: ["notificacoes"] });
+      queryClient.invalidateQueries({ queryKey: ["reuniao-disponibilidade"] });
     },
   });
 }
@@ -346,6 +349,7 @@ export function useUpdateReuniao() {
       queryClient.invalidateQueries({ queryKey: ["reunioes"] });
       queryClient.invalidateQueries({ queryKey: ["participantes-reuniao"] });
       queryClient.invalidateQueries({ queryKey: ["notificacoes"] });
+      queryClient.invalidateQueries({ queryKey: ["reuniao-disponibilidade"] });
     },
   });
 }
@@ -378,6 +382,7 @@ export function useDeleteReuniao() {
     },
     onSuccess: () => {
       queryClient.refetchQueries({ queryKey: ["reunioes"], type: "active" });
+      queryClient.invalidateQueries({ queryKey: ["reuniao-disponibilidade"] });
       queryClient.invalidateQueries({ queryKey: ["participantes-reuniao"] });
     },
   });

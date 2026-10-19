@@ -7,7 +7,7 @@ import { semHistoricos, type DadosCadastrais } from "./empresaDadosCadastrais";
 
 export interface Empresa {
   tipoEmpresa?: string;
-  dadosCadastrais?: DadosCadastrais;
+  dadosCadastrais?: DadosCadastrais | null;
   id: number;
   idEmpresa?: number;
   nome: string;

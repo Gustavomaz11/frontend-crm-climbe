@@ -6,7 +6,7 @@ import { api } from "@/api";
 import Agenda from "./Agenda";
 
 const mocks = vi.hoisted(() => ({ create: vi.fn(), update: vi.fn(), reunioes: [] as object[] }));
-vi.mock("@/api", () => ({ api: { get: vi.fn() } }));
+vi.mock("@/api", () => ({ api: { get: vi.fn(), post: vi.fn() } }));
 vi.mock("@/services", () => ({
   useReunioes: () => ({ data: mocks.reunioes }),
   useEmpresas: () => ({ data: [{ id: 1, nome: "Cliente" }] }),
@@ -28,6 +28,7 @@ describe("reuniões da equipe na agenda", () => {
   beforeEach(() => {
     vi.clearAllMocks(); mocks.reunioes = [];
     vi.mocked(api.get).mockResolvedValue({ data: [{ email: "sala@resource.calendar.google.com", nome: "Sala 1" }] });
+    vi.mocked(api.post).mockResolvedValue({ data: { salas: [{ email: "sala@resource.calendar.google.com", disponivel: true }], participantes: [{ id: 2, disponivel: true }], localDisponivel: true } });
   });
   afterEach(cleanup);
 
@@ -52,24 +53,61 @@ describe("reuniões da equipe na agenda", () => {
     fireEvent.change(form.getByPlaceholderText("Pauta da reunião..."), { target: { value: "Reunião da equipe" } });
     fireEvent.change(formElement.querySelector('input[type="time"]')!, { target: { value: "10:00" } });
     fireEvent.click(form.getByRole("checkbox"));
-    await screen.findByRole("option", { name: "Sala 1" });
+    await screen.findByRole("option", { name: "Sala 1 — Disponível" });
     fireEvent.change(screen.getByLabelText("Sala física"), { target: { value: "sala@resource.calendar.google.com" } });
     expect(screen.getByLabelText("Cliente (opcional)")).toHaveValue("");
+    await waitFor(() => expect(form.getByRole("button", { name: "Confirmar Agendamento" })).toBeEnabled());
     fireEvent.click(form.getByRole("button", { name: "Confirmar Agendamento" }));
-    await waitFor(() => expect(mocks.create).toHaveBeenCalledWith(expect.objectContaining({ empresaId: null, participanteIds: [2], salaEmail: "sala@resource.calendar.google.com", local: "Sala 1" })));
+    await waitFor(() => expect(mocks.create).toHaveBeenCalledWith(expect.objectContaining({ empresaId: null, participanteIds: [2], salaEmail: "sala@resource.calendar.google.com", local: "Sala 1", horaFim: "11:00" })));
+  });
+
+  it("reconsulta o intervalo completo e impede salvar a sala quando o término passa a conflitar", async () => {
+    vi.mocked(api.post).mockImplementation(async (_url, request) => {
+      const { horaFim } = request as { horaFim: string };
+      return { data: {
+        salas: [{ email: "sala@resource.calendar.google.com", disponivel: horaFim < "12:00" }],
+        participantes: [{ id: 2, disponivel: horaFim < "12:00" }], localDisponivel: true,
+      } };
+    });
+    setup();
+    fireEvent.click(screen.getByRole("button", { name: "Agendar" }));
+    const form = within(document.querySelector('[data-form-validation]')!);
+    fireEvent.change(screen.getByLabelText("Início *"), { target: { value: "10:00" } });
+    await screen.findByRole("option", { name: "Sala 1 — Disponível" });
+    fireEvent.change(screen.getByLabelText("Sala física"), { target: { value: "sala@resource.calendar.google.com" } });
+    await waitFor(() => expect(form.getByRole("button", { name: "Confirmar Agendamento" })).toBeEnabled());
+    fireEvent.change(screen.getByLabelText("Término *"), { target: { value: "12:00" } });
+    expect(await screen.findByRole("option", { name: "Sala 1 — Ocupada" })).toBeDisabled();
+    expect(screen.getByText("Ocupado")).toBeInTheDocument();
+    expect(form.getByRole("button", { name: "Confirmar Agendamento" })).toBeDisabled();
+    expect(mocks.create).not.toHaveBeenCalled();
+    expect(api.post).toHaveBeenLastCalledWith("/reunioes/disponibilidade", expect.objectContaining({ hora: "10:00", horaFim: "12:00", participanteIds: [2] }), expect.any(Object));
+  });
+
+  it("não consulta disponibilidade nem agenda um intervalo com término anterior ao início", async () => {
+    setup(); fireEvent.click(screen.getByRole("button", { name: "Agendar" }));
+    fireEvent.change(screen.getByLabelText("Início *"), { target: { value: "10:00" } });
+    await screen.findByRole("option", { name: "Sala 1 — Disponível" });
+    vi.mocked(api.post).mockClear();
+    fireEvent.change(screen.getByLabelText("Término *"), { target: { value: "09:00" } });
+    expect(screen.getByText("O término deve ser posterior ao início da reunião.")).toBeInTheDocument();
+    expect(api.post).not.toHaveBeenCalled();
+    expect(mocks.create).not.toHaveBeenCalled();
   });
 
   it("edita reunião sem cliente e remove a sala ao mudar para virtual", async () => {
-    mocks.reunioes = [{ id: 3, titulo: "Alinhamento interno", empresaId: null, dataHora: "2026-10-20T10:00:00", data: "2026-10-20", hora: "10:00", local: "Sala 1", presencial: false, salaEmail: "sala@resource.calendar.google.com", linkMeet: "https://meet.google.com/abc-defg-hij" }];
+    mocks.reunioes = [{ id: 3, titulo: "Alinhamento interno", empresaId: null, dataHora: "2026-10-20T10:00:00", dataHoraFim: "2026-10-20T12:30:00", data: "2026-10-20", hora: "10:00", local: "Sala 1", presencial: false, salaEmail: "sala@resource.calendar.google.com", linkMeet: "https://meet.google.com/abc-defg-hij" }];
     setup();
     fireEvent.click(screen.getByRole("button", { name: "Kanban" }));
     fireEvent.click(await screen.findByRole("button", { name: "Editar" }));
     expect(screen.getByLabelText("Cliente (opcional)")).toHaveValue("");
+    expect(screen.getByLabelText("Término *")).toHaveValue("12:30");
     expect(within(document.querySelector('[data-form-validation]')!).getByRole("radio", { name: "Presencial" })).toBeChecked();
     expect(screen.getByRole("link", { name: "Entrar no Google Meet" })).toHaveAttribute("href", "https://meet.google.com/abc-defg-hij");
     fireEvent.click(within(document.querySelector('[data-form-validation]')!).getByRole("radio", { name: "Virtual" }));
     fireEvent.click(within(document.querySelector('[data-form-validation]')!).getByRole("button", { name: "Confirmar Agendamento" }));
-    await waitFor(() => expect(mocks.update).toHaveBeenCalledWith({ id: 3, data: expect.objectContaining({ empresaId: null, presencial: false, salaEmail: null, local: "" }) }));
+    await waitFor(() => expect(mocks.update).toHaveBeenCalledWith({ id: 3, data: expect.objectContaining({ empresaId: null, presencial: false, salaEmail: null, local: "", horaFim: "12:30" }) }));
+    expect(api.post).toHaveBeenCalledWith("/reunioes/disponibilidade", expect.objectContaining({ reuniaoId: 3 }), expect.any(Object));
   });
 
   it("move reunião da equipe no Kanban preservando a sala e os convidados", async () => {

@@ -40,12 +40,12 @@ export const dadosCadastraisVazios = (): DadosCadastrais => ({
   suframa: { number: "", since: "", approved: null, approvalDate: "", status: { id: null, text: "" }, incentives: [] },
 });
 
-export const completarDadosCadastrais = (data: DadosCadastrais = {}): DadosCadastrais => {
+export const completarDadosCadastrais = (data: DadosCadastrais | null = {}): DadosCadastrais => {
   const merge = (base: DadosCadastrais, atual: DadosCadastrais): DadosCadastrais => Object.fromEntries(Object.entries({ ...base, ...atual }).map(([key, value]) => {
     if (value && typeof value === "object" && !Array.isArray(value)) return [key, merge(objetoCadastral(base[key]), value)];
     return [key, value];
   }));
-  return merge(dadosCadastraisVazios(), semHistoricos(data));
+  return merge(dadosCadastraisVazios(), semHistoricos(data ?? {}));
 };
 
 export const modeloColecao = (key: string): DadosCadastrais => {

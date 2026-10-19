@@ -28,11 +28,11 @@ describe("agendamento de reuniões", () => {
     vi.mocked(api.post).mockResolvedValue({ data: { ...data, idReuniao: 1, empresa: null } });
     const { result } = renderHook(() => useCreateReuniao(), { wrapper });
     await act(async () => {
-      const created = await result.current.mutateAsync({ ...data, participanteIds: [2, 3] });
+      const created = await result.current.mutateAsync({ ...data, horaFim: "12:30", participanteIds: [2, 3] });
       expect(created.empresaId).toBeNull();
       expect(created.salaEmail).toBe(data.salaEmail);
     });
-    expect(api.post).toHaveBeenCalledWith("/reunioes", expect.objectContaining({ empresaId: null, empresa: null, salaEmail: data.salaEmail, participanteIds: [2, 3] }), expect.any(Object));
+    expect(api.post).toHaveBeenCalledWith("/reunioes", expect.objectContaining({ empresaId: null, empresa: null, salaEmail: data.salaEmail, participanteIds: [2, 3], horaFim: "12:30" }), expect.any(Object));
   });
 
   it("alterar status não envia lista vazia de participantes", async () => {

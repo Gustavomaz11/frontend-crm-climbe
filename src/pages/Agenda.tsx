@@ -9,6 +9,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Calendar as CalendarIcon, Building2, ChevronLeft, ChevronRight, Plus, Search, Clock, MapPin, X, GripVertical, Video } from "lucide-react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { getReuniaoError, isReuniaoPresencial } from "@/services/useReunioes";
+import { useReuniaoDisponibilidade } from "@/services/useReuniaoDisponibilidade";
+import { DisponibilidadeReuniaoBadge } from "@/components/reunioes/DisponibilidadeReuniaoBadge";
 
 import { AppHeaderUser } from "@/components/layout/AppHeaderUser";
 
@@ -203,6 +205,7 @@ const initialEventForm = () => ({
   empresaId: "",
   data: toDateInputValue(),
   hora: "",
+  horaFim: "",
   local: "",
   salaEmail: "",
   pauta: "",
@@ -233,6 +236,12 @@ const Agenda = () => {
   const { mutateAsync: createReuniao, isPending: creatingReuniao } = useCreateReuniao();
   const { mutateAsync: updateReuniao, isPending: updatingReuniao } = useUpdateReuniao();
   const { mutateAsync: deleteReuniao, isPending: deletingReuniao } = useDeleteReuniao();
+  const disponibilidade = useReuniaoDisponibilidade({ data: eventForm.data, hora: eventForm.hora,
+    horaFim: eventForm.horaFim, reuniaoId: editingEventId }, eventForm.presencial,
+    eventForm.local, showAddEvent);
+  const salaDisponivel = disponibilidade.data?.salas.find(sala => sala.email.toLowerCase() === eventForm.salaEmail.toLowerCase())?.disponivel;
+  const localImpedido = eventForm.presencial && (disponibilidade.data?.localDisponivel === false || !!eventForm.salaEmail
+    && (disponibilidade.consultando || salaDisponivel !== true));
   const basicUserData = useAuthStore((state) => state.basicUserData);
   const userData = useAuthStore((state) => state.userData);
 
@@ -307,7 +316,7 @@ const Agenda = () => {
           id: String(reuniao.id),
           title: reuniao.titulo,
           time: timeLabel,
-          endTime: diaInteiro ? "--" : addOneHour(formatEventTime(reuniao.dataHora)),
+          endTime: diaInteiro ? "--" : reuniao.dataHoraFim ? formatEventTime(reuniao.dataHoraFim) : addOneHour(formatEventTime(reuniao.dataHora)),
           diaInteiro,
           empresa,
           local: reuniao.local,
@@ -472,8 +481,12 @@ const Agenda = () => {
   const handleCreateEvent = async () => {
     setEventError("");
 
-    if (!eventForm.titulo.trim() || !eventForm.data || !eventForm.hora) {
-      setEventError("Preencha pauta, data e horário.");
+    if (!eventForm.titulo.trim() || !disponibilidade.valido) {
+      setEventError("Preencha pauta, data, horário de início e término. O término deve ser posterior ao início.");
+      return;
+    }
+    if (localImpedido) {
+      setEventError("Escolha uma sala/local disponível durante todo o período da reunião.");
       return;
     }
 
@@ -483,6 +496,7 @@ const Agenda = () => {
         empresaId: eventForm.empresaId ? Number(eventForm.empresaId) : null,
         data: eventForm.data,
         hora: eventForm.hora,
+        horaFim: eventForm.horaFim,
         local: eventForm.local.trim(),
         salaEmail: eventForm.presencial && eventForm.salaEmail ? eventForm.salaEmail : null,
         pauta: eventForm.pauta.trim(),
@@ -502,6 +516,7 @@ const Agenda = () => {
       setShowAddEvent(false);
     } catch (error) {
       setEventError(getReuniaoError(error));
+      void disponibilidade.refetch();
     }
   };
 
@@ -526,6 +541,7 @@ const Agenda = () => {
       empresaId: event.empresaId ? String(event.empresaId) : "",
       data: event.data ?? toDateInputValue(),
       hora: event.hora ?? "",
+      horaFim: event.endTime,
       local: event.presencial ? event.local ?? "" : "",
       salaEmail: event.salaEmail ?? "",
       pauta: event.pauta ?? "",
@@ -942,15 +958,20 @@ const Agenda = () => {
                     {empresas.map((empresa) => <option key={empresa.id} value={empresa.id}>{empresa.nome}</option>)}
                   </select>
                 </div>
-                <ParticipantesReuniaoSelect value={eventForm.participanteIds} onChange={(participanteIds) => setEventForm((prev) => ({ ...prev, participanteIds }))} />
-                <div className="grid grid-cols-2 gap-3">
-                  <div><label className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Data *</label><input required type="date" value={eventForm.data} onChange={(e) => setEventForm((prev) => ({ ...prev, data: e.target.value }))} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 text-foreground" /></div>
-                  <div><label className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Horário *</label><input required type="time" value={eventForm.hora} onChange={(e) => setEventForm((prev) => ({ ...prev, hora: e.target.value }))} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 text-foreground" /></div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div><label htmlFor="reuniao-data" className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Data *</label><input id="reuniao-data" required type="date" value={eventForm.data} onChange={(e) => setEventForm((prev) => ({ ...prev, data: e.target.value }))} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 text-foreground" /></div>
+                  <div><label htmlFor="reuniao-inicio" className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Início *</label><input id="reuniao-inicio" required type="time" value={eventForm.hora} onChange={(e) => setEventForm((prev) => ({ ...prev, hora: e.target.value, horaFim: !prev.horaFim || prev.horaFim <= e.target.value ? addOneHour(e.target.value) : prev.horaFim }))} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 text-foreground" /></div>
+                  <div><label htmlFor="reuniao-fim" className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Término *</label><input id="reuniao-fim" required type="time" min={eventForm.hora || undefined} value={eventForm.horaFim} onChange={(e) => setEventForm((prev) => ({ ...prev, horaFim: e.target.value }))} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 text-foreground" /></div>
                 </div>
-                {eventForm.presencial && <SalaReuniaoSelect email={eventForm.salaEmail} local={eventForm.local} onChange={(salaEmail, local) => setEventForm((prev) => ({ ...prev, salaEmail, local }))} />}
+                {eventForm.hora && eventForm.horaFim && !disponibilidade.valido && <p role="alert" className="text-xs text-destructive">O término deve ser posterior ao início da reunião.</p>}
+                <ParticipantesReuniaoSelect value={eventForm.participanteIds} onChange={(participanteIds) => setEventForm((prev) => ({ ...prev, participanteIds }))} disponibilidade={disponibilidade.data?.participantes} consultando={disponibilidade.consultando} periodoValido={disponibilidade.valido} />
+                {eventForm.presencial && <SalaReuniaoSelect email={eventForm.salaEmail} local={eventForm.local} onChange={(salaEmail, local) => setEventForm((prev) => ({ ...prev, salaEmail, local }))} disponibilidade={disponibilidade.data?.salas} consultando={disponibilidade.consultando} periodoValido={disponibilidade.valido} />}
+                {disponibilidade.isError && <p role="alert" className="text-xs text-destructive">{getReuniaoError(disponibilidade.error)} <button type="button" onClick={() => void disponibilidade.refetch()} className="underline">Verificar novamente</button></p>}
+                {localImpedido && !disponibilidade.consultando && <p role="alert" className="text-xs text-destructive">A sala/local está ocupada ou a disponibilidade não pôde ser confirmada. Escolha outro local ou horário.</p>}
                 <div>
                   <label htmlFor="reuniao-local" className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Local{eventForm.presencial ? " *" : ""}</label>
                   <input id="reuniao-local" required={eventForm.presencial && !eventForm.salaEmail} type="text" placeholder="Endereço da reunião" value={eventForm.local} disabled={!eventForm.presencial || !!eventForm.salaEmail} onChange={(e) => setEventForm((prev) => ({ ...prev, local: e.target.value }))} className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 transition-colors placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-45" />
+                  {eventForm.presencial && !eventForm.salaEmail && eventForm.local.trim() && <div className="mt-2"><DisponibilidadeReuniaoBadge sala periodoValido={disponibilidade.valido} consultando={disponibilidade.consultando} disponivel={disponibilidade.data?.localDisponivel} /></div>}
                   {editingEventId && reunioes.find(r => r.id === editingEventId)?.linkMeet && <a href={reunioes.find(r => r.id === editingEventId)?.linkMeet} target="_blank" rel="noopener noreferrer" className="mt-2 inline-block text-xs text-accent underline">Entrar no Google Meet</a>}
                 </div>
                 <div className="flex items-center gap-3">
@@ -959,7 +980,7 @@ const Agenda = () => {
                 </div>
                 {eventError && <p className="text-[11px] text-destructive">{eventError}</p>}
                 <p className="text-[11px] text-muted-foreground">Todos os convidados receberão o convite no Google Agenda. contato@climbe.com.br será incluído automaticamente.</p>
-                <motion.button data-validate-submit onClick={handleCreateEvent} disabled={isSavingEvent} className="w-full h-10 rounded-lg bg-accent text-accent-foreground text-[13px] font-semibold shadow-[0_2px_10px_-2px_hsl(var(--accent)/0.3)]" whileHover={{ scale: 1.01, y: -1 }} whileTap={{ scale: 0.98 }}>{isSavingEvent ? "Salvando..." : "Confirmar Agendamento"}</motion.button>
+                <motion.button data-validate-submit onClick={handleCreateEvent} disabled={isSavingEvent || !!localImpedido || eventForm.presencial && disponibilidade.consultando} className="w-full h-10 rounded-lg bg-accent text-accent-foreground text-[13px] font-semibold disabled:opacity-45 shadow-[0_2px_10px_-2px_hsl(var(--accent)/0.3)]" whileHover={{ scale: 1.01, y: -1 }} whileTap={{ scale: 0.98 }}>{isSavingEvent ? "Salvando..." : "Confirmar Agendamento"}</motion.button>
               </FormValidation>
               <div className="hidden">
                 <div><label className="text-[10px] text-muted-foreground font-medium tracking-wider uppercase mb-1.5 block">Pauta</label><input type="text" placeholder="Pauta da reunião..." className="w-full h-10 px-3 rounded-lg border border-border/25 bg-background/50 text-[13px] outline-none focus:border-accent/40 transition-colors placeholder:text-muted-foreground" /></div>

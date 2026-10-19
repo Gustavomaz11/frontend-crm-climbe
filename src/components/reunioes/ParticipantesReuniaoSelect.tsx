@@ -2,13 +2,18 @@ import { useMemo, useState } from "react";
 import { Search, X } from "lucide-react";
 import { UserIdentity } from "@/components/users/UserSelect";
 import { useUsuarios } from "@/services/useUsuarios";
+import type { ReuniaoDisponibilidade } from "@/services/useReuniaoDisponibilidade";
+import { DisponibilidadeReuniaoBadge } from "./DisponibilidadeReuniaoBadge";
 
 interface Props {
   value: number[];
   onChange: (ids: number[]) => void;
+  disponibilidade?: ReuniaoDisponibilidade["participantes"];
+  consultando?: boolean;
+  periodoValido?: boolean;
 }
 
-export const ParticipantesReuniaoSelect = ({ value, onChange }: Props) => {
+export const ParticipantesReuniaoSelect = ({ value, onChange, disponibilidade = [], consultando, periodoValido }: Props) => {
   const [search, setSearch] = useState("");
   const { data: usuarios = [], isLoading, isError } = useUsuarios();
   const filtered = useMemo(() => {
@@ -32,6 +37,7 @@ export const ParticipantesReuniaoSelect = ({ value, onChange }: Props) => {
           return <label key={usuario.id} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-[12px] text-foreground/75 transition-colors hover:bg-muted/20">
             <input type="checkbox" checked={obrigatorio || value.includes(usuario.id)} disabled={obrigatorio} onChange={(event) => onChange(event.target.checked ? [...value, usuario.id] : value.filter((id) => id !== usuario.id))} className="h-3.5 w-3.5 rounded border-border/40 accent-[hsl(var(--accent))]" />
             <UserIdentity user={usuario} className="min-w-0 flex-1" />
+            <DisponibilidadeReuniaoBadge periodoValido={periodoValido} consultando={consultando} disponivel={disponibilidade.find(item => item.id === usuario.id)?.disponivel} />
           </label>;
         }) : <p className="px-2 py-2 text-[11px] text-muted-foreground">Nenhum participante encontrado.</p>}
     </div>
