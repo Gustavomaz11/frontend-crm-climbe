@@ -1,8 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { getNotificacaoApresentacao } from "./notificacaoApresentacao";
+import { getNotificacaoApresentacao, notificacaoUsaDialogoPrazo } from "./notificacaoApresentacao";
 import { getNotificacaoDestino } from "./useNotificacoes";
 
 describe("apresentação das notificações existentes", () => {
+  it.each(["REUNIAO_ACEITA", "REUNIAO_RECUSADA"])("resposta %s usa popup pequeno e preserva nome e reunião", tipo => {
+    const mensagem = 'Ana confirmou presença na reunião "Alinhamento" em 21/10/2026 às 17:00.';
+    expect(getNotificacaoApresentacao({ tipo, mensagem }).titulo).not.toBe("Tem novidade para você");
+    expect(getNotificacaoApresentacao({ tipo, mensagem }).mensagem).toBe(mensagem);
+    expect(notificacaoUsaDialogoPrazo(tipo)).toBe(false);
+  });
   it("mantém o prazo e o nome da tarefa ao tornar a atribuição mais natural", () => {
     const aviso = { tipo: "TAREFA_ATRIBUIDA", mensagem: 'Você foi atribuído como responsável pela tarefa "Fechamento mensal".\nContrato/negociação: Datawer Tec.\nPrazo: 30/10/2026.' };
     expect(getNotificacaoApresentacao(aviso).mensagem).toBe('A tarefa "Fechamento mensal" da Datawer Tec está com você. O prazo é 30/10/2026.');

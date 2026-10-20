@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "@/api";
 import { conectarAvisos, type AvisoSinal } from "@/services/avisosStream";
 import { useMinhasNotificacoes } from "@/services/useNotificacoes";
-import { useConvitesReuniaoPendentes, useReunioes } from "@/services/useReunioes";
+import { useConvitesReuniaoPendentes, useReunioes, useReuniaoDetalhes } from "@/services/useReunioes";
 import { useAvisosTempoReal } from "./useAvisosTempoReal";
 import { clearAuthCookies, saveAccessToken } from "@/lib/authCookies";
 
@@ -34,6 +34,17 @@ afterEach(() => {
 });
 
 describe("canal global de avisos", () => {
+  it("atualiza o status dos participantes no detalhe aberto quando chega uma resposta pelo SSE", async () => {
+    const { wrapper } = setup();
+    const reuniao = { idReuniao: 3, titulo: "Reunião", data: "2099-10-20", hora: "10:00", participantes: [{ email: "ana@climbe.com.br", resposta: "PENDENTE" }] };
+    vi.mocked(api.get).mockResolvedValue({ data: reuniao });
+    const { result } = renderHook(() => { useAvisosTempoReal(7); return useReuniaoDetalhes(3); }, { wrapper });
+    await waitFor(() => expect(result.current.data?.participantes?.[0].resposta).toBe("PENDENTE"));
+    vi.mocked(api.get).mockResolvedValue({ data: { ...reuniao, participantes: [{ email: "ana@climbe.com.br", resposta: "ACEITA" }] } });
+    act(() => canais[0].sinal("convites"));
+    await waitFor(() => expect(result.current.data?.participantes?.[0].resposta).toBe("ACEITA"));
+    expect(api.get).toHaveBeenCalledTimes(2);
+  });
   it("carrega os pendentes ao entrar e não consulta periodicamente", async () => {
     const { wrapper } = setup();
     renderHook(() => {
@@ -57,10 +68,9 @@ describe("canal global de avisos", () => {
       for (let i = 0; i < 20; i++) canais[0].sinal("notificacoes");
       canais[0].sinal("convites"); await vi.advanceTimersByTimeAsync(100);
     });
-    expect(invalidar).toHaveBeenCalledTimes(3);
+    expect(invalidar).toHaveBeenCalledTimes(2);
     expect(invalidar).toHaveBeenCalledWith({ queryKey: ["notificacoes", 7] });
-    expect(invalidar).toHaveBeenCalledWith({ queryKey: ["reunioes", "convites", 7] });
-    expect(invalidar).toHaveBeenCalledWith({ queryKey: ["reunioes"], exact: true });
+    expect(invalidar).toHaveBeenCalledWith({ queryKey: ["reunioes"] });
   });
 
   it("atualiza a agenda aberta ao receber convite para permitir abrir os detalhes pelo aviso", async () => {
@@ -85,7 +95,7 @@ describe("canal global de avisos", () => {
     expect(conectarAvisos).toHaveBeenCalledTimes(2);
     vi.useFakeTimers();
     await act(async () => { canais[1].sinal("sincronizar"); await vi.advanceTimersByTimeAsync(100); });
-    expect(invalidar).toHaveBeenCalledTimes(5);
+    expect(invalidar).toHaveBeenCalledTimes(4);
     act(() => { window.dispatchEvent(new Event("offline")); });
     expect(canais[1].signal.aborted).toBe(true);
     act(() => { window.dispatchEvent(new Event("online")); });

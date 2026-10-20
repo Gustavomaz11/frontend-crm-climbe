@@ -14,6 +14,53 @@ describe("consulta das reuniões do dia", () => {
   beforeEach(() => { vi.clearAllMocks(); vi.mocked(api.get).mockResolvedValue({ data: detalhes }); });
   afterEach(cleanup);
 
+  it("mostra aceite em verde, recusa em vermelho e confirma automaticamente o organizador", () => {
+    setup([{ ...detalhes, id: -3, participantes: [
+      { email: "bruno@example.test", resposta: "PENDENTE" },
+      { email: "ana@example.test", resposta: "ACEITA" },
+      { email: "bia@example.test", resposta: "RECUSADA" },
+      { email: "caio@example.test", resposta: "PENDENTE" },
+      { email: "davi@example.test", resposta: "TENTATIVA" },
+    ] }]);
+    fireEvent.click(screen.getByRole("button", { name: /Alinhamento da equipe/ }));
+    const pessoas = within(screen.getByRole("region", { name: "Participantes da reunião" }));
+    expect(pessoas.getByText("bruno@example.test").closest("li")).toHaveClass("border-emerald-500/70");
+    expect(pessoas.getByText("Aceitou · Organizador")).toBeInTheDocument();
+    const aceitou = pessoas.getByText("ana@example.test").closest("li")!;
+    expect(aceitou).toHaveClass("border-emerald-500/70");
+    expect(within(aceitou).getByText("Aceitou")).toBeInTheDocument();
+    const recusou = pessoas.getByText("bia@example.test").closest("li")!;
+    expect(recusou).toHaveClass("border-red-500/70");
+    expect(within(recusou).getByText("Recusou")).toBeInTheDocument();
+    expect(pessoas.getByText("Aguardando resposta")).toBeInTheDocument();
+    expect(pessoas.getByText("Talvez")).toBeInTheDocument();
+  });
+
+  it("permite rejeitar o convite e mostra a recusa nos detalhes", async () => {
+    const pendente: Reuniao = { ...detalhes, data: "2099-10-19", dataHora: "2099-10-19T10:00:00", dataHoraFim: "2099-10-19T11:00:00", minhaResposta: "PENDENTE" };
+    vi.mocked(api.get).mockResolvedValue({ data: pendente });
+    vi.mocked(api.post).mockImplementation(async () => {
+      const recusado = { ...pendente, minhaResposta: "RECUSADA", participantes: [{ ...pendente.participantes![0], resposta: "RECUSADA" }] };
+      vi.mocked(api.get).mockResolvedValue({ data: recusado });
+      return { data: recusado };
+    });
+    setup([pendente]); fireEvent.click(screen.getByRole("button", { name: /Alinhamento da equipe/ }));
+    fireEvent.click(await screen.findByRole("button", { name: "Rejeitar reunião" }));
+    expect(await screen.findByText("Você recusou esta reunião")).toBeInTheDocument();
+    expect(await screen.findByText("Recusou")).toBeInTheDocument();
+    expect(api.post).toHaveBeenCalledWith("/reunioes/3/rejeitar");
+    expect(screen.queryByRole("button", { name: "Rejeitar reunião" })).not.toBeInTheDocument();
+  });
+
+  it("organizador já confirmado não recebe botões para responder à própria reunião", async () => {
+    const organizada: Reuniao = { ...detalhes, dataHoraFim: "2099-10-19T11:00:00", minhaResposta: "ACEITA", souOrganizador: true };
+    vi.mocked(api.get).mockResolvedValue({ data: organizada });
+    setup([organizada]); fireEvent.click(screen.getByRole("button", { name: /Alinhamento da equipe/ }));
+    expect(await screen.findByText("Participação confirmada")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Aceitar reunião" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Rejeitar reunião" })).not.toBeInTheDocument();
+  });
+
   it("permite ao convidado aceitar pelos detalhes e exibe a confirmação", async () => {
     const pendente: Reuniao = { ...detalhes, data: "2099-10-19", dataHora: "2099-10-19T10:00:00", dataHoraFim: "2099-10-19T11:00:00", minhaResposta: "PENDENTE" };
     vi.mocked(api.get).mockResolvedValue({ data: pendente });

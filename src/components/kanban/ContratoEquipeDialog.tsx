@@ -14,20 +14,20 @@ export const ContratoEquipeDialog = ({ equipe, titulo, usuarios, onClose, onSave
   const save = useSalvarContratoEquipe();
   const submit = async () => {
     try {
-      await save.mutateAsync({ id: equipe.contratoId, usuarioIds: ids });
+      await save.mutateAsync({ id: equipe.contratoId, usuarioIds: ids, ...(equipe.servico ? { servico: equipe.servico } : {}) });
       toast.success("Equipe salva. Os novos participantes foram notificados.");
       onSaved();
     } catch (error) { toast.error(error instanceof Error ? error.message : "Não foi possível salvar a equipe."); }
   };
-  return <TaskDialogShell label="Selecionar equipe do contrato" onClose={onClose} closeDisabled={save.isPending}>
+  return <TaskDialogShell label="Selecionar equipe do serviço" onClose={onClose} closeDisabled={save.isPending}>
     <header className="flex shrink-0 items-start justify-between border-b border-border/20 p-5"><div>
-      <h2 className="flex items-center gap-2 text-base font-semibold"><UsersRound className="h-5 w-5 text-accent" />Equipe do contrato</h2>
+      <h2 className="flex items-center gap-2 text-base font-semibold"><UsersRound className="h-5 w-5 text-accent" />Equipe do serviço</h2>
       <p className="mt-1 text-xs text-muted-foreground">{titulo}</p></div>
       <button type="button" aria-label="Fechar seleção de equipe" disabled={save.isPending} onClick={onClose}><X className="h-5 w-5" /></button>
     </header>
     <FormValidation as="form" className="flex min-h-0 flex-1 flex-col" onSubmit={e => { e.preventDefault(); void submit(); }}>
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5">
-        <p className="text-sm text-muted-foreground">Selecione as pessoas que irão trabalhar no contrato. Elas poderão criar e editar tarefas, subtarefas, anexos e comentários. Os responsáveis técnicos dos serviços permanecem na equipe.</p>
+        <p className="text-sm text-muted-foreground">Selecione as pessoas que irão trabalhar neste serviço. Elas poderão criar e editar tarefas, subtarefas, anexos e comentários. O responsável técnico deste serviço permanece na equipe. O acesso à pasta no Drive é atualizado automaticamente para os e-mails corporativos.</p>
         <UserMultiSelect users={usuarios} value={ids} onChange={setIds} required label="Equipe fixa" disabled={save.isPending} />
         {!!equipe.temporarios.length && <section className="rounded-lg border border-border/25 p-4">
           <h3 className="text-sm font-semibold">Pessoas de apoio</h3>

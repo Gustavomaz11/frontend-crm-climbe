@@ -9,6 +9,7 @@ const useUsuarioAtualId = () => useAuthStore(s => s.basicUserData?.id ?? s.userD
 
 export interface ContratoEquipe {
   contratoId: number;
+  servico?: CommercialService | null;
   configurada: boolean;
   lider: boolean;
   responsavel?: UsuarioResumo | null;
@@ -26,28 +27,28 @@ export interface ContratoRateioTecnico {
   servicos: Array<{ servico: CommercialService; recebimento: number; percentual: number; comissao: number }>;
   participantes: Array<{ usuario: UsuarioResumo; valor: number }>;
 }
-export const useContratoEquipe = (id?: number, enabled = true) => {
+export const useContratoEquipe = (id?: number, enabled = true, servico?: string) => {
   const usuarioId = useUsuarioAtualId();
   return useQuery({
-    queryKey: ["contratos", id, "equipe", usuarioId],
+    queryKey: ["contratos", id, "equipe", usuarioId, ...(servico ? ["servico", servico] : [])],
     enabled: !!id && enabled,
     retry: false,
-    queryFn: async () => (await api.get<ContratoEquipe>(`/contratos/${id}/equipe`)).data,
+    queryFn: async () => (await api.get<ContratoEquipe>(`/contratos/${id}/equipe`, { params: { servico } })).data,
   });
 };
 export const useSalvarContratoEquipe = () => {
   const client = useQueryClient();
   const usuarioId = useUsuarioAtualId();
   return useMutation({
-    mutationFn: async ({ id, usuarioIds }: { id: number; usuarioIds: number[] }) => {
-      try { return (await api.put<ContratoEquipe>(`/contratos/${id}/equipe`, { usuarioIds })).data; }
+    mutationFn: async ({ id, usuarioIds, servico }: { id: number; usuarioIds: number[]; servico?: string }) => {
+      try { return (await api.put<ContratoEquipe>(`/contratos/${id}/equipe`, { usuarioIds }, { params: { servico } })).data; }
       catch (error) {
         throw new Error(isAxiosError(error) ? error.response?.data?.message || error.response?.data?.detail || error.message
           : error instanceof Error ? error.message : "Não foi possível salvar a equipe.");
       }
     },
-    onSuccess: (data, { id }) => {
-      client.setQueryData(["contratos", id, "equipe", usuarioId], data);
+    onSuccess: (data, { id, servico }) => {
+      client.setQueryData(["contratos", id, "equipe", usuarioId, ...(servico ? ["servico", servico] : [])], data);
       client.invalidateQueries({ queryKey: ["contratos"] });
       client.invalidateQueries({ queryKey: ["empresas"] });
     },

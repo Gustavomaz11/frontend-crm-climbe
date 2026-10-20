@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { ExternalLink, Video } from "lucide-react";
+import { CheckCircle2, CircleHelp, Clock3, ExternalLink, Video, XCircle } from "lucide-react";
 import { isReuniaoPresencial, useReuniaoDetalhes, type PessoaReuniao, type Reuniao } from "@/services/useReunioes";
 import { reuniaoCliente, reuniaoDateKey, reuniaoHorario, reuniaoLink, reuniaoStatus } from "./reuniaoPresentation";
 import { AceitarReuniaoButton } from "./AceitarReuniaoButton";
@@ -13,6 +13,26 @@ const Pessoa = ({ pessoa }: { pessoa: PessoaReuniao }) => <div className="min-w-
   <p className="break-words text-sm font-medium">{pessoa.nomeCompleto || pessoa.email || "Nome não informado"}</p>
   {pessoa.nomeCompleto && pessoa.email && <p className="break-all text-xs text-muted-foreground">{pessoa.email}</p>}
 </div>;
+
+const respostas = {
+  ACEITA: { label: "Aceitou", classe: "border-emerald-500/70", texto: "text-emerald-400", Icone: CheckCircle2 },
+  RECUSADA: { label: "Recusou", classe: "border-red-500/70", texto: "text-red-400", Icone: XCircle },
+  TENTATIVA: { label: "Talvez", classe: "border-amber-500/50", texto: "text-amber-400", Icone: CircleHelp },
+  PENDENTE: { label: "Aguardando resposta", classe: "border-border/25", texto: "text-muted-foreground", Icone: Clock3 },
+};
+
+const Participante = ({ pessoa, organizador }: { pessoa: PessoaReuniao; organizador?: PessoaReuniao | null }) => {
+  const ehOrganizador = pessoa.id != null && pessoa.id === organizador?.id
+    || Boolean(pessoa.email && organizador?.email && pessoa.email.toLowerCase() === organizador.email.toLowerCase());
+  const { label, classe, texto, Icone } = respostas[ehOrganizador ? "ACEITA" : pessoa.resposta ?? "PENDENTE"];
+  return <li className={`flex items-start justify-between gap-3 rounded-lg border bg-background/30 p-3 ${classe}`}>
+    <div className="min-w-0 space-y-1.5">
+      <Pessoa pessoa={pessoa} />
+      <p className={`text-[11px] ${texto}`}>{label}{ehOrganizador ? " · Organizador" : ""}</p>
+    </div>
+    <Icone aria-hidden="true" className={`mt-0.5 h-4 w-4 shrink-0 ${texto}`} />
+  </li>;
+};
 
 export const ReuniaoDetalhes = ({ reuniao }: { reuniao: Reuniao }) => {
   const { data, isLoading, error, refetch } = useReuniaoDetalhes(reuniao.id);
@@ -45,7 +65,7 @@ export const ReuniaoDetalhes = ({ reuniao }: { reuniao: Reuniao }) => {
     </section>
     <section aria-label="Participantes da reunião" className="space-y-3">
       <h3 className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Participantes ({participantes.length})</h3>
-      {participantes.length ? <ul className="grid gap-2 sm:grid-cols-2">{participantes.map((pessoa, index) => <li key={pessoa.id ?? pessoa.email ?? index} className="rounded-lg border border-border/25 bg-background/30 p-3"><Pessoa pessoa={pessoa} /></li>)}</ul>
+      {participantes.length ? <ul className="grid gap-2 sm:grid-cols-2">{participantes.map((pessoa, index) => <Participante key={pessoa.id ?? pessoa.email ?? index} pessoa={pessoa} organizador={detalhes.organizador} />)}</ul>
         : <p className="text-sm text-muted-foreground">Participantes não informados.</p>}
       {detalhes.participantesOmitidos && <p className="text-xs text-muted-foreground">O Google não disponibilizou a lista completa de participantes.</p>}
     </section>

@@ -4,6 +4,8 @@ const titulos: Record<string, string> = {
   TAREFA_VENCIMENTO: "Atenção ao prazo da tarefa",
   TAREFA_ATRASADA: "Esta tarefa está atrasada",
   REUNIAO_AGENDADA: "Você tem um convite para reunião",
+  REUNIAO_ACEITA: "Presença confirmada na sua reunião",
+  REUNIAO_RECUSADA: "Um convidado recusou a reunião",
   TAREFA_ATRIBUIDA: "Uma nova tarefa para você",
   TAREFA_CRIADA: "Nova tarefa no Kanban",
   TAREFA_A_FAZER: "Uma tarefa voltou para a fila",

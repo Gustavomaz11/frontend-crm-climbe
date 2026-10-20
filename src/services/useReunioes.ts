@@ -6,14 +6,19 @@ import {
   syncGoogleAccessToken,
 } from "@/lib/googleAccessToken";
 
+export type RespostaConviteReuniao = "PENDENTE" | "ACEITA" | "RECUSADA" | "TENTATIVA";
+
 export interface PessoaReuniao {
   id?: number | null;
   nomeCompleto?: string | null;
   email?: string | null;
+  resposta?: RespostaConviteReuniao | null;
+  respondidoEm?: string | null;
 }
 
 export interface Reuniao {
-  minhaResposta?: "PENDENTE" | "ACEITA" | null;
+  minhaResposta?: RespostaConviteReuniao | null;
+  souOrganizador?: boolean;
   conviteId?: number | null;
   respondidoEm?: string | null;
   arquivadoEm?: string | null;
@@ -310,10 +315,10 @@ export const useConvitesReuniaoPendentes = (usuarioId?: number) => useQuery({
   staleTime: 0,
 });
 
-export const useAceitarReuniao = () => {
+const useResponderReuniao = (acao: "aceitar" | "rejeitar") => {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: async (id: number) => normalizeReuniao((await api.post<ReuniaoApi>(`/reunioes/${id}/aceitar`)).data),
+    mutationFn: async (id: number) => normalizeReuniao((await api.post<ReuniaoApi>(`/reunioes/${id}/${acao}`)).data),
     onSuccess: (reuniao) => {
       client.setQueryData<Reuniao>(["reunioes", reuniao.id, "detalhes"], atual => atual
         ? { ...atual, minhaResposta: reuniao.minhaResposta, respondidoEm: reuniao.respondidoEm } : undefined);
@@ -325,6 +330,9 @@ export const useAceitarReuniao = () => {
     },
   });
 };
+
+export const useAceitarReuniao = () => useResponderReuniao("aceitar");
+export const useRejeitarReuniao = () => useResponderReuniao("rejeitar");
 
 export function useReunioesByEmpresa(empresaId: number) {
   return useQuery<Reuniao[]>({

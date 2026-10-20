@@ -179,7 +179,7 @@ export function useContratoKanbanAbertura(contratoId?: number, usuarioId = usuar
       const response = await (servico ? api.get<ApiEnvelope<ContratoKanbanAbertura>>(url, { params: { servico } })
         : api.get<ApiEnvelope<ContratoKanbanAbertura>>(url));
       const abertura = unwrap(response.data);
-      client.setQueryData(["contratos", contratoId, "equipe", usuarioId], abertura.equipe);
+      client.setQueryData(["contratos", contratoId, "equipe", usuarioId, ...(servico ? ["servico", servico] : [])], abertura.equipe);
       client.setQueryData(boardQueryKey(contratoId, usuarioId, servico), abertura.board);
       return abertura;
     },

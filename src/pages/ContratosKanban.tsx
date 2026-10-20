@@ -89,7 +89,7 @@ const ContratosKanban = () => {
     && (!requestedServico || contrato.quadroServico === requestedServico));
   const selectedServico = selectedContrato?.quadroServico || requestedServico;
   const { data: abertura, isLoading: equipeLoading, error: equipeError } = useContratoKanbanAbertura(selectedContratoId, usuarioId ?? undefined, selectedServico);
-  const { data: equipe } = useContratoEquipe(selectedContratoId, false);
+  const { data: equipe } = useContratoEquipe(selectedContratoId, false, selectedServico);
   const [editingEquipe, setEditingEquipe] = useState(false);
   const { data: board, isLoading: boardLoading, error: boardError } = useContratoKanban(equipe?.configurada ? selectedContratoId : undefined, usuarioId ?? undefined, false, selectedServico);
   const { data: usuariosComPerfil = [] } = useUsuarios();
@@ -507,7 +507,7 @@ const ContratosKanban = () => {
                 </div>
               </div>
 
-              {equipe?.lider && equipe.configurada && <button type="button" onClick={() => setEditingEquipe(true)} className="mb-4 text-xs text-accent underline">Gerenciar equipe do contrato</button>}
+              {equipe?.lider && equipe.configurada && <button type="button" onClick={() => setEditingEquipe(true)} className="mb-4 text-xs text-accent underline">Gerenciar equipe do serviço</button>}
               <AnimatePresence>
                 {message && (
                   <motion.div className={`mb-4 flex items-center gap-2 rounded-lg border px-3 py-2 text-[12px] ${message.type === "error" ? "border-destructive/20 bg-destructive/5 text-destructive" : "border-accent/20 bg-accent/5 text-accent"}`} initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}>
@@ -523,7 +523,7 @@ const ContratosKanban = () => {
               ) : equipeError || boardError ? (
                 <div className="rounded-lg border border-destructive/20 bg-destructive/5 px-3 py-2 text-[12px] text-destructive">Erro ao carregar Kanban do contrato.</div>
               ) : equipe && !equipe.configurada ? (
-                <div className="rounded-lg border border-border/25 p-5 text-sm text-muted-foreground">{equipe.lider ? "Selecione a equipe para iniciar o kanban." : "Aguardando o líder técnico selecionar a equipe do contrato."}</div>
+                <div className="rounded-lg border border-border/25 p-5 text-sm text-muted-foreground">{equipe.lider ? "Selecione a equipe para iniciar o kanban." : "Aguardando o líder técnico selecionar a equipe deste serviço."}</div>
               ) : !board ? (
                 <div className="py-16 text-center text-[12px] text-muted-foreground">Nenhum contrato selecionado.</div>
               ) : board.raias.length === 0 ? (
@@ -690,7 +690,7 @@ const ContratosKanban = () => {
       )}
       {lateCompletion && <TaskDelayJustificationDialog title={lateCompletion.task.titulo} onClose={() => setLateCompletion(null)} onConfirm={reason => handleMoveTask(lateCompletion.task, lateCompletion.raiaId, reason)} />}
       {selectedContrato && equipe?.lider && (editingEquipe || !equipe.configurada) && <ContratoEquipeDialog
-        key={selectedContrato.id} equipe={equipe} titulo={getContratoLabel(selectedContrato)}
+        key={selectedContrato.quadroId} equipe={equipe} titulo={getContratoLabel(selectedContrato)}
         usuarios={equipe.usuariosDisponiveis.map(u => ({ ...u, ...usuariosComPerfil.find(p => p.id === u.id) }))}
         onClose={() => { setEditingEquipe(false); if (!equipe.configurada) setSearchParams({}); }}
         onSaved={() => setEditingEquipe(false)} />}
