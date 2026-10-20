@@ -278,13 +278,7 @@ const AprovarAcesso = () => {
           <header
             className="sticky top-0 z-20 h-16 flex items-center justify-end px-6 border-b border-border/20 bg-background/80 backdrop-blur-xl"
           >
-            <div className="flex items-center gap-2">
-              <AppHeaderUser name={userName} photoUrl={userPhoto} />
-              <div className="text-right">
-                <p className="text-[12px] font-medium text-foreground">{userName}</p>
-                <p className="text-[10px] text-muted-foreground">{userCargo}</p>
-              </div>
-            </div>
+            <AppHeaderUser name={userName} photoUrl={userPhoto} role={userCargo} />
           </header>
 
           <div className="px-6 pt-6 pb-2">

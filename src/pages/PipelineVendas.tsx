@@ -27,6 +27,7 @@ import {
   useUpdatePipelineNegocio,
   type PipelineNegocio,
   type PipelineNegocioInput,
+  type PipelineResponsavelServico,
 } from "@/services/usePipelineVendas";
 import { useUsuarioPermissoes } from "@/services/usePermissoes";
 import { useUsuarios } from "@/services/useUsuarios";
@@ -180,10 +181,10 @@ const PipelineVendas = ({ preVendas = false }: { preVendas?: boolean }) => {
     }
   };
 
-  const confirmWin = async (propostaId: number, responsavelTecnicoId: number) => {
+  const confirmWin = async (propostaId: number, responsavelTecnicoId: number, responsaveisPorServico?: PipelineResponsavelServico[]) => {
     if (!pendingWin) return;
     try {
-      const data = { id: pendingWin.business.id, propostaId, responsavelTecnicoId };
+      const data = { id: pendingWin.business.id, propostaId, responsavelTecnicoId, responsaveisPorServico };
       const updated = pendingWin.stageId
         ? await moveBusiness.mutateAsync({ ...data, etapaId: pendingWin.stageId })
         : await concludeBusiness.mutateAsync({ ...data, resultado: "GANHO" });
@@ -280,7 +281,7 @@ const PipelineVendas = ({ preVendas = false }: { preVendas?: boolean }) => {
       </section>
 
       <AnimatePresence>{(selectedBusiness || createStageId) && <PipelineNegocioDialog canRestartCadence={can("COMERCIAL_CAMPANHA_EXECUTAR")} preVendas={preVendas} negocio={selectedBusiness} onLinkedTaskClose={() => { const next = new URLSearchParams(searchParams); next.delete("tarefaId"); setSearchParams(next, { replace: true }); }} initialEtapaId={createStageId || undefined} initialResponsavelId={userId} initialTaskId={selectedBusiness?.id === linkedBusinessId ? linkedTaskId : undefined} etapas={board?.etapas || []} empresas={companies} usuarios={users} motivosPerda={lossReasons} canEdit={can(commercialPermissions.edit)} canConclude={can(commercialPermissions.conclude)} canConvert={can(commercialPermissions.convert)} canViewTasks={canViewTasks} canCreateTask={can(commercialPermissions.taskCreate)} canEditTask={can(commercialPermissions.taskEdit)} canConcludeTask={can(commercialPermissions.taskConclude)} canViewComments={can(commercialPermissions.commentView)} canCreateComment={can(commercialPermissions.commentCreate)} canViewHistory={can(commercialPermissions.historyView)} canCreateProposal={can(commercialPermissions.proposalCreate)} isProcessing={isProcessing} onClose={closeDialog} onSave={(data) => void saveBusiness(data)} onConclude={(result, motivoId, observacao) => void conclude(result, motivoId, observacao)} onReactivate={() => void reactivate()} onConvert={(companyId) => void convert(companyId)} onOpenContract={() => navigate(`/contratos?contrato=${selectedBusiness?.contratoId}`)} onCreateProposal={() => { if (!selectedBusiness?.empresaId) return; navigate(`/propostas?empresaId=${selectedBusiness.empresaId}&negocioId=${selectedBusiness.id}&nova=true`); }} />}</AnimatePresence>
-      {pendingWin && <PipelineGanhoDialog negocio={pendingWin.business} usuarios={users} isProcessing={isProcessing} onClose={() => setPendingWin(null)} onConfirm={(proposalId, tecnicoId) => void confirmWin(proposalId, tecnicoId)} />}
+      {pendingWin && <PipelineGanhoDialog negocio={pendingWin.business} usuarios={users} isProcessing={isProcessing} onClose={() => setPendingWin(null)} onConfirm={(proposalId, tecnicoId, responsaveis) => void confirmWin(proposalId, tecnicoId, responsaveis)} />}
       {pendingLoss && <PipelinePerdaDialog empresa={pendingLoss.business.nomeEmpresa} motivos={lossReasons} isProcessing={moveBusiness.isPending} onCancel={() => setPendingLoss(null)} onConfirm={(motivoId, observacao) => void confirmDraggedLoss(motivoId, observacao)} />}
     </PipelineVendasShell>
   );

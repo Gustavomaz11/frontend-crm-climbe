@@ -31,4 +31,11 @@ describe("notificações pessoais da equipe", () => {
     expect(getNotificacaoDestino("Tarefa atribuída", "/contratos/kanban?contrato=12&tarefaId=34")).toBe("/contratos/kanban?contrato=12&tarefaId=34");
     expect(getNotificacaoDestino("Tarefa atribuída", "/pipeline-pre-vendas?funilId=1&negocioId=2&tarefaId=3")).toBe("/pipeline-pre-vendas?funilId=1&negocioId=2&tarefaId=3");
   });
+  it("abre proposta aceita e contrato sem aceitar outros destinos ou parâmetros", () => {
+    expect(getNotificacaoDestino("Proposta aceita", "/propostas?proposta=12")).toBe("/propostas?proposta=12");
+    expect(getNotificacaoDestino("Contrato criado", "/contratos?contrato=34")).toBe("/contratos?contrato=34");
+    expect(getNotificacaoDestino("Aviso", "/contratos?contrato=34&redirect=https://example.test")).toBeUndefined();
+    expect(getNotificacaoDestino("Aviso", "/propostas?proposta=0")).toBeUndefined();
+    expect(getNotificacaoDestino("Aviso", "/propostas?proposta=12#https://example.test")).toBeUndefined();
+  });
 });

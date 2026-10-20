@@ -12,7 +12,8 @@ export interface Notificacao {
 }
 export const getNotificacaoDestino = (mensagem: string, destino?: string | null) => {
   const rota = destino || mensagem.match(/\/(?:contratos\/kanban|pipeline-vendas|pipeline-pre-vendas|agenda)\?[A-Za-z0-9=&_-]+/)?.[0];
-  if (!rota || !/^\/(?:contratos\/kanban|pipeline-vendas|pipeline-pre-vendas|agenda)\?[A-Za-z0-9=&_-]+$/.test(rota)) return undefined;
+  if (!rota || (!/^\/(?:contratos\/kanban|pipeline-vendas|pipeline-pre-vendas|agenda)\?[A-Za-z0-9=&_-]+$/.test(rota)
+    && !/^\/contratos\?contrato=[1-9]\d*$/.test(rota) && !/^\/propostas\?proposta=[1-9]\d*$/.test(rota))) return undefined;
   return rota;
 };
 export const useLerTodasNotificacoes = () => {
@@ -23,7 +24,8 @@ export const useLerTodasNotificacoes = () => {
   });
 };
 export const useMinhasNotificacoes = (usuarioId?: number) => useQuery({
-  queryKey: ["notificacoes", usuarioId], enabled: !!usuarioId, refetchInterval: 60_000,
+  queryKey: ["notificacoes", usuarioId], enabled: !!usuarioId,
+  refetchOnMount: "always",
   queryFn: async () => (await api.get<Notificacao[]>("/notificacoes/minhas")).data,
 });
 export const useLerNotificacao = () => {

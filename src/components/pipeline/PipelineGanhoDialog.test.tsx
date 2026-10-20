@@ -5,12 +5,42 @@ import { usePropostas } from "@/services/usePropostas";
 import type { PipelineNegocio } from "@/services/usePipelineVendas";
 
 vi.mock("@/services/usePropostas", async importOriginal => ({ ...await importOriginal<typeof import("@/services/usePropostas")>(), usePropostas: vi.fn() }));
-vi.mock("@/components/users/UserSelect", () => ({ UserSelect: ({ required, value, onValueChange, ariaLabel }: { required: boolean; value: string; onValueChange: (value: string) => void; ariaLabel: string }) => <select required={required} aria-label={ariaLabel} value={value} onChange={e => onValueChange(e.target.value)}><option value="">Selecione</option><option value="2">Técnico</option></select> }));
+vi.mock("@/components/users/UserSelect", () => ({ UserSelect: ({ required, value, onValueChange, ariaLabel }: { required: boolean; value: string; onValueChange: (value: string) => void; ariaLabel: string }) => <select required={required} aria-label={ariaLabel} value={value} onChange={e => onValueChange(e.target.value)}><option value="">Selecione</option><option value="2">Técnico</option><option value="3">Outro técnico</option></select> }));
 const negocio = { id: 10, empresaId: 30, nomeEmpresa: "Empresa" } as PipelineNegocio;
-const proposal = { idProposta: 40, empresaId: 30, usuarioId: 1, negocioId: 10, status: "APROVADA", revisaoStatus: "APROVADO", valuation: 50000, url: "http://storage.test/proposta.pdf", servicos: [{ servico: "CONTABILIDADE", valor: 30000 }, { servico: "VALUATION", valor: 20000 }] };
+const proposal = { idProposta: 40, empresaId: 30, usuarioId: 1, negocioId: 10, status: "APROVADA", revisaoStatus: "APROVADO", valuation: 50000, url: "http://storage.test/proposta.pdf", servicos: [{ servico: "CONTABILIDADE", valor: 50000 }] };
+const multiProposal = { ...proposal, servicos: [{ servico: "CONTABILIDADE", valor: 30000 }, { servico: "CFO", valor: 20000 }] };
 beforeEach(() => vi.mocked(usePropostas).mockReturnValue({ data: [proposal], isLoading: false, error: null } as ReturnType<typeof usePropostas>));
 
 describe("conclusão da venda", () => {
+  it.each(["2", "3"])("exige todos os serviços e permite responsáveis iguais ou diferentes (%s)", segundoTecnico => {
+    vi.mocked(usePropostas).mockReturnValue({ data: [multiProposal], isLoading: false, error: null } as ReturnType<typeof usePropostas>);
+    const confirm = vi.fn();
+    render(<PipelineGanhoDialog negocio={negocio} usuarios={[]} isProcessing={false} onClose={vi.fn()} onConfirm={confirm} />);
+    fireEvent.change(screen.getByLabelText("Responsável técnico por Contabilidade"), { target: { value: "2" } });
+    fireEvent.click(screen.getByRole("button", { name: "Marcar como ganho" }));
+    expect(confirm).not.toHaveBeenCalled();
+    expect(screen.getByLabelText("Responsável técnico por CFO")).toHaveAttribute("aria-invalid", "true");
+    fireEvent.change(screen.getByLabelText("Responsável técnico por CFO"), { target: { value: segundoTecnico } });
+    fireEvent.click(screen.getByRole("button", { name: "Marcar como ganho" }));
+    expect(confirm).toHaveBeenCalledWith(40, 2, [
+      { servico: "CONTABILIDADE", responsavelTecnicoId: 2 }, { servico: "CFO", responsavelTecnicoId: Number(segundoTecnico) },
+    ]);
+  });
+
+  it("limpa as escolhas ao trocar a proposta e usa apenas seus serviços", () => {
+    vi.mocked(usePropostas).mockReturnValue({ data: [multiProposal, { ...proposal, idProposta: 41 }], isLoading: false, error: null } as ReturnType<typeof usePropostas>);
+    const confirm = vi.fn();
+    render(<PipelineGanhoDialog negocio={negocio} usuarios={[]} isProcessing={false} onClose={vi.fn()} onConfirm={confirm} />);
+    fireEvent.change(screen.getByLabelText("Proposta aprovada pelo cliente"), { target: { value: "40" } });
+    fireEvent.change(screen.getByLabelText("Responsável técnico por CFO"), { target: { value: "3" } });
+    fireEvent.change(screen.getByLabelText("Proposta aprovada pelo cliente"), { target: { value: "41" } });
+    expect(screen.queryByLabelText("Responsável técnico por CFO")).not.toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Proposta aprovada pelo cliente"), { target: { value: "40" } });
+    expect(screen.getByLabelText("Responsável técnico por CFO")).toHaveValue("");
+    fireEvent.click(screen.getByRole("button", { name: "Marcar como ganho" }));
+    expect(confirm).not.toHaveBeenCalled();
+  });
+
   it("exige um técnico e envia os IDs da proposta aprovada e do técnico", () => {
     const confirm = vi.fn();
     render(<PipelineGanhoDialog negocio={negocio} usuarios={[]} isProcessing={false} onClose={vi.fn()} onConfirm={confirm} />);

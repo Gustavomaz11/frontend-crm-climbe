@@ -1,6 +1,7 @@
 import { destroyCookie, setCookie } from "nookies";
 
 export const ACCESS_TOKEN_COOKIE = "CLIMB_ACCESS_TOKEN";
+export const AUTH_SESSION_CHANGED_EVENT = "climb:auth-session-changed";
 export const REFRESH_TOKEN_COOKIE = "CLIMB_REFRESH_TOKEN";
 export const REFRESH_TOKEN_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 7;
 
@@ -19,6 +20,7 @@ export const saveAccessToken = (accessToken: string, expiresIn: number) => {
     secure: isSecureContext(),
     sameSite: "strict",
   });
+  if (typeof window !== "undefined") window.dispatchEvent(new Event(AUTH_SESSION_CHANGED_EVENT));
 };
 
 export const saveRefreshToken = (refreshToken: string) => {
@@ -33,6 +35,7 @@ export const saveRefreshToken = (refreshToken: string) => {
 export const clearAuthCookies = () => {
   destroyCookie(undefined, ACCESS_TOKEN_COOKIE, { path: "/" });
   destroyCookie(undefined, REFRESH_TOKEN_COOKIE, { path: "/" });
+  if (typeof window !== "undefined") window.dispatchEvent(new Event(AUTH_SESSION_CHANGED_EVENT));
 };
 
 export const clearLegacyAuthStorage = () => {

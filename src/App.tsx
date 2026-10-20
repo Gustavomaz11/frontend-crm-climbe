@@ -14,6 +14,7 @@ import { PublicRoute } from "@/guards/PublicRoute";
 import { PendingRegistrationRoute } from "@/guards/PendingRegistrationRoute";
 import { RouteLoading } from "@/components/layout/RouteLoading";
 import { ReuniaoConvitePopup } from "@/components/reunioes/ReuniaoConvitePopup";
+import { AvisosTempoReal } from "@/components/avisos/AvisosTempoReal";
 import {
   Agenda,
   AprovarAcesso,
@@ -57,6 +58,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <ReuniaoConvitePopup />
+          <AvisosTempoReal />
           <SpeedInsights />
           <Analytics />
           <Suspense fallback={<RouteLoading />}>

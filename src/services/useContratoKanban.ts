@@ -8,8 +8,9 @@ const usuarioAtualId = () => {
   const { basicUserData, userData } = useAuthStore.getState();
   return basicUserData?.id ?? userData?.id;
 };
-const boardQueryKey = (contratoId?: number, usuarioId = usuarioAtualId()) =>
-  usuarioId ? ["contratos", contratoId, "kanban", usuarioId] : ["contratos", contratoId, "kanban"];
+const boardQueryKey = (contratoId?: number, usuarioId = usuarioAtualId(), servico?: string | null) =>
+  [...(usuarioId ? ["contratos", contratoId, "kanban", usuarioId] : ["contratos", contratoId, "kanban"]),
+    ...(servico ? ["servico", servico] : [])];
 
 interface ApiEnvelope<T> {
   success: boolean;
@@ -68,6 +69,7 @@ export interface ContratoKanbanRaia {
 }
 
 export interface ContratoKanbanBoard {
+  servico?: string | null;
   podeEditar?: boolean;
   contratoId: number;
   contratoTitulo?: string | null;
@@ -79,6 +81,7 @@ export interface ContratoKanbanBoard {
 }
 
 export interface KanbanRaiaDTO {
+  servico?: string;
   concluiTarefas?: boolean;
   titulo: string;
   posicao?: number;
@@ -162,29 +165,34 @@ function getApiErrorMessage(error: unknown) {
 export interface ContratoKanbanAbertura {
   equipe: ContratoEquipe;
   board: ContratoKanbanBoard | null;
+  podeEncerrar?: boolean;
 }
 
-export function useContratoKanbanAbertura(contratoId?: number, usuarioId = usuarioAtualId()) {
+export function useContratoKanbanAbertura(contratoId?: number, usuarioId = usuarioAtualId(), servico?: string) {
   const client = useQueryClient();
   return useQuery<ContratoKanbanAbertura>({
-    queryKey: ["contratos", contratoId, "abertura", usuarioId],
+    queryKey: ["contratos", contratoId, "abertura", usuarioId, ...(servico ? ["servico", servico] : [])],
     enabled: !!contratoId && !!usuarioId,
     retry: false,
     queryFn: async () => {
-      const response = await api.get<ApiEnvelope<ContratoKanbanAbertura>>(`/contratos/${contratoId}/kanban/abertura`);
+      const url = `/contratos/${contratoId}/kanban/abertura`;
+      const response = await (servico ? api.get<ApiEnvelope<ContratoKanbanAbertura>>(url, { params: { servico } })
+        : api.get<ApiEnvelope<ContratoKanbanAbertura>>(url));
       const abertura = unwrap(response.data);
       client.setQueryData(["contratos", contratoId, "equipe", usuarioId], abertura.equipe);
-      client.setQueryData(boardQueryKey(contratoId, usuarioId), abertura.board);
+      client.setQueryData(boardQueryKey(contratoId, usuarioId, servico), abertura.board);
       return abertura;
     },
   });
 }
 
-export function useContratoKanban(contratoId?: number, usuarioId?: number, enabled = true) {
+export function useContratoKanban(contratoId?: number, usuarioId?: number, enabled = true, servico?: string) {
   return useQuery<ContratoKanbanBoard>({
-    queryKey: boardQueryKey(contratoId, usuarioId),
+    queryKey: boardQueryKey(contratoId, usuarioId, servico),
     queryFn: async () => {
-      const response = await api.get<ApiEnvelope<ContratoKanbanBoard>>(`/contratos/${contratoId}/kanban`);
+      const url = `/contratos/${contratoId}/kanban`;
+      const response = await (servico ? api.get<ApiEnvelope<ContratoKanbanBoard>>(url, { params: { servico } })
+        : api.get<ApiEnvelope<ContratoKanbanBoard>>(url));
       return unwrap(response.data);
     },
     enabled: !!contratoId && enabled,
@@ -263,7 +271,7 @@ export function useCreateKanbanTask() {
       }
     },
     onSuccess: (board, variables) => {
-      const queryKey = boardQueryKey(variables.contratoId);
+      const queryKey = boardQueryKey(variables.contratoId, usuarioAtualId(), board.servico);
       queryClient.setQueryData(queryKey, board);
       queryClient.invalidateQueries({ queryKey: ["contratos"] });
       queryClient.invalidateQueries({ queryKey: ["empresas"] });
@@ -296,7 +304,7 @@ export function useMoveKanbanTask() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ contratoId, taskId, data }: { contratoId: number; taskId: number; data: MoveKanbanTaskDTO }) => {
+    mutationFn: async ({ contratoId, taskId, data }: { contratoId: number; taskId: number; data: MoveKanbanTaskDTO; servico?: string }) => {
       try {
         const response = await api.patch<ApiEnvelope<ContratoKanbanBoard>>(`/contratos/${contratoId}/kanban/tasks/${taskId}/raia`, data);
         return unwrap(response.data);
@@ -305,7 +313,7 @@ export function useMoveKanbanTask() {
       }
     },
     onMutate: async (variables) => {
-      const queryKey = boardQueryKey(variables.contratoId);
+      const queryKey = boardQueryKey(variables.contratoId, usuarioAtualId(), variables.servico);
       await queryClient.cancelQueries({ queryKey });
       const previousBoard = queryClient.getQueryData<ContratoKanbanBoard>(queryKey);
 

@@ -27,7 +27,7 @@ export const ContratoEquipeDialog = ({ equipe, titulo, usuarios, onClose, onSave
     </header>
     <FormValidation as="form" className="flex min-h-0 flex-1 flex-col" onSubmit={e => { e.preventDefault(); void submit(); }}>
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto p-5">
-        <p className="text-sm text-muted-foreground">Selecione as pessoas que irão trabalhar no contrato. Elas poderão criar e editar tarefas, subtarefas, anexos e comentários. O líder técnico permanece na equipe.</p>
+        <p className="text-sm text-muted-foreground">Selecione as pessoas que irão trabalhar no contrato. Elas poderão criar e editar tarefas, subtarefas, anexos e comentários. Os responsáveis técnicos dos serviços permanecem na equipe.</p>
         <UserMultiSelect users={usuarios} value={ids} onChange={setIds} required label="Equipe fixa" disabled={save.isPending} />
         {!!equipe.temporarios.length && <section className="rounded-lg border border-border/25 p-4">
           <h3 className="text-sm font-semibold">Pessoas de apoio</h3>

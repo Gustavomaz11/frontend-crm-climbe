@@ -10,15 +10,16 @@ const render = (ui: React.ReactElement) => {
   return renderUi(ui, { wrapper: ({ children }) => <QueryClientProvider client={client}>{children}</QueryClientProvider> });
 };
 
-const mocks = vi.hoisted(() => ({ equipe: {} as Record<string, unknown>, board: {} as Record<string, unknown>, buscarBoard: vi.fn(), move: vi.fn() }));
+const mocks = vi.hoisted(() => ({ equipe: {} as Record<string, unknown>, board: {} as Record<string, unknown>, buscarBoard: vi.fn(), buscarServico: vi.fn(), move: vi.fn(),
+  contratos: [] as { id: number; empresaNome: string; titulo: string; status: string; servico?: string; servicos?: { servico: string }[] }[] }));
 vi.mock("@/services", async importOriginal => {
   const original = await importOriginal<typeof import("@/services")>();
   const mutation = () => ({ mutateAsync: vi.fn(), isPending: false });
   return { ...original,
-    useContratosKanbanDisponiveis: () => ({ data: [{ id: 12, empresaNome: "Empresa teste", titulo: "contrato.pdf", status: "APROVADO", servico: "CONTABILIDADE" }] }),
+    useContratosKanbanDisponiveis: () => ({ data: mocks.contratos, isSuccess: true }),
     useContratoEquipe: (id?: number) => ({ data: id ? mocks.equipe : undefined }),
     useContratoKanbanAbertura: () => ({ isLoading: false }),
-    useContratoKanban: (id?: number) => { mocks.buscarBoard(id); return { data: id ? mocks.board : undefined }; },
+    useContratoKanban: (id?: number, _usuarioId?: number, _enabled?: boolean, servico?: string) => { mocks.buscarBoard(id); mocks.buscarServico(servico); return { data: id ? mocks.board : undefined }; },
     useUsuarios: () => ({ data: [] }),
     ...Object.fromEntries(["useCreateKanbanSubtarefa", "useCreateKanbanRaia", "useCreateKanbanTask", "useDeleteKanbanSubtarefa", "useDeleteKanbanRaia", "useDeleteKanbanTask", "useMoveKanbanTask", "useToggleKanbanSubtarefa", "useUpdateKanbanSubtarefa", "useUpdateKanbanRaia", "useUpdateKanbanTask"].map(name => [name, mutation])),
     useMoveKanbanTask: () => ({ mutateAsync: mocks.move, isPending: false }),
@@ -33,12 +34,28 @@ vi.mock("@/hooks/useSidebarState", () => ({ useSidebarState: () => [false, vi.fn
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.move.mockResolvedValue({});
+  mocks.contratos = [{ id: 12, empresaNome: "Empresa teste", titulo: "contrato.pdf", status: "APROVADO", servico: "CONTABILIDADE" }];
   mocks.equipe = { contratoId: 12, configurada: false, lider: true, membros: [], temporarios: [], usuariosDisponiveis: [] };
   mocks.board = { contratoId: 12, gestor: false, podeEditar: true, participantes: [], usuariosDisponiveis: [], raias: [{ id: 1, titulo: "A fazer", tasks: [] }] };
 });
 const abrir = (url = "/contratos/kanban") => render(<MemoryRouter initialEntries={[url]}><ContratosKanban /></MemoryRouter>);
 
 describe("abertura do kanban do contrato", () => {
+  it("abre um quadro separado para cada serviço do mesmo contrato", () => {
+    mocks.equipe = { ...mocks.equipe, configurada: true };
+    mocks.contratos = [{ id: 10, empresaNome: "Datawer Tec", titulo: "contrato.pdf", status: "APROVADO",
+      servicos: [{ servico: "CONTABILIDADE" }, { servico: "CFO" }] }];
+    abrir();
+    const contabilidade = screen.getByRole("button", { name: /Datawer Tec - Contabilidade/ });
+    const cfo = screen.getByRole("button", { name: /Datawer Tec - CFO/ });
+    expect(contabilidade).not.toHaveTextContent(" + CFO");
+    fireEvent.click(cfo);
+    expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent("Datawer Tec - CFO");
+    expect(mocks.buscarServico).toHaveBeenLastCalledWith("CFO");
+    fireEvent.click(contabilidade);
+    expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent("Datawer Tec - Contabilidade");
+    expect(mocks.buscarServico).toHaveBeenLastCalledWith("CONTABILIDADE");
+  });
   it("solicita equipe ao clicar no contrato e só consulta o quadro após configurá-la", () => {
     abrir();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
@@ -62,6 +79,22 @@ describe("abertura do kanban do contrato", () => {
     abrir("/contratos/kanban?contrato=12");
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Adicionar tarefa" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Encerrar Contrato" })).toBeDisabled();
+  });
+
+  it("responsável do outro serviço não pode encerrar o quadro aberto", () => {
+    mocks.equipe = { ...mocks.equipe, configurada: true, lider: true };
+    abrir("/contratos/kanban?contrato=12&servico=CONTABILIDADE");
+    expect(screen.getByRole("button", { name: "Encerrar Contrato" })).toBeDisabled();
+  });
+
+  it("limpa a seleção quando o quadro encerrado desaparece da lista", async () => {
+    mocks.equipe = { ...mocks.equipe, configurada: true };
+    const view = abrir("/contratos/kanban?contrato=12&servico=CONTABILIDADE");
+    mocks.contratos = [];
+    view.rerender(<MemoryRouter><ContratosKanban /></MemoryRouter>);
+    await waitFor(() => expect(screen.getByRole("heading", { level: 2 })).toHaveTextContent("Selecione um contrato"));
+    expect(screen.queryByRole("button", { name: "Adicionar tarefa" })).not.toBeInTheDocument();
   });
 
   it("arrastar uma tarefa atrasada para concluído pede justificativa antes de enviar", async () => {
@@ -78,7 +111,7 @@ describe("abertura do kanban do contrato", () => {
     expect(mocks.move).not.toHaveBeenCalled(); expect(screen.getByRole("dialog")).toHaveTextContent("Justificar atraso");
     fireEvent.change(screen.getByLabelText(/Justificativa do atraso/), { target: { value: "Cliente enviou documentos após o prazo." } });
     fireEvent.click(screen.getByRole("button", { name: "Justificar e concluir" }));
-    await waitFor(() => expect(mocks.move).toHaveBeenCalledWith({ contratoId: 12, taskId: 30, data: { raiaId: 2, justificativaAtraso: "Cliente enviou documentos após o prazo." } }));
+    await waitFor(() => expect(mocks.move).toHaveBeenCalledWith({ contratoId: 12, servico: "CONTABILIDADE", taskId: 30, data: { raiaId: 2, justificativaAtraso: "Cliente enviou documentos após o prazo." } }));
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   });
 });

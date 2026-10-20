@@ -8,6 +8,7 @@ export interface KanbanArquivoContexto {
   contratoId?: number;
   negocioId?: number;
   funilId?: number;
+  servico?: string;
 }
 
 export interface KanbanItemArquivado<T = unknown> {
@@ -41,7 +42,7 @@ export const useKanbanArquivados = <T,>(contexto: KanbanArquivoContexto, enabled
     queryKey: ["kanban-arquivos", usuarioId, contexto],
     enabled,
     queryFn: async () => (await api.get<KanbanItemArquivado<T>[]>(arquivoPath(contexto), {
-      params: { funilId: contexto.funilId, negocioId: contexto.negocioId },
+      params: { funilId: contexto.funilId, negocioId: contexto.negocioId, ...(contexto.servico ? { servico: contexto.servico } : {}) },
     })).data,
   });
 };

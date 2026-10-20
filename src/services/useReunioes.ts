@@ -304,8 +304,7 @@ export const useConvitesReuniaoPendentes = (usuarioId?: number) => useQuery({
   queryKey: ["reunioes", "convites", usuarioId],
   queryFn: async () => (await api.get<ReuniaoApi[]>("/reunioes/convites/pendentes")).data.map(normalizeReuniao),
   enabled: !!usuarioId,
-  refetchInterval: 5_000,
-  refetchIntervalInBackground: true,
+  refetchOnMount: "always",
   staleTime: 0,
 });
 

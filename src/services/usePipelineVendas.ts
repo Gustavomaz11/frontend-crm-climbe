@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { CommercialService } from "./commercialProposal";
 import { isAxiosError } from "axios";
 import { api } from "@/api";
 
@@ -69,6 +70,11 @@ export interface PipelineBoard {
   funilId: number;
   funilNome: string;
   etapas: PipelineEtapa[];
+}
+
+export interface PipelineResponsavelServico {
+  servico: CommercialService;
+  responsavelTecnicoId: number;
 }
 
 export interface PipelineNegocioInput {
@@ -202,14 +208,15 @@ export const useMovePipelineNegocio = () => {
   const queryClient = useQueryClient();
   const invalidate = useInvalidatePipeline();
   return useMutation({
-    mutationFn: async ({ id, etapaId, motivoPerdaId, observacaoPerda, responsavelTecnicoId, propostaId }: {
+    mutationFn: async ({ id, etapaId, motivoPerdaId, observacaoPerda, responsavelTecnicoId, propostaId, responsaveisPorServico }: {
       id: number; etapaId: number; motivoPerdaId?: number; observacaoPerda?: string;
       responsavelTecnicoId?: number; propostaId?: number;
+      responsaveisPorServico?: PipelineResponsavelServico[];
     }) => {
       try {
         return unwrap((await api.patch<ApiResponse<PipelineNegocio>>(
           `/pipeline-vendas/negocios/${id}/etapa`,
-          { etapaId, motivoPerdaId, observacaoPerda, responsavelTecnicoId, propostaId },
+          { etapaId, motivoPerdaId, observacaoPerda, responsavelTecnicoId, propostaId, responsaveisPorServico },
         )).data);
       } catch (error) {
         throw new Error(getErrorMessage(error));
@@ -238,16 +245,17 @@ export const useMovePipelineNegocio = () => {
 export const useConcludePipelineNegocio = () => {
   const invalidate = useInvalidatePipeline();
   return useMutation({
-    mutationFn: async ({ id, resultado, motivoPerdaId, observacaoPerda, responsavelTecnicoId, propostaId }: {
+    mutationFn: async ({ id, resultado, motivoPerdaId, observacaoPerda, responsavelTecnicoId, propostaId, responsaveisPorServico }: {
       id: number; resultado: Exclude<PipelineResultado, "ABERTO">;
       motivoPerdaId?: number; observacaoPerda?: string;
       responsavelTecnicoId?: number; propostaId?: number;
+      responsaveisPorServico?: PipelineResponsavelServico[];
     }) => {
       const action = resultado === "GANHO" ? "ganhar" : "perder";
       try {
         return unwrap((await api.patch<ApiResponse<PipelineNegocio>>(
           `/pipeline-vendas/negocios/${id}/${action}`,
-          resultado === "PERDIDO" ? { motivoPerdaId, observacaoPerda } : { responsavelTecnicoId, propostaId },
+          resultado === "PERDIDO" ? { motivoPerdaId, observacaoPerda } : { responsavelTecnicoId, propostaId, responsaveisPorServico },
         )).data);
       } catch (error) {
         throw new Error(getErrorMessage(error));

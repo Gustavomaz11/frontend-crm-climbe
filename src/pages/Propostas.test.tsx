@@ -1,6 +1,6 @@
 vi.mock("@/hooks/useCrudPermissions", () => ({ useCrudPermissions: () => ({ canRead: true, canCreate: canWrite, canEdit: canWrite, canDelete: true, canAccess: true, isLoading: false }) }));
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import Propostas from "./Propostas";
@@ -8,6 +8,7 @@ import Propostas from "./Propostas";
 let canWrite = true;
 let proposalRows: import("@/services/usePropostas").PropostaApi[] = [];
 const create = vi.fn();
+const Location = () => { const location = useLocation(); return <output aria-label="Rota atual">{location.pathname}{location.search}</output>; };
 vi.mock("@/services", async (importOriginal) => ({
   ...await importOriginal<typeof import("@/services")>(),
   useEmpresas: () => ({ data: [{ id: 1, nome: "Climbe" }] }),
@@ -57,5 +58,15 @@ describe("envio de proposta", () => {
       configuracao: { mesInicio: "2026-10-01", quantidadeParcelas: 12, servicos: [{ servico: "BPO", valor: 50000 }] } });
     expect(payload.configuracao.recebimentos).toHaveLength(12);
     expect(payload.configuracao.recebimentos.reduce((sum: number, item: { valor: number }) => sum + Math.round(item.valor * 100), 0)).toBe(5000000);
+  });
+
+  it("abre a proposta indicada pela notificação e consome o parâmetro", async () => {
+    proposalRows = [{ idProposta: 10, empresaId: 1, usuarioId: 7, url: "aceita.pdf", valuation: 1000, status: "APROVADA" }];
+    render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+      <MemoryRouter initialEntries={["/propostas?proposta=10"]}><Propostas /><Location /></MemoryRouter>
+    </QueryClientProvider>);
+    await waitFor(() => expect(screen.getByRole("heading", { name: "aceita.pdf" })).toBeInTheDocument());
+    expect(screen.getByLabelText("Rota atual")).toHaveTextContent("/propostas");
+    expect(screen.getByLabelText("Rota atual")).not.toHaveTextContent("?proposta=");
   });
 });

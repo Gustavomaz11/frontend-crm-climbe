@@ -115,7 +115,7 @@ const Propostas = () => {
   const proposalTotal = parseCurrencyInput(valuationInput);
   const inputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const contextualEmpresaId = Number(searchParams.get("empresaId")) || 0;
   const contextualNegocioId = Number(searchParams.get("negocioId")) || 0;
 
@@ -169,6 +169,16 @@ const Propostas = () => {
       })),
     [empresasById, propostas],
   );
+
+  useEffect(() => {
+    const id = Number(searchParams.get("proposta"));
+    if (!canRead || !Number.isSafeInteger(id) || id <= 0) return;
+    const proposta = propostasView.find(item => item.id === id);
+    if (!proposta) return;
+    setSelectedProposta(proposta); setModalError("");
+    const params = new URLSearchParams(searchParams); params.delete("proposta");
+    setSearchParams(params, { replace: true });
+  }, [canRead, propostasView, searchParams, setSearchParams]);
 
   useEffect(() => {
     if (!uploadError && !uploadDone) return;
