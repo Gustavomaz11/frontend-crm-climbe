@@ -19,6 +19,8 @@ export const useAvisosTempoReal = (usuarioId?: number) => {
       }
       if (pendentes.has("convites") || pendentes.has("sincronizar")) {
         void client.invalidateQueries({ queryKey: ["reunioes", "convites", usuarioId] });
+        // A reunião precisa estar na agenda atual antes de o convidado abrir os detalhes pelo aviso.
+        void client.invalidateQueries({ queryKey: ["reunioes"], exact: true });
       }
       if (pendentes.has("kanban") || pendentes.has("sincronizar")) {
         void client.invalidateQueries({ queryKey: ["contratos", "kanban-resumos", usuarioId] });

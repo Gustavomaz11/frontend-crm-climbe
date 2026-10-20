@@ -1,6 +1,9 @@
 import type { Notificacao } from "./useNotificacoes";
 
 const titulos: Record<string, string> = {
+  TAREFA_VENCIMENTO: "Atenção ao prazo da tarefa",
+  TAREFA_ATRASADA: "Esta tarefa está atrasada",
+  REUNIAO_AGENDADA: "Você tem um convite para reunião",
   TAREFA_ATRIBUIDA: "Uma nova tarefa para você",
   TAREFA_CRIADA: "Nova tarefa no Kanban",
   TAREFA_A_FAZER: "Uma tarefa voltou para a fila",
@@ -16,6 +19,8 @@ const titulos: Record<string, string> = {
   CONTRATO_VENCIMENTO: "Atenção ao prazo do contrato",
   CONTRATO: "Novidades do seu contrato",
 };
+
+export const notificacaoUsaDialogoPrazo = (tipo: string) => tipo === "TAREFA_VENCIMENTO" || tipo === "TAREFA_ATRASADA";
 
 /** Apresenta também os avisos antigos sem expor os caminhos internos de navegação. */
 export const getNotificacaoApresentacao = ({ tipo, mensagem: original }: Pick<Notificacao, "tipo" | "mensagem">) => {

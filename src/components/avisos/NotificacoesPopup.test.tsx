@@ -63,6 +63,54 @@ afterEach(async () => {
 
 describe("avisos discretos de notificações", () => {
   it.each([
+    ["TAREFA_VENCIMENTO", "Atenção ao prazo da tarefa"],
+    ["TAREFA_ATRASADA", "Esta tarefa está atrasada"],
+  ])("reserva o popup grande para %s e mantém o aviso no sininho ao fechar", async (tipo, titulo) => {
+    avisos = [aviso(1, tipo)]; setup({ bell: true });
+    expect(await screen.findByRole("alertdialog", { name: titulo })).toHaveTextContent(avisos[0].mensagem);
+    expect(popup()).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Notificações, 1 não lidas")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Agora não" }));
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument());
+    expect(screen.getByRole("button", { name: "Notificações, 1 não lidas" })).toBeInTheDocument();
+    expect(api.patch).not.toHaveBeenCalled();
+  });
+
+  it("abre a tarefa do serviço pelo aviso grande e só marca como lido após a confirmação", async () => {
+    avisos = [aviso(1, "TAREFA_ATRASADA")]; vi.mocked(api.patch).mockRejectedValueOnce(new Error("Falha")); setup();
+    fireEvent.click(await screen.findByRole("button", { name: "Ver tarefa" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Tente de novo");
+    expect(screen.getByRole("alertdialog")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Ver tarefa" }));
+    await waitFor(() => expect(screen.getByLabelText("Rota atual")).toHaveTextContent(avisos[0].destino!));
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument());
+    expect(api.patch).toHaveBeenCalledTimes(2);
+  });
+
+  it("alternar entre avisos comuns e de prazo não sobrepõe os dois tipos de popup", async () => {
+    avisos = [aviso(1), aviso(2, "TAREFA_VENCIMENTO"), aviso(3, "REUNIAO_AGENDADA")]; setup();
+    await esperarPopup(); fechar();
+    expect(await screen.findByRole("alertdialog")).toHaveTextContent("Aviso 2");
+    expect(popup()).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Agora não" }));
+    await esperarPopup("Aviso 3");
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(api.patch).not.toHaveBeenCalled();
+  });
+
+  it("aguarda outros diálogos antes do aviso grande e o remove ao encerrar a sessão", async () => {
+    const outro = document.createElement("dialog"); outro.setAttribute("open", ""); outro.dataset.testeOutroDialogo = "";
+    document.body.appendChild(outro); avisos = [aviso(1, "TAREFA_VENCIMENTO")]; const { client } = setup();
+    await waitFor(() => expect(client.getQueryData(["notificacoes", 7])).toEqual(avisos));
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    await act(async () => { outro.remove(); });
+    expect(await screen.findByRole("alertdialog")).toBeInTheDocument();
+    act(() => clearAuthCookies());
+    await waitFor(() => expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument());
+  });
+
+  it.each([
+    ["REUNIAO_AGENDADA", "Você tem um convite para reunião", "/agenda?reuniaoId=3"],
     ["TAREFA_ATRIBUIDA", "Uma nova tarefa para você", "/contratos/kanban?contrato=12&tarefaId=34&servico=CFO"],
     ["PROPOSTA_ACEITA", "Boa notícia: proposta aceita!", "/propostas?proposta=12"],
     ["PROPOSTA_REVISAO_SOLICITADA", "O cliente pediu ajustes na proposta", "/propostas?proposta=12"],
@@ -72,13 +120,30 @@ describe("avisos discretos de notificações", () => {
     ["CONTRATO_REVISAO_SOLICITADA", "O cliente pediu ajustes no contrato", "/contratos?contrato=12"],
     ["CONTRATO_REPROVADO", "O cliente não aprovou o contrato", "/contratos?contrato=12"],
   ])("mostra %s no mesmo toaster das boas-vindas e abre o destino", async (tipo, titulo, destino) => {
-    avisos = [aviso(1, tipo, destino)]; setup(); await esperarPopup();
+    avisos = [aviso(1, tipo, destino)]; setup({ bell: true }); await esperarPopup();
     expect(popup()).toHaveTextContent(titulo);
+    expect(screen.getByRole("button", { name: "Notificações, 1 não lidas" })).toBeInTheDocument();
     expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Ver detalhes" }));
     await waitFor(() => expect(api.patch).toHaveBeenCalledWith("/notificacoes/minhas/1/lida"));
     await waitFor(() => expect(screen.getByLabelText("Rota atual")).toHaveTextContent(destino)); await esperarFechar();
+  });
+
+  it.each([
+    "TAREFA_CRIADA", "TAREFA_A_FAZER", "TAREFA_CONCLUIDA", "CONTRATO_ENVIADO",
+    "CONTRATO_VENCIMENTO", "CONTRATO", "GERAL", "NOVO_TIPO_DE_AVISO",
+  ])("mantém %s somente no aviso pequeno e no sininho, sem abrir modal", async tipo => {
+    avisos = [aviso(1, tipo, null)]; setup({ bell: true }); await esperarPopup();
+    expect(document.querySelectorAll('[data-sonner-toast]:not([data-removed="true"])')).toHaveLength(1);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    expect(document.body.style.overflow).not.toBe("hidden");
+    expect(document.body.style.pointerEvents).not.toBe("none");
+    expect(screen.getByRole("button", { name: "Notificações, 1 não lidas" })).toBeInTheDocument();
+    fechar(); await esperarFechar();
+    expect(screen.getByRole("button", { name: "Notificações, 1 não lidas" })).toBeInTheDocument();
+    expect(api.patch).not.toHaveBeenCalled();
   });
 
   it("humaniza avisos antigos no popup e no sininho, preservando a navegação", async () => {

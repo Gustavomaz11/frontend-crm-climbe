@@ -6,6 +6,8 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { useMinhasNotificacoes } from "@/services/useNotificacoes";
 import { useNotificacaoPopupDisponivel } from "@/hooks/useNotificacaoPopupDisponivel";
 import { NotificacaoPopupToast } from "./NotificacaoPopupToast";
+import { NotificacaoPrazoDialog } from "./NotificacaoPrazoDialog";
+import { notificacaoUsaDialogoPrazo } from "@/services/notificacaoApresentacao";
 
 const sessaoAtiva = () => {
   const cookies = parseCookies();
@@ -42,7 +44,8 @@ const PopupsDoUsuario = ({ usuarioId }: { usuarioId: number }) => {
   const dispensar = () => {
     setVistos(anteriores => new Set(anteriores).add(notificacao.id));
   };
-  return <NotificacaoPopupToast key={notificacao.id} notificacao={notificacao} onDismiss={dispensar} onRead={destino => {
+  const Popup = notificacaoUsaDialogoPrazo(notificacao.tipo) ? NotificacaoPrazoDialog : NotificacaoPopupToast;
+  return <Popup key={notificacao.id} notificacao={notificacao} onDismiss={dispensar} onRead={destino => {
     if (!ativo.current) return;
     dispensar();
     if (destino) navigate(destino);
