@@ -262,7 +262,9 @@ export function useReunioes() {
   return useQuery<Reuniao[]>({
     queryKey: ["reunioes"],
     queryFn: () => fetchReuniaoList("/reunioes"),
-    refetchOnWindowFocus: false,
+    // Uma exclusão no Google pode acontecer mesmo enquanto o cache ainda é recente.
+    refetchOnWindowFocus: "always",
+    refetchOnMount: "always",
     staleTime: 60000,
   });
 }

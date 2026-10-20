@@ -1,11 +1,11 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, renderHook } from "@testing-library/react";
+import { focusManager, QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import type { PropsWithChildren } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "@/api";
-import { useCreateReuniao, useUpdateReuniao } from "./useReunioes";
+import { useCreateReuniao, useReunioes, useUpdateReuniao } from "./useReunioes";
 
-vi.mock("@/api", () => ({ api: { post: vi.fn(), put: vi.fn() } }));
+vi.mock("@/api", () => ({ api: { get: vi.fn(), post: vi.fn(), put: vi.fn() } }));
 
 const wrapper = ({ children }: PropsWithChildren) => <QueryClientProvider client={new QueryClient()}>{children}</QueryClientProvider>;
 const data = { titulo: "Alinhamento", data: "2026-10-20", hora: "10:00", presencial: true, salaEmail: "sala@resource.calendar.google.com" };
@@ -42,5 +42,51 @@ describe("agendamento de reuniões", () => {
     const payload = vi.mocked(api.put).mock.calls[0][1];
     expect(JSON.parse(JSON.stringify(payload))).not.toHaveProperty("participanteIds");
     expect(payload).toMatchObject({ empresaId: null, salaEmail: data.salaEmail, status: "CONFIRMADA" });
+  });
+});
+
+describe("sincronização da Agenda ao retornar ao CRM", () => {
+  afterEach(() => focusManager.setFocused(undefined));
+
+  it("sincroniza ao abrir a Agenda mesmo quando existe uma lista recente em cache", async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const queryWrapper = ({ children }: PropsWithChildren) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    );
+    client.setQueryData(["reunioes"], [{ ...data, idReuniao: 11 }]);
+    vi.mocked(api.get).mockReset();
+    vi.mocked(api.get).mockResolvedValueOnce({ data: [] });
+    const { result, unmount } = renderHook(() => useReunioes(), { wrapper: queryWrapper });
+    try {
+      await waitFor(() => expect(result.current.data).toEqual([]));
+      expect(api.get).toHaveBeenCalledTimes(1);
+    } finally {
+      unmount();
+      client.clear();
+    }
+  });
+
+  it("remove da tela a reunião excluída no Google mesmo com cache recente", async () => {
+    const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const queryWrapper = ({ children }: PropsWithChildren) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    );
+    vi.mocked(api.get).mockReset();
+    vi.mocked(api.get)
+      .mockResolvedValueOnce({ data: [{ ...data, idReuniao: 11 }] })
+      .mockResolvedValueOnce({ data: [] });
+    const { result, unmount } = renderHook(() => useReunioes(), { wrapper: queryWrapper });
+    try {
+      await waitFor(() => expect(result.current.data).toHaveLength(1));
+
+      act(() => focusManager.setFocused(false));
+      act(() => focusManager.setFocused(true));
+
+      await waitFor(() => expect(result.current.data).toEqual([]));
+      expect(api.get).toHaveBeenCalledTimes(2);
+    } finally {
+      unmount();
+      client.clear();
+    }
   });
 });

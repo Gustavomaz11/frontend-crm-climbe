@@ -4,6 +4,7 @@ import { useContratoPermissions } from "@/hooks/useContratoPermissions";
 import { useCrudPermissions } from "@/hooks/useCrudPermissions";
 import { useDeferredValue, useMemo, useState } from "react";
 import { getReuniaoError, type Reuniao } from "@/services/useReunioes";
+import { useReuniaoDisponibilidade } from "@/services/useReuniaoDisponibilidade";
 import { ReunioesDiaModal, type DiaReunioesAberto } from "@/components/reunioes/ReunioesDiaModal";
 import { reunioesDoDia } from "@/components/reunioes/reuniaoPresentation";
 import { SalaReuniaoSelect } from "@/components/reunioes/SalaReuniaoSelect";
@@ -88,6 +89,7 @@ interface DashboardMeetingForm {
   empresaId: string;
   data: string;
   hora: string;
+  horaFim: string;
   local: string;
   salaEmail: string;
   participanteIds: number[];
@@ -109,6 +111,7 @@ const initialDashboardMeetingForm = (date = new Date()): DashboardMeetingForm =>
   empresaId: "",
   data: calendarDateInput(date.getFullYear(), date.getMonth(), date.getDate()),
   hora: "",
+  horaFim: "",
   local: "",
   salaEmail: "",
   participanteIds: [],
@@ -371,6 +374,14 @@ const Dashboard = () => {
     initialDashboardMeetingForm(),
   );
   const [meetingError, setMeetingError] = useState("");
+  const disponibilidadeReuniao = useReuniaoDisponibilidade({
+    data: meetingForm.data, hora: meetingForm.hora, horaFim: meetingForm.horaFim,
+  }, true, meetingForm.local, maxCalendar && showAddMeeting);
+  const salaDisponivel = disponibilidadeReuniao.data?.salas.find(
+    sala => sala.email.toLowerCase() === meetingForm.salaEmail.toLowerCase(),
+  )?.disponivel;
+  const localImpedido = disponibilidadeReuniao.data?.localDisponivel === false
+    || Boolean(meetingForm.salaEmail && (disponibilidadeReuniao.consultando || salaDisponivel !== true));
   const [selectedStage, setSelectedStage] = useState<{
     label: string;
     docs: string[];
@@ -1344,15 +1355,18 @@ const Dashboard = () => {
 
     if (
       !meetingForm.titulo.trim() ||
-      !meetingForm.data ||
-      !meetingForm.hora
+      !disponibilidadeReuniao.valido
     ) {
-      setMeetingError("Preencha título, data e horário.");
+      setMeetingError("Preencha título, data, horário de início e término. O término deve ser posterior ao início.");
       return;
     }
 
     if (!meetingForm.salaEmail && !meetingForm.local.trim()) {
       setMeetingError("Escolha uma sala ou informe o local da reunião.");
+      return;
+    }
+    if (localImpedido || disponibilidadeReuniao.consultando) {
+      setMeetingError("Escolha uma sala/local disponível durante todo o período da reunião.");
       return;
     }
 
@@ -1362,6 +1376,7 @@ const Dashboard = () => {
         empresaId: meetingForm.empresaId ? Number(meetingForm.empresaId) : null,
         data: meetingForm.data,
         hora: meetingForm.hora,
+        horaFim: meetingForm.horaFim,
         local: meetingForm.local.trim(),
         salaEmail: meetingForm.salaEmail || null,
         participanteIds: meetingForm.participanteIds,
@@ -1376,6 +1391,7 @@ const Dashboard = () => {
       setShowAddMeeting(false);
     } catch (error) {
       setMeetingError(getReuniaoError(error));
+      void disponibilidadeReuniao.refetch();
     }
   };
 
@@ -1546,14 +1562,14 @@ const Dashboard = () => {
                 className="h-9 w-full rounded-lg border border-border/60 bg-background/50 px-3 text-[12px] outline-none transition-colors placeholder:text-muted-foreground focus:border-accent/40"
               />
 
-              <div className="grid grid-cols-2 gap-3">
+              <div>
                 <select
                   aria-label="Cliente (opcional)"
                   value={meetingForm.empresaId}
                   onChange={(event) =>
                     setMeetingForm((form) => ({ ...form, empresaId: event.target.value }))
                   }
-                  className="h-9 rounded-lg border border-border/60 bg-background/50 px-3 text-[12px] outline-none transition-colors placeholder:text-muted-foreground focus:border-accent/40"
+                  className="h-9 w-full rounded-lg border border-border/60 bg-background/50 px-3 text-[12px] outline-none transition-colors placeholder:text-muted-foreground focus:border-accent/40"
                 >
                   <option value="">Sem cliente (reunião da equipe)</option>
                   {empresas.map((empresa) => (
@@ -1562,27 +1578,38 @@ const Dashboard = () => {
                     </option>
                   ))}
                 </select>
-                <input
-                  type="time"
-                  aria-label="Horário"
-                  value={meetingForm.hora}
-                  onChange={(event) =>
-                    setMeetingForm((form) => ({ ...form, hora: event.target.value }))
-                  }
-                  className="h-9 rounded-lg border border-border/60 bg-background/50 px-3 text-[12px] outline-none transition-colors placeholder:text-muted-foreground focus:border-accent/40"
-                />
               </div>
 
-              <input
-                type="date"
-                aria-label="Data"
-                value={meetingForm.data}
-                onChange={(event) => setMeetingForm((form) => ({ ...form, data: event.target.value }))}
-                className="h-9 w-full rounded-lg border border-border/60 bg-background/50 px-3 text-[12px] outline-none transition-colors focus:border-accent/40"
-              />
+              <div className="grid gap-3 sm:grid-cols-3">
+                <label className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                  Data *
+                  <input required type="date" value={meetingForm.data}
+                    onChange={(event) => setMeetingForm((form) => ({ ...form, data: event.target.value }))}
+                    className="mt-1.5 h-9 w-full rounded-lg border border-border/60 bg-background/50 px-3 text-[12px] text-foreground outline-none transition-colors focus:border-accent/40" />
+                </label>
+                <label className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                  Início *
+                  <input required type="time" value={meetingForm.hora}
+                    onChange={(event) => setMeetingForm((form) => ({ ...form, hora: event.target.value }))}
+                    className="mt-1.5 h-9 w-full rounded-lg border border-border/60 bg-background/50 px-3 text-[12px] text-foreground outline-none transition-colors focus:border-accent/40" />
+                </label>
+                <label className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                  Término *
+                  <input required type="time" min={meetingForm.hora || undefined} value={meetingForm.horaFim}
+                    onChange={(event) => setMeetingForm((form) => ({ ...form, horaFim: event.target.value }))}
+                    className="mt-1.5 h-9 w-full rounded-lg border border-border/60 bg-background/50 px-3 text-[12px] text-foreground outline-none transition-colors focus:border-accent/40" />
+                </label>
+              </div>
 
-              <ParticipantesReuniaoSelect value={meetingForm.participanteIds} onChange={(participanteIds) => setMeetingForm((form) => ({ ...form, participanteIds }))} />
-              <SalaReuniaoSelect email={meetingForm.salaEmail} local={meetingForm.local} onChange={(salaEmail, local) => setMeetingForm((form) => ({ ...form, salaEmail, local }))} />
+              {meetingForm.hora && meetingForm.horaFim && !disponibilidadeReuniao.valido && (
+                <p role="alert" className="text-xs text-destructive">O término deve ser posterior ao início da reunião.</p>
+              )}
+              <ParticipantesReuniaoSelect value={meetingForm.participanteIds} onChange={(participanteIds) => setMeetingForm((form) => ({ ...form, participanteIds }))}
+                disponibilidade={disponibilidadeReuniao.data?.participantes} consultando={disponibilidadeReuniao.consultando} periodoValido={disponibilidadeReuniao.valido} />
+              <SalaReuniaoSelect email={meetingForm.salaEmail} local={meetingForm.local} onChange={(salaEmail, local) => setMeetingForm((form) => ({ ...form, salaEmail, local }))}
+                disponibilidade={disponibilidadeReuniao.data?.salas} consultando={disponibilidadeReuniao.consultando} periodoValido={disponibilidadeReuniao.valido} />
+              {disponibilidadeReuniao.isError && <p role="alert" className="text-xs text-destructive">{getReuniaoError(disponibilidadeReuniao.error)} <button type="button" onClick={() => void disponibilidadeReuniao.refetch()} className="underline">Verificar novamente</button></p>}
+              {localImpedido && !disponibilidadeReuniao.consultando && <p role="alert" className="text-xs text-destructive">A sala/local está ocupada ou a disponibilidade não pôde ser confirmada. Escolha outro local ou horário.</p>}
               <input
                 type="text"
                 aria-label="Local"
@@ -1613,7 +1640,7 @@ const Dashboard = () => {
                 <motion.button
                   type="button"
                   onClick={() => void handleCreateMeeting()}
-                  disabled={creatingReuniao}
+                  disabled={creatingReuniao || !disponibilidadeReuniao.valido || localImpedido || disponibilidadeReuniao.consultando}
                   className="h-8 rounded-md bg-accent px-4 text-[11px] font-medium text-accent-foreground disabled:cursor-not-allowed disabled:opacity-50"
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
