@@ -6,6 +6,7 @@ import { useComentarTarefa, useTarefaColaboracao, type TarefaComentario, type Ta
 import { TaskAttachmentList } from "./TaskAttachmentList";
 import { TaskFilePicker } from "./TaskFilePicker";
 import { TaskFileBrowser } from "./TaskFileBrowser";
+import { DriveFileBrowser } from "./DriveFileBrowser";
 
 export const TaskCollaborationPanel = ({ tipo, taskId }: { tipo: TarefaTipo; taskId: number }) => {
   const { data, isLoading, error, refetch } = useTarefaColaboracao(tipo, taskId);
@@ -31,7 +32,13 @@ export const TaskCollaborationPanel = ({ tipo, taskId }: { tipo: TarefaTipo; tas
     {comments.filter((child) => child.comentarioPaiId === item.id).map((child) => renderComment(child, level + 1))}
   </div>;
   return <section className="mt-5 space-y-5 border-t border-border/25 pt-4" aria-label="Arquivos e comentários da tarefa">
-    <TaskFileBrowser tipo={tipo} taskId={taskId} files={data?.anexos || []} folders={data?.pastas || []} />
+    {tipo === "CONTRATO" ? <>
+      <DriveFileBrowser taskId={taskId} />
+      {!!(data?.anexos.length || data?.pastas?.length) && <details className="space-y-3 rounded-lg border border-border/25 p-3">
+        <summary className="cursor-pointer text-[11px] font-medium">Arquivos anteriores da tarefa</summary>
+        <TaskFileBrowser tipo={tipo} taskId={taskId} files={data?.anexos || []} folders={data?.pastas || []} readOnly />
+      </details>}
+    </> : <TaskFileBrowser tipo={tipo} taskId={taskId} files={data?.anexos || []} folders={data?.pastas || []} />}
     <div className="space-y-3"><h3 className="flex items-center gap-2 text-[12px] font-semibold"><MessageSquare className="h-4 w-4 text-accent" />Comentários ({comments.length})</h3>
       {comments.filter((item) => !item.comentarioPaiId).map((item) => renderComment(item, 0))}
       {!comments.length && <p className="text-[11px] text-muted-foreground">Comece a conversa sobre esta tarefa.</p>}

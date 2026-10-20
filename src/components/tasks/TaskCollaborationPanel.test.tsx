@@ -13,7 +13,7 @@ const show = (tipo: TarefaTipo) => render(<QueryClientProvider client={new Query
 
 describe("arquivos e conversas da tarefa", () => {
   beforeEach(() => vi.clearAllMocks());
-  it.each<TarefaTipo>(["CONTRATO", "COMERCIAL"])("permite arquivos na tarefa, comentários e respostas em %s", async (tipo) => {
+  it.each<TarefaTipo>(["COMERCIAL"])("permite arquivos na tarefa, comentários e respostas em %s", async (tipo) => {
     const data: { anexos: TarefaAnexo[]; comentarios: TarefaComentario[] } = { anexos: [], comentarios: [] };
     vi.mocked(api.get).mockImplementation(async () => ({ data: { success: true, data: { ...data } } }));
     vi.mocked(api.post).mockImplementation(async (url, body) => {
@@ -59,7 +59,7 @@ describe("arquivos e conversas da tarefa", () => {
     vi.mocked(api.get).mockResolvedValue({ data: { success: true, data: { anexos: [], comentarios: [] } } });
     vi.mocked(api.post).mockRejectedValue(new Error("Não foi possível salvar. Tente novamente."));
     show("CONTRATO");
-    await screen.findByText("Nenhum arquivo anexado.");
+    await screen.findByLabelText("Seu comentário *");
     fireEvent.change(screen.getByLabelText("Seu comentário *"), { target: { value: "Confira os anexos" } });
     fireEvent.change(screen.getByLabelText("Anexar arquivos ao comentário"), { target: { files: [file] } });
     fireEvent.click(screen.getByRole("button", { name: "Publicar comentário" }));

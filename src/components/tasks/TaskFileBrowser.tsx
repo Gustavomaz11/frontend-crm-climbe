@@ -6,8 +6,8 @@ import { useAnexarTarefa, useCriarPastaTarefa, type TarefaAnexo, type TarefaPast
 import { TaskAttachmentList } from "./TaskAttachmentList";
 import { TaskFilePicker } from "./TaskFilePicker";
 
-export const TaskFileBrowser = ({ tipo, taskId, files, folders }: {
-  tipo: TarefaTipo; taskId: number; files: TarefaAnexo[]; folders: TarefaPasta[];
+export const TaskFileBrowser = ({ tipo, taskId, files, folders, readOnly = false }: {
+  tipo: TarefaTipo; taskId: number; files: TarefaAnexo[]; folders: TarefaPasta[]; readOnly?: boolean;
 }) => {
   const upload = useAnexarTarefa(tipo, taskId);
   const createFolder = useCriarPastaTarefa(tipo, taskId);
@@ -43,8 +43,8 @@ export const TaskFileBrowser = ({ tipo, taskId, files, folders }: {
   };
   return <section className="space-y-3" aria-label="Pastas e arquivos da tarefa">
     <div className="flex items-center justify-between gap-2"><h3 className="text-[12px] font-semibold">Arquivos da tarefa</h3>
-      <button type="button" disabled={pending} onClick={() => { setCreating(true); setError(""); }} className="flex items-center gap-1.5 rounded-lg border border-border/30 px-3 py-2 text-[11px] text-accent disabled:opacity-50"><FolderPlus className="h-4 w-4" />{current ? "Nova subpasta" : "Nova pasta"}</button></div>
-    <p className="text-[10px] text-muted-foreground">Crie pastas e subpastas para organizar os arquivos. Todas as pessoas que podem visualizar a tarefa têm acesso a eles.</p>
+      {!readOnly && <button type="button" disabled={pending} onClick={() => { setCreating(true); setError(""); }} className="flex items-center gap-1.5 rounded-lg border border-border/30 px-3 py-2 text-[11px] text-accent disabled:opacity-50"><FolderPlus className="h-4 w-4" />{current ? "Nova subpasta" : "Nova pasta"}</button>}</div>
+    <p className="text-[10px] text-muted-foreground">{readOnly ? "Arquivos anteriores à integração com o Drive. Envie novos arquivos na área do serviço." : "Crie pastas e subpastas para organizar os arquivos. Todas as pessoas que podem visualizar a tarefa têm acesso a eles."}</p>
     <nav aria-label="Local dos arquivos" className="flex flex-wrap items-center gap-1 rounded-lg bg-background/40 p-2 text-[11px]">
       <button type="button" disabled={pending} onClick={() => navigate(null)} aria-current={!current ? "page" : undefined} className="rounded px-1 py-1 text-accent hover:bg-accent/10">Arquivos da tarefa</button>
       {ancestors.map((folder) => <span key={folder.id} className="flex min-w-0 items-center gap-1"><ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground" /><button type="button" disabled={pending} onClick={() => navigate(folder.id)} aria-current={folder.id === folderId ? "page" : undefined} className="break-all rounded px-1 py-1 text-accent hover:bg-accent/10">{folder.nome}</button></span>)}
@@ -61,7 +61,7 @@ export const TaskFileBrowser = ({ tipo, taskId, files, folders }: {
       {current && <p className="flex items-center gap-2 text-[11px] font-medium"><FolderOpen className="h-4 w-4 text-accent" />{current.nome}</p>}
       <TaskAttachmentList tipo={tipo} taskId={taskId} files={contents} />
       {!contents.length && !children.length && <p className="text-[11px] text-muted-foreground">{current ? "Nenhum arquivo nesta pasta." : "Nenhum arquivo anexado."}</p>}
-      <TaskFilePicker label={current ? `Adicionar arquivos à pasta ${current.nome}` : "Selecionar arquivos para a tarefa"} files={selectedFiles} onChange={setSelectedFiles} disabled={pending} />
+      {!readOnly && <TaskFilePicker label={current ? `Adicionar arquivos à pasta ${current.nome}` : "Selecionar arquivos para a tarefa"} files={selectedFiles} onChange={setSelectedFiles} disabled={pending} />}
       {selectedFiles.length > 0 && <><p className="text-[10px] text-muted-foreground">Destino: {ancestors.length ? ancestors.map((folder) => folder.nome).join(" / ") : "Arquivos da tarefa"}</p><button type="button" disabled={pending} onClick={() => void sendFiles()} className="flex items-center gap-2 rounded-lg bg-accent px-3 py-2 text-[11px] font-semibold text-accent-foreground disabled:opacity-50"><Upload className="h-3.5 w-3.5" />{upload.isPending ? "Enviando..." : "Anexar arquivos"}</button></>}
     </div>
     {error && <p role="alert" className="rounded border border-destructive/30 p-2 text-[11px] text-destructive">{error}</p>}

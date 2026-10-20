@@ -20,7 +20,7 @@ const dados = () => {
 
 describe("pastas de arquivos da tarefa", () => {
   beforeEach(() => vi.clearAllMocks());
-  it.each<TarefaTipo>(["CONTRATO", "COMERCIAL"])("cria pastas e subpastas, envia múltiplos arquivos ao destino e permite novos uploads em %s", async (tipo) => {
+  it.each<TarefaTipo>(["COMERCIAL"])("cria pastas e subpastas, envia múltiplos arquivos ao destino e permite novos uploads em %s", async (tipo) => {
     const data = dados();
     vi.mocked(api.post).mockImplementation(async (url, body) => {
       if (String(url).endsWith("/pastas")) {
@@ -79,7 +79,7 @@ describe("pastas de arquivos da tarefa", () => {
         tamanho: file.size, autor, criadoEm: "2026-10-09T09:00:00", pastaId: 50 }));
       return { data: { success: true, data: data.anexos } };
     });
-    show("CONTRATO");
+    show("COMERCIAL");
     const picker = await screen.findByLabelText("Selecionar arquivos para a tarefa");
     fireEvent.change(picker, { target: { files: [primeiro, segundo] } });
     fireEvent.click(screen.getByRole("button", { name: "Anexar arquivos" }));
