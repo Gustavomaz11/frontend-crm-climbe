@@ -21,6 +21,7 @@ import { getContratoDownloadUrl, getDocumentoDownloadUrl, getPropostaDownloadUrl
 
 import { useAuthStore } from "@/store/useAuthStore";
 import { getNotificacaoDestino, useLerNotificacao, useMinhasNotificacoes } from "@/services/useNotificacoes";
+import { getNotificacaoApresentacao } from "@/services/notificacaoApresentacao";
 import { calendarDateInput, shiftDashboardCalendarMonth } from "./dashboardCalendar";
 
 /* ══════════════════════════════════════════════════
@@ -754,7 +755,7 @@ const Dashboard = () => {
     const pessoais: NotificationItem[] = notificacoesPessoais.map(n => ({
       id: n.id,
       destino: getNotificacaoDestino(n.mensagem, n.destino),
-      text: n.mensagem.replace(/\. Acesse \/contratos\/kanban\?contrato=\d+ para trabalhar nas tarefas\./, "."),
+      text: getNotificacaoApresentacao(n).mensagem,
       time: getRelativeLabel(n.dataCriacao || n.dataEnvio),
       icon: Bell,
       type: "info",

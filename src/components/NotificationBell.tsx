@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import * as Dialog from "@radix-ui/react-alert-dialog";
 import { useAuthStore } from "@/store/useAuthStore";
+import { getNotificacaoApresentacao } from "@/services/notificacaoApresentacao";
 import { getNotificacaoDestino, useLerNotificacao, useLerTodasNotificacoes, useMinhasNotificacoes, type Notificacao } from "@/services/useNotificacoes";
 
 export function NotificationBell() {
@@ -38,7 +39,7 @@ export function NotificationBell() {
       </div>
       <div className="max-h-[min(65vh,540px)] overflow-y-auto">
         {isLoading ? <p role="status" className="p-5 text-sm text-muted-foreground">Carregando notificações...</p> : isError ? <p role="alert" className="p-5 text-sm text-destructive">Não foi possível carregar suas notificações.</p> : notificacoes.length === 0 ? <p className="p-5 text-sm text-muted-foreground">Você ainda não tem notificações.</p> : notificacoes.map(n => <button type="button" key={n.id} onClick={() => abrir(n)} className={`block w-full border-b border-border/15 p-4 text-left last:border-b-0 hover:bg-muted/30 ${!n.lida ? "bg-accent/5" : ""}`}>
-          <div className="flex items-start gap-2"><span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${n.lida ? "bg-transparent" : "bg-accent"}`} /><p className="whitespace-pre-line break-words text-xs leading-relaxed">{n.mensagem}</p></div>
+          <div className="flex items-start gap-2"><span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${n.lida ? "bg-transparent" : "bg-accent"}`} /><p className="whitespace-pre-line break-words text-xs leading-relaxed">{getNotificacaoApresentacao(n).mensagem}</p></div>
           <p className="ml-4 mt-2 text-[10px] text-muted-foreground">{new Date(n.dataCriacao || n.dataEnvio).toLocaleString("pt-BR")}{getNotificacaoDestino(n.mensagem, n.destino) && " · Abrir detalhes"}</p>
         </button>)}
       </div>
