@@ -52,7 +52,7 @@ export default function Integracoes() {
       {feedback && <div role={feedback.erro ? "alert" : "status"} className={`rounded-xl border p-3 text-sm ${feedback.erro ? "border-destructive/30 text-destructive" : "border-primary/30 text-primary"}`}>{feedback.texto}</div>}
       {catalogo.error && <p role="alert" className="text-sm text-destructive">Não foi possível carregar o catálogo. Atualize a página para tentar novamente.</p>}
       {form && <IntegracaoForm key={form === "novo" ? "novo" : form.id} integracao={form === "novo" ? undefined : form} catalogo={catalogo.data ?? []} empresas={empresas.data ?? []} erroEmpresas={!!empresas.error} salvando={salvar.isPending} onSalvar={gravar} onCancelar={() => setForm(null)} />}
-      {historico && <IntegracaoAuditoriaPanel id={historico.id} nome={historico.nome} onFechar={() => setHistorico(null)} />}
+      {historico && <IntegracaoAuditoriaPanel key={historico.id} id={historico.id} nome={historico.nome} onFechar={() => setHistorico(null)} />}
       <input aria-label="Buscar integração" placeholder="Buscar por empresa, CNPJ, responsável ou Client ID" className="h-11 w-full rounded-xl border border-border/40 bg-card/50 px-4 text-sm" value={busca} onChange={e => setBusca(e.target.value)} />
       {lista.isLoading && <p className="flex items-center gap-2 text-sm"><Loader2 className="animate-spin" size={16} />Carregando integrações…</p>}
       {lista.error && <p role="alert" className="text-sm text-destructive">{erroIntegracao(lista.error)}</p>}

@@ -58,9 +58,9 @@ export interface Reuniao {
 export const isReuniaoPresencial = (reuniao: Pick<Reuniao, "local" | "presencial">) =>
   Boolean(reuniao.local?.trim()) || Boolean(reuniao.presencial);
 
-export function getReuniaoError(error: unknown) {
-  if (isAxiosError(error)) return error.response?.data?.message || "Não foi possível confirmar o agendamento.";
-  return error instanceof Error ? error.message : "Não foi possível confirmar o agendamento.";
+export function getReuniaoError(error: unknown, fallback = "Não foi possível confirmar o agendamento.") {
+  if (isAxiosError(error)) return error.response?.data?.message || fallback;
+  return error instanceof Error ? error.message : fallback;
 }
 
 export interface CreateReuniaoDTO {
@@ -333,6 +333,27 @@ const useResponderReuniao = (acao: "aceitar" | "rejeitar") => {
 
 export const useAceitarReuniao = () => useResponderReuniao("aceitar");
 export const useRejeitarReuniao = () => useResponderReuniao("rejeitar");
+
+export const useCancelarReuniao = () => {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: number) => normalizeReuniao((await api.post<ReuniaoApi>(
+      `/reunioes/${id}/cancelar`, undefined, { headers: buildHeaders() },
+    )).data),
+    onSuccess: (cancelada) => {
+      client.setQueriesData<Reuniao[]>({ queryKey: ["reunioes"], predicate: query => Array.isArray(query.state.data) },
+        atuais => atuais?.map(reuniao => reuniao.id === cancelada.id ? { ...reuniao, ...cancelada } : reuniao));
+      for (const key of [["reunioes", cancelada.id], ["reunioes", cancelada.id, "detalhes"]]) {
+        client.setQueryData<Reuniao>(key, atual => atual ? { ...atual, ...cancelada } : undefined);
+      }
+      client.setQueriesData<Reuniao[]>({ queryKey: ["reunioes", "convites"] }, atuais => atuais?.filter(r => r.id !== cancelada.id));
+      void client.invalidateQueries({ queryKey: ["reunioes"] });
+      void client.invalidateQueries({ queryKey: ["participantes-reuniao"] });
+      void client.invalidateQueries({ queryKey: ["reuniao-disponibilidade"] });
+      void client.invalidateQueries({ queryKey: ["notificacoes"] });
+    },
+  });
+};
 
 export function useReunioesByEmpresa(empresaId: number) {
   return useQuery<Reuniao[]>({

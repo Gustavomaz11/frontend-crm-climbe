@@ -14,7 +14,10 @@ export interface Integracao extends CadastroIntegracao {
   id: string; clientId: string; status: "PENDENTE" | "ATIVO" | "SUSPENSO" | "REVOGADO";
   criadoEm: string; ultimoUso: string | null; emailStatus: string; emailTentativas: number;
 }
-export interface AuditoriaIntegracao { id: number; evento: string; metodo?: string; rota?: string; status?: number; criadoEm: string }
+export interface AuditoriaIntegracao {
+  id: number; evento: string; metodo?: string; rota?: string; status?: number; criadoEm: string;
+  payloadDisponivel?: boolean; payloadLimiteExcedido?: boolean;
+}
 export interface EmpresaIntegracao { id: number; nome: string; cnpj: string }
 export const erroIntegracao = (erro: unknown) => {
   if (axios.isAxiosError(erro)) {
@@ -32,6 +35,10 @@ export const useEmpresasIntegracoes = (enabled: boolean) => useQuery({ queryKey:
   queryFn: async () => (await api.get<EmpresaIntegracao[]>("/integracoes/empresas")).data });
 export const useAuditoriaIntegracao = (id?: string) => useQuery({ queryKey: ["integracoes-auditoria", id], enabled: !!id,
   queryFn: async () => (await api.get<AuditoriaIntegracao[]>(`/integracoes/${id}/auditoria`)).data });
+export const usePayloadAuditoriaIntegracao = (id: string, eventoId?: number) => useQuery({
+  queryKey: ["integracoes-auditoria-payload", id, eventoId], enabled: eventoId !== undefined,
+  queryFn: async () => (await api.get<{ payload: string }>(`/integracoes/${id}/auditoria/${eventoId}/payload`)).data,
+});
 export const useSalvarIntegracao = () => {
   const cache = useQueryClient();
   return useMutation({ mutationFn: async ({ id, dados }: { id?: string; dados: CadastroIntegracao }) =>

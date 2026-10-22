@@ -3,7 +3,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import type { PropsWithChildren } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { api } from "@/api";
-import { useCreateReuniao, useReunioes, useUpdateReuniao } from "./useReunioes";
+import { useCancelarReuniao, useCreateReuniao, useReunioes, useUpdateReuniao } from "./useReunioes";
 
 vi.mock("@/api", () => ({ api: { get: vi.fn(), post: vi.fn(), put: vi.fn() } }));
 
@@ -42,6 +42,30 @@ describe("agendamento de reuniões", () => {
     const payload = vi.mocked(api.put).mock.calls[0][1];
     expect(JSON.parse(JSON.stringify(payload))).not.toHaveProperty("participanteIds");
     expect(payload).toMatchObject({ empresaId: null, salaEmail: data.salaEmail, status: "CONFIRMADA" });
+  });
+
+  it("cancelar atualiza listas e detalhes, remove convites pendentes e libera o cache de disponibilidade", async () => {
+    const client = new QueryClient();
+    const queryWrapper = ({ children }: PropsWithChildren) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+    const reuniao = { ...data, id: 3, status: "AGENDADA", souOrganizador: true };
+    const outra = { ...reuniao, id: 4 };
+    client.setQueryData(["reunioes"], [reuniao, outra]);
+    client.setQueryData(["reunioes", "empresa", 1], [reuniao]);
+    client.setQueryData(["reunioes", 3], reuniao);
+    client.setQueryData(["reunioes", 3, "detalhes"], { ...reuniao, participantes: [{ id: 2 }] });
+    client.setQueryData(["reunioes", "convites", 2], [reuniao, outra]);
+    client.setQueryData(["reuniao-disponibilidade", "periodo"], { localDisponivel: false });
+    vi.mocked(api.post).mockResolvedValue({ data: { ...data, idReuniao: 3, status: "CANCELADA", linkMeet: null } });
+    const { result } = renderHook(() => useCancelarReuniao(), { wrapper: queryWrapper });
+
+    await act(async () => { await result.current.mutateAsync(3); });
+
+    expect(client.getQueryData(["reunioes"])).toEqual([expect.objectContaining({ id: 3, status: "CANCELADA" }), outra]);
+    expect(client.getQueryData(["reunioes", "empresa", 1])).toEqual([expect.objectContaining({ status: "CANCELADA" })]);
+    expect(client.getQueryData(["reunioes", 3])).toMatchObject({ status: "CANCELADA" });
+    expect(client.getQueryData(["reunioes", 3, "detalhes"])).toMatchObject({ status: "CANCELADA", souOrganizador: true, participantes: [{ id: 2 }] });
+    expect(client.getQueryData(["reunioes", "convites", 2])).toEqual([outra]);
+    expect(client.getQueryState(["reuniao-disponibilidade", "periodo"])?.isInvalidated).toBe(true);
   });
 });
 

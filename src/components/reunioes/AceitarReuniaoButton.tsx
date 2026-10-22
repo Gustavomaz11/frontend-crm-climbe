@@ -5,8 +5,8 @@ import { getReuniaoError, useAceitarReuniao, useRejeitarReuniao, type Reuniao } 
 export const AceitarReuniaoButton = ({ reuniao, onAccepted }: { reuniao: Reuniao; onAccepted?: () => void }) => {
   const aceitar = useAceitarReuniao();
   const rejeitar = useRejeitarReuniao();
-  if (reuniao.id <= 0 || !reuniao.minhaResposta) return null;
-  const encerrada = ["CANCELADA", "CANCELADO"].includes(reuniao.status ?? "") || Boolean(reuniao.dataHoraFim && new Date(reuniao.dataHoraFim).getTime() <= Date.now());
+  if (reuniao.id <= 0 || !reuniao.minhaResposta || ["CANCELADA", "CANCELADO"].includes(reuniao.status ?? "")) return null;
+  const encerrada = Boolean(reuniao.dataHoraFim && new Date(reuniao.dataHoraFim).getTime() <= Date.now());
   const ocupada = aceitar.isPending || rejeitar.isPending;
   return <div className="space-y-2">
     {reuniao.minhaResposta === "ACEITA" && <p role="status" className="flex items-center gap-2 text-xs font-medium text-emerald-400"><Check className="h-4 w-4" />Participação confirmada</p>}
