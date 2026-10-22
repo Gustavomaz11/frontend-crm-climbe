@@ -82,6 +82,25 @@ describe("responsáveis exibidos na Home", () => {
 });
 
 describe("reuniões por dia no Dashboard", () => {
+  it("remove canceladas da agenda, dos indicadores e dos lembretes da Home", async () => {
+    const today = new Date();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const data = `${today.getFullYear()}-${month}-19`;
+    const ativa = { id: 3, titulo: "Reunião ativa", dataHora: `${data}T10:00:00`, data, local: "Sala 1", status: "AGENDADA" };
+    mocks.reunioes = [{ ...ativa, id: 4, titulo: "Planejamento cancelado", status: "CANCELADA" },
+      { ...ativa, id: 5, titulo: "Treinamento cancelado", status: "CANCELADO" }, ativa];
+    abrir();
+    expect(screen.queryByText(/Planejamento cancelado|Treinamento cancelado/)).not.toBeInTheDocument();
+    expect(screen.getByText("1 reuniões cadastradas")).toBeInTheDocument();
+    const label = `19/${month}/${today.getFullYear()}, 1 reunião`;
+    expect(screen.getByRole("button", { name: label })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Ampliar Calendário" }));
+    fireEvent.click(screen.getAllByRole("button", { name: label }).at(-1)!);
+    const dialog = within(screen.getAllByRole("dialog").at(-1)!);
+    expect(dialog.getByRole("button", { name: /^Reunião ativa / })).toBeInTheDocument();
+    expect(dialog.queryByRole("button", { name: /cancelado/ })).not.toBeInTheDocument();
+  });
+
   const abrirAgendamento = () => {
     abrir();
     fireEvent.click(screen.getByRole("button", { name: "Ampliar Calendário" }));

@@ -15,7 +15,7 @@ export const CancelarReuniaoButton = ({ reuniao }: { reuniao: Reuniao }) => {
 
   return <div role="group" aria-label="Confirmar cancelamento da reunião" className="space-y-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4">
     <p className="text-sm font-medium">Cancelar a reunião “{reuniao.titulo}”?</p>
-    <p className="text-xs text-muted-foreground">A reunião ficará marcada como cancelada.{reuniao.googleEventId && " O Google Agenda enviará o cancelamento aos participantes."}</p>
+    <p className="text-xs text-muted-foreground">A reunião ficará marcada como cancelada. Os convidados que confirmaram presença receberão uma notificação.{reuniao.googleEventId && " O Google Agenda enviará o cancelamento aos participantes."}</p>
     <div className="flex flex-wrap gap-2">
       <button type="button" autoFocus disabled={cancelar.isPending} onClick={() => setConfirmando(false)}
         className="min-h-10 rounded-lg border border-border/30 px-4 py-2 text-xs font-semibold disabled:opacity-50">Manter reunião</button>

@@ -3,6 +3,14 @@ import { getNotificacaoApresentacao, notificacaoUsaDialogoPrazo } from "./notifi
 import { getNotificacaoDestino } from "./useNotificacoes";
 
 describe("apresentação das notificações existentes", () => {
+  it("apresenta o cancelamento com título claro e preserva a mensagem pessoal e o acesso à reunião", () => {
+    const mensagem = 'Olá, Ana! A reunião "Planejamento", marcada para 15/11/2026 às 14:30, foi cancelada. Você pode liberar esse horário na sua agenda.';
+    expect(getNotificacaoApresentacao({ tipo: "REUNIAO_CANCELADA", mensagem })).toEqual({
+      titulo: "Uma reunião da sua agenda foi cancelada", mensagem,
+    });
+    expect(notificacaoUsaDialogoPrazo("REUNIAO_CANCELADA")).toBe(false);
+    expect(getNotificacaoDestino(mensagem, "/agenda?reuniaoId=3")).toBe("/agenda?reuniaoId=3");
+  });
   it.each(["REUNIAO_ACEITA", "REUNIAO_RECUSADA"])("resposta %s usa popup pequeno e preserva nome e reunião", tipo => {
     const mensagem = 'Ana confirmou presença na reunião "Alinhamento" em 21/10/2026 às 17:00.';
     expect(getNotificacaoApresentacao({ tipo, mensagem }).titulo).not.toBe("Tem novidade para você");

@@ -58,6 +58,9 @@ export interface Reuniao {
 export const isReuniaoPresencial = (reuniao: Pick<Reuniao, "local" | "presencial">) =>
   Boolean(reuniao.local?.trim()) || Boolean(reuniao.presencial);
 
+export const isReuniaoCancelada = (reuniao: Pick<Reuniao, "status">) =>
+  ["CANCELADA", "CANCELADO"].includes((reuniao.status ?? "").trim().toUpperCase());
+
 export function getReuniaoError(error: unknown, fallback = "Não foi possível confirmar o agendamento.") {
   if (isAxiosError(error)) return error.response?.data?.message || fallback;
   return error instanceof Error ? error.message : fallback;

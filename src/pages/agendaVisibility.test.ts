@@ -3,6 +3,11 @@ import type { Reuniao } from "@/services/useReunioes";
 import { shouldShowAgendaReuniao } from "./agendaVisibility";
 
 describe("visibilidade da agenda", () => {
+  it.each(["CANCELADA", "CANCELADO"])("retira reuniões com status %s do calendário", status => {
+    const reuniao: Reuniao = { id: 3, titulo: "Reunião cancelada", dataHora: "2026-10-29T16:00:00", local: "Sala 1", status };
+    expect(shouldShowAgendaReuniao(reuniao)).toBe(false);
+  });
+
   it("mantem evento externo da agenda Google mesmo sem participante local", () => {
     const eventoGoogle: Reuniao = {
       id: -42,

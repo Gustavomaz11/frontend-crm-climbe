@@ -22,7 +22,12 @@ vi.mock("@/components/kanban/KanbanArquivados", () => ({ KanbanArquivados: () =>
 vi.mock("@/hooks/useSidebarState", () => ({ useSidebarState: () => [false, vi.fn()] }));
 vi.mock("@/store/useAuthStore", () => ({ useAuthStore: (selector: (state: object) => unknown) => selector({}) }));
 
-const setup = (path = "/agenda") => render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}><MemoryRouter initialEntries={[path]}><Agenda /></MemoryRouter></QueryClientProvider>);
+const setup = (path = "/agenda") => {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const content = () => <QueryClientProvider client={client}><MemoryRouter initialEntries={[path]}><Agenda /></MemoryRouter></QueryClientProvider>;
+  const view = render(content());
+  return { ...view, refresh: () => view.rerender(content()) };
+};
 
 describe("reuniões da equipe na agenda", () => {
   beforeEach(() => {
@@ -31,6 +36,48 @@ describe("reuniões da equipe na agenda", () => {
     vi.mocked(api.post).mockResolvedValue({ data: { salas: [{ email: "sala@resource.calendar.google.com", disponivel: true }], participantes: [{ id: 2, disponivel: true }], localDisponivel: true } });
   });
   afterEach(cleanup);
+
+  it("retira canceladas do calendário, da lista do dia e da lista de eventos, mantendo o histórico no Kanban", async () => {
+    const today = new Date();
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const data = `${today.getFullYear()}-${month}-19`;
+    const ativa = { id: 3, titulo: "Reunião ativa", dataHora: `${data}T10:00:00`, data, hora: "10:00", local: "Sala 1", status: "AGENDADA" };
+    mocks.reunioes = [ativa, { ...ativa, id: 4, titulo: "Planejamento cancelado", status: "CANCELADA" },
+      { ...ativa, id: 5, titulo: "Treinamento cancelado", status: "CANCELADO" }];
+    const view = setup();
+    const dia = screen.getByRole("button", { name: `Reuniões em 19/${month}/${today.getFullYear()}` });
+    expect(dia).toHaveTextContent("Reunião ativa");
+    expect(screen.queryByText(/Planejamento cancelado|Treinamento cancelado/)).not.toBeInTheDocument();
+    fireEvent.click(dia);
+    const dialog = within(screen.getByRole("dialog"));
+    expect(dialog.getByText("1 reunião neste dia")).toBeInTheDocument();
+    expect(dialog.queryByRole("button", { name: /cancelado/ })).not.toBeInTheDocument();
+    fireEvent.click(dialog.getByRole("button", { name: "Fechar reuniões do dia" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "Lista" }));
+    await screen.findByText("Reunião ativa");
+    expect(screen.queryByText(/Planejamento cancelado|Treinamento cancelado/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Kanban" }));
+    const cancelados = (await screen.findByText("Cancelado")).closest(".rounded-xl")!;
+    expect(within(cancelados as HTMLElement).getByText("Planejamento cancelado")).toBeInTheDocument();
+    expect(within(cancelados as HTMLElement).getByText("Treinamento cancelado")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Mês" }));
+    const diaAtualizado = await screen.findByRole("button", { name: `Reuniões em 19/${month}/${today.getFullYear()}` });
+    mocks.reunioes = mocks.reunioes.map(reuniao => ({ ...reuniao, status: "CANCELADA" }));
+    view.refresh();
+    expect(within(diaAtualizado).queryByText(/Reunião ativa/)).not.toBeInTheDocument();
+    fireEvent.click(diaAtualizado);
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("abre os detalhes de uma reunião cancelada pelo link da notificação", async () => {
+    const cancelada = { id: 3, titulo: "Planejamento cancelado", dataHora: "2099-10-20T10:00:00", data: "2099-10-20", hora: "10:00", local: "Sala 1", status: "CANCELADA" };
+    mocks.reunioes = [cancelada];
+    vi.mocked(api.get).mockResolvedValue({ data: cancelada });
+    setup("/agenda?reuniaoId=3");
+    expect(await screen.findByText("Cancelada", { exact: true })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Planejamento cancelado" })).toBeInTheDocument();
+  });
 
   it("abre o convite pelos detalhes para aceitar sem entrar no formulário de edição", async () => {
     const reuniao = { id: 3, titulo: "Convite da equipe", dataHora: "2099-10-20T10:00:00", dataHoraFim: "2099-10-20T11:00:00", data: "2099-10-20", hora: "10:00", local: "Sala 1", minhaResposta: "PENDENTE" };

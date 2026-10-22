@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowLeft, ChevronRight, Clock, MapPin, X } from "lucide-react";
-import { isReuniaoPresencial, type Reuniao } from "@/services/useReunioes";
+import { isReuniaoCancelada, isReuniaoPresencial, type Reuniao } from "@/services/useReunioes";
 import { ReuniaoDetalhes } from "./ReuniaoDetalhes";
 import { reuniaoCliente, reuniaoHorario } from "./reuniaoPresentation";
 
@@ -23,6 +23,7 @@ export const ReunioesDiaModal = ({ data, reuniaoId, reunioes, onClose }: Props) 
   const [closing, setClosing] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(reuniaoId ?? null);
   const selected = reunioes.find((reuniao) => reuniao.id === selectedId);
+  const reunioesAgendadas = reunioes.filter(reuniao => !isReuniaoCancelada(reuniao));
   const dayLabel = new Date(`${data}T12:00:00`).toLocaleDateString("pt-BR");
 
   useEffect(() => {
@@ -64,8 +65,8 @@ export const ReunioesDiaModal = ({ data, reuniaoId, reunioes, onClose }: Props) 
       </header>
       <div className="min-h-0 overflow-y-auto p-5">
         {selected ? <div key={selected.id} className="app-fade-enter"><ReuniaoDetalhes reuniao={selected} /></div> : <div key="lista" className="app-fade-enter space-y-3">
-          <p className="text-xs text-muted-foreground">{reunioes.length} {reunioes.length === 1 ? "reunião" : "reuniões"} neste dia</p>
-          {reunioes.map((reuniao) => <button key={reuniao.id} type="button" onClick={() => setSelectedId(reuniao.id)} className="group flex w-full items-center gap-3 rounded-xl border border-border/30 bg-background/40 p-4 text-left transition-colors hover:border-accent/40 hover:bg-accent/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
+          <p className="text-xs text-muted-foreground">{reunioesAgendadas.length} {reunioesAgendadas.length === 1 ? "reunião" : "reuniões"} neste dia</p>
+          {reunioesAgendadas.map((reuniao) => <button key={reuniao.id} type="button" onClick={() => setSelectedId(reuniao.id)} className="group flex w-full items-center gap-3 rounded-xl border border-border/30 bg-background/40 p-4 text-left transition-colors hover:border-accent/40 hover:bg-accent/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent">
             <div className="min-w-0 flex-1 space-y-2">
               <p className="break-words text-sm font-semibold">{reuniao.titulo}</p>
               <p className="flex items-center gap-1.5 text-xs text-accent"><Clock className="h-3.5 w-3.5 shrink-0" />{reuniaoHorario(reuniao)}</p>
@@ -74,7 +75,7 @@ export const ReunioesDiaModal = ({ data, reuniaoId, reunioes, onClose }: Props) 
             </div>
             <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-accent" />
           </button>)}
-          {!reunioes.length && <p className="py-6 text-center text-sm text-muted-foreground">Nenhuma reunião neste dia.</p>}
+          {!reunioesAgendadas.length && <p className="py-6 text-center text-sm text-muted-foreground">Nenhuma reunião neste dia.</p>}
         </div>}
       </div>
     </div>

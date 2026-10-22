@@ -14,6 +14,14 @@ describe("consulta das reuniões do dia", () => {
   beforeEach(() => { vi.clearAllMocks(); vi.mocked(api.get).mockResolvedValue({ data: detalhes }); });
   afterEach(cleanup);
 
+  it("omite as canceladas da lista de reuniões do dia", () => {
+    setup([reuniao, { ...reuniao, id: 4, titulo: "Planejamento cancelado", status: "CANCELADA" },
+      { ...reuniao, id: 5, titulo: "Treinamento cancelado", status: "CANCELADO" }]);
+    expect(screen.getByText("1 reunião neste dia")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Alinhamento da equipe/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /cancelado/ })).not.toBeInTheDocument();
+  });
+
   it("mostra aceite em verde, recusa em vermelho e confirma automaticamente o organizador", () => {
     setup([{ ...detalhes, id: -3, participantes: [
       { email: "bruno@example.test", resposta: "PENDENTE" },

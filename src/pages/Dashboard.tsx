@@ -3,7 +3,7 @@ import { AppSidebar } from "@/components/layout/AppSidebar";
 import { useContratoPermissions } from "@/hooks/useContratoPermissions";
 import { useCrudPermissions } from "@/hooks/useCrudPermissions";
 import { useDeferredValue, useMemo, useState } from "react";
-import { getReuniaoError, type Reuniao } from "@/services/useReunioes";
+import { getReuniaoError, isReuniaoCancelada, type Reuniao } from "@/services/useReunioes";
 import { useReuniaoDisponibilidade } from "@/services/useReuniaoDisponibilidade";
 import { ReunioesDiaModal, type DiaReunioesAberto } from "@/components/reunioes/ReunioesDiaModal";
 import { reunioesDoDia } from "@/components/reunioes/reuniaoPresentation";
@@ -403,10 +403,11 @@ const Dashboard = () => {
   } = useEmpresas();
 
   const {
-    data: reunioes = [],
+    data: reunioesCadastradas = [],
     isLoading: loadingReunioes,
     isError: errorReunioes,
   } = useReunioes();
+  const reunioes = useMemo(() => reunioesCadastradas.filter(reuniao => !isReuniaoCancelada(reuniao)), [reunioesCadastradas]);
   const { mutateAsync: createReuniao, isPending: creatingReuniao } =
     useCreateReuniao();
 

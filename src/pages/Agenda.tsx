@@ -297,7 +297,6 @@ const Agenda = () => {
   const calendarGrid = useMemo(() => buildCalendarGrid(currentYear, currentMonth), [currentMonth, currentYear]);
   const agendaEvents = useMemo<AgendaEvent[]>(() => {
     return reunioes
-      .filter(shouldShowAgendaReuniao)
       .map<AgendaEvent | null>((reuniao) => {
         const date = new Date(reuniao.dataHora);
         if (Number.isNaN(date.getTime())) return null;
@@ -338,7 +337,7 @@ const Agenda = () => {
   }, [reunioes, empresas]);
 
   const filteredAgendaEvents = useMemo(
-    () => agendaEvents.filter((event) => matchesSearch(event, searchQuery)),
+    () => agendaEvents.filter(shouldShowAgendaReuniao).filter((event) => matchesSearch(event, searchQuery)),
     [agendaEvents, searchQuery],
   );
 
@@ -397,7 +396,7 @@ const Agenda = () => {
   const selectCalendarDay = (day: number) => {
     setSelectedDay(day);
     const data = eventDateInput(new Date(currentYear, currentMonth, day));
-    if (reunioesDoDia(reunioes, data).length) setDiaReunioesAberto({ data });
+    if (reunioesDoDia(reunioes, data).some(shouldShowAgendaReuniao)) setDiaReunioesAberto({ data });
   };
 
   const goToNextMonth = () => {
