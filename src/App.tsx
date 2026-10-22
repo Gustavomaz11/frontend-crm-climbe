@@ -1,7 +1,7 @@
 import PipelineCadastros from "@/pages/PipelineCadastros";
 import { lazy, Suspense } from "react";
 import { MotionConfig } from "framer-motion";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Analytics } from "@vercel/analytics/react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -16,6 +16,8 @@ import { RouteLoading } from "@/components/layout/RouteLoading";
 import { AvisosTempoReal } from "@/components/avisos/AvisosTempoReal";
 import {
   Agenda,
+  Integracoes,
+  AtivarIntegracao,
   AprovarAcesso,
   CadastroEmpresa,
   Cargos,
@@ -48,6 +50,12 @@ import {
 
 const PipelinePreVendas = lazy(() => import("@/pages/PipelinePreVendas"));
 
+const AppTelemetry = () => {
+  const { pathname } = useLocation();
+  if (pathname === "/integracoes/ativar") return null;
+  return <><AvisosTempoReal /><SpeedInsights /><Analytics /></>;
+};
+
 const App = () => (
   <MotionConfig reducedMotion="user" transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }}>
   <QueryProvider>
@@ -56,11 +64,11 @@ const App = () => (
         <AuthProvider>
           <Toaster />
           <Sonner />
-          <AvisosTempoReal />
-          <SpeedInsights />
-          <Analytics />
+          <AppTelemetry />
           <Suspense fallback={<RouteLoading />}>
             <Routes>
+            <Route path="/integracoes/ativar" element={<AtivarIntegracao />} />
+            <Route path="/integracoes" element={<PrivateRoute><Integracoes /></PrivateRoute>} />
             {/* Rotas Públicas */}
             <Route
               path="/"

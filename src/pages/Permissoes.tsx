@@ -16,6 +16,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 import { useCreateUsuarioPermissao, useDeleteUsuarioPermissao, usePermissoes, useUsuarioPermissoes, useUsuarios, type Permissao } from "@/services";
 
 function getPermissaoGroup(permissao: Permissao) {
+  if (permissao.codigo.startsWith("INTEGRACOES_")) return "Tokens e Integração";
   if (permissao.codigo.startsWith("JURIDICO_CONTRATO_")) return "Jurídico";
   if (permissao.codigo.includes("COMERCIAL")) return "Comercial";
   if (permissao.codigo.includes("CONTRATO")) return "Contratos";

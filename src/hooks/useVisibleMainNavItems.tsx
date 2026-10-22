@@ -19,6 +19,7 @@ import {
   BriefcaseBusiness,
   Network,
   UsersRound,
+  KeyRound,
   type LucideIcon,
 } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -48,6 +49,7 @@ const mainNavItems: MainNavItem[] = [
   { icon: ScrollText, label: "Propostas", path: "/propostas", adminOnly: true, permissions: ["PROPOSTA_LER", "PROPOSTA_CRIAR", "PROPOSTA_EDITAR", "PROPOSTA_DELETAR"] },
   { icon: CalendarIcon, label: "Agenda", path: "/agenda", permissions: ["REUNIAO_AGENDAMENTO"] },
   { icon: Shield, label: "Permissões", path: "/permissoes", permissions: ["PERMITIR_ACESSO"] },
+  { icon: KeyRound, label: "Tokens e Integração", path: "/integracoes", permissions: ["INTEGRACOES_GERENCIAR"] },
   { icon: BriefcaseBusiness, label: "Cargos", path: "/cargos", permissions: ["CARGO_LER", "CARGO_CRIAR", "CARGO_EDITAR", "CARGO_DELETAR"] },
   { icon: Network, label: "Hierarquia de cargos", path: "/cargos/hierarquia", permissions: ["CARGO_HIERARQUIA_EDITAR"] },
   { icon: Building2, label: "Empresas", path: "/empresas" },

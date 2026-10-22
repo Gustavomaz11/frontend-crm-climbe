@@ -143,6 +143,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, [performTokenRefresh]);
 
   useEffect(() => {
+    if (location.pathname === "/integracoes/ativar") {
+      if (refreshTokenInterval) clearInterval(refreshTokenInterval);
+      refreshTokenInterval = null;
+      return;
+    }
     const cookies = parseCookies();
     const accessToken = cookies[ACCESS_TOKEN_COOKIE];
     const refreshTokenCookie = cookies[REFRESH_TOKEN_COOKIE];
