@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import type { PipelineNegocio } from "@/services/usePipelineVendas";
 import { PipelineNegocioDialog } from "./PipelineNegocioDialog";
 
@@ -8,6 +8,10 @@ vi.mock("./PipelineTarefasPanel", () => ({ PipelineTarefasPanel: () => null }));
 vi.mock("./PipelineComentariosPanel", () => ({ PipelineComentariosPanel: () => null }));
 vi.mock("./PipelineHistoricoPanel", () => ({ PipelineHistoricoPanel: () => null }));
 vi.mock("./PipelinePropostasPanel", () => ({ PipelinePropostasPanel: () => null }));
+
+const scrollIntoView = HTMLElement.prototype.scrollIntoView;
+beforeAll(() => { HTMLElement.prototype.scrollIntoView = vi.fn(); });
+afterAll(() => { HTMLElement.prototype.scrollIntoView = scrollIntoView; });
 
 const negocio: PipelineNegocio = {
   id: 30,
@@ -35,6 +39,28 @@ const negocio: PipelineNegocio = {
 };
 
 describe("PipelineNegocioDialog", () => {
+  it("permite atribuir um lead recebido sem responsável preservando a origem da integração", async () => {
+    const salvar = vi.fn();
+    render(<PipelineNegocioDialog
+      negocio={{ ...negocio, tipoFunil: "PRE_VENDAS", responsavelId: 0, responsavelNome: "Sem responsável", origemNegocio: "Integração" }}
+      preVendas initialResponsavelId={7} etapas={[]} empresas={[]}
+      usuarios={[{ id: 7, nomeCompleto: "Ana Souza", situacao: "ATIVO", email: "ana@example.com", cargo: "Comercial", aceitouTermos: true, dataCriacao: "", dataAtualizacao: "" }]} motivosPerda={[]}
+      canEdit canConclude={false} canConvert={false} canViewTasks={false} canCreateTask={false} canEditTask={false}
+      canConcludeTask={false} canViewComments={false} canCreateComment={false} canViewHistory={false} canCreateProposal={false}
+      isProcessing={false} onClose={vi.fn()} onSave={salvar} onConclude={vi.fn()} onReactivate={vi.fn()}
+      onConvert={vi.fn()} onOpenContract={vi.fn()} onCreateProposal={vi.fn()}
+    />);
+    fireEvent.click(screen.getByRole("button", { name: "Dados" }));
+    const responsavel = screen.getByRole("combobox", { name: "Responsável" });
+    expect(responsavel).toHaveTextContent("Sem responsável");
+    expect(responsavel).not.toHaveAttribute("aria-required");
+    fireEvent.click(screen.getByRole("button", { name: "Salvar alterações" }));
+    expect(salvar).toHaveBeenLastCalledWith(expect.objectContaining({ responsavelId: 0, origemNegocio: "Integração" }));
+    fireEvent.keyDown(responsavel, { key: "ArrowDown" });
+    fireEvent.click(await screen.findByRole("option", { name: /Ana Souza/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Salvar alterações" }));
+    expect(salvar).toHaveBeenLastCalledWith(expect.objectContaining({ responsavelId: 7, origemNegocio: "Integração" }));
+  });
   it("destaca a aba Proposta quando o cliente solicita ajustes", () => {
     render(
       <PipelineNegocioDialog

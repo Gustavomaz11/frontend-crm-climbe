@@ -89,7 +89,7 @@ export const negocioToDraft = (negocio: PipelineNegocio): PipelineNegocioDraft =
   responsavelId: String(negocio.responsavelId),
   etapaId: String(negocio.etapaId),
   dataReuniao: negocio.dataReuniao?.slice(0, 16) || "",
-  origemNegocio: normalizePipelineNegocioOption(negocio.origemNegocio, origemNegocioOptions),
+  origemNegocio: normalizePipelineNegocioOption(negocio.origemNegocio, origemNegocioOptions) || negocio.origemNegocio.trim(),
   estrategiaComercial: negocio.estrategiaComercial,
   servicosInteresse: negocioServicosToDraft(negocio),
   valorEstimadoProposta: negocio.valorEstimadoProposta ? String(negocio.valorEstimadoProposta) : "",

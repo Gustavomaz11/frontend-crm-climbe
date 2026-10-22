@@ -11,7 +11,7 @@ import { commercialError } from "@/services/usePipelineCadastros";
 export const PipelineConverterVendaDialog = ({ negocio, usuarios, onClose, onSuccess }: { negocio: PipelineNegocio; usuarios: Usuario[]; onClose: () => void; onSuccess: () => void }) => {
   const { data: funis = [] } = usePipelineFunisAtivos();
   const [funilId, setFunil] = useState("");
-  const [responsavelId, setResponsavel] = useState(String(negocio.responsavelId));
+  const [responsavelId, setResponsavel] = useState(negocio.responsavelId > 0 ? String(negocio.responsavelId) : "");
   const [saving, setSaving] = useState(false);
   const client = useQueryClient();
   const vendas = funis.filter(f => f.tipo !== "PRE_VENDAS");
@@ -26,7 +26,7 @@ export const PipelineConverterVendaDialog = ({ negocio, usuarios, onClose, onSuc
   };
   return <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 p-4"><FormValidation as="section" role="dialog" aria-modal="true" aria-label="Ganhar pré-venda" className="w-full max-w-md space-y-4 rounded-xl bg-card p-6"><h2 className="font-semibold">Ganhar e gerar negócio</h2><p className="text-sm text-muted-foreground">O negócio entrará em Diagnóstico. O histórico da pré-venda continuará disponível.</p>
     <label className="block text-sm">Funil de vendas *<select required className="mt-1 w-full rounded border bg-background p-2" value={destino} onChange={e => setFunil(e.target.value)}>{vendas.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}</select></label>
-    <label className="block text-sm">Responsável *<select required className="mt-1 w-full rounded border bg-background p-2" value={responsavelId} onChange={e => setResponsavel(e.target.value)}>{usuarios.map(u => <option key={u.id} value={u.id}>{u.nomeCompleto}</option>)}</select></label>
+    <label className="block text-sm">Responsável *<select required className="mt-1 w-full rounded border bg-background p-2" value={responsavelId} onChange={e => setResponsavel(e.target.value)}><option value="">Selecione o responsável</option>{usuarios.map(u => <option key={u.id} value={u.id}>{u.nomeCompleto}</option>)}</select></label>
     <div className="flex justify-end gap-2"><button disabled={saving} onClick={onClose} className="rounded border p-2">Cancelar</button><button data-validate-submit disabled={saving} onClick={() => void save()} className="rounded bg-accent p-2 text-accent-foreground disabled:opacity-50">{saving ? "Gerando..." : "Ganhar e gerar negócio"}</button></div>
   </FormValidation></div>;
 };

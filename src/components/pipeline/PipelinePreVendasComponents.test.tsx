@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 import { PipelineCancelarTarefaDialog } from "./PipelineCancelarTarefaDialog";
 import { PipelineCadenciaPorEtapa } from "./PipelineCadenciaPorEtapa";
 import { PipelineNegocioCard } from "./PipelineNegocioCard";
+import { PipelineConverterVendaDialog } from "./PipelineConverterVendaDialog";
 import { emptyPipelineNegocioDraft, isPipelineNegocioDraftValid } from "./pipelineNegocioForm";
 import type { PipelineNegocio } from "@/services/usePipelineVendas";
 import type { PipelineTarefa } from "@/services/usePipelineAtividades";
@@ -12,10 +13,26 @@ import type { CadenceStep } from "@/services/usePipelineCampanhas";
 import { api } from "@/api";
 
 vi.mock("@/api", () => ({ api: { post: vi.fn().mockResolvedValue({ data: {} }) } }));
+vi.mock("@/services/usePipelineFunis", () => ({ usePipelineFunisAtivos: () => ({ data: [{ id: 2, tipo: "VENDAS", nome: "Vendas" }] }) }));
 const lead = { id: 1, tipoFunil: "PRE_VENDAS", nomeEmpresa: "Empresa", nomeContato: "Maria", resultado: "ABERTO", valorEstimadoProposta: 123456,
   cadenciaStatus: "CONCLUIDA", campanhaOrigemNome: "Recuperação", tags: [{ id: 1, nome: "Prioridade 3", cor: "#334455", ativo: true }] } as PipelineNegocio;
 
 describe("Pré-vendas", () => {
+  it("pede responsável ao converter lead ainda não atribuído", async () => {
+    vi.mocked(api.post).mockClear();
+    const success = vi.fn();
+    render(<QueryClientProvider client={new QueryClient()}><PipelineConverterVendaDialog
+      negocio={{ ...lead, responsavelId: 0 }}
+      usuarios={[{ id: 7, nomeCompleto: "Ana Souza", email: "ana@example.com", cargo: "Comercial", aceitouTermos: true, dataCriacao: "", dataAtualizacao: "" }]}
+      onClose={vi.fn()} onSuccess={success} /></QueryClientProvider>);
+    expect(screen.getByLabelText("Responsável *")).toHaveValue("");
+    fireEvent.click(screen.getByRole("button", { name: "Ganhar e gerar negócio" }));
+    expect(api.post).not.toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText("Responsável *"), { target: { value: "7" } });
+    fireEvent.click(screen.getByRole("button", { name: "Ganhar e gerar negócio" }));
+    await waitFor(() => expect(success).toHaveBeenCalledOnce());
+    expect(api.post).toHaveBeenCalledWith("/pipeline-vendas/negocios/1/converter-venda", { funilId: 2, responsavelId: 7 });
+  });
   it("aceita contato sem telefone e e-mail", () => {
     expect(isPipelineNegocioDraftValid({ ...emptyPipelineNegocioDraft, cadastrarEmpresa: false, nomeEmpresa: "Empresa", nomeContato: "Maria", responsavelId: "1", origemNegocio: "Outbound", estrategiaComercial: "Ativa" })).toBe(true);
   });
