@@ -29,4 +29,38 @@ describe("cadastro de integração", () => {
     fireEvent.submit(screen.getByRole("form", { name: "Nova integração" }));
     expect(screen.getByRole("alert")).toHaveTextContent("Selecione os métodos e as operações");
   });
+  it.each(["POST", "PUT", "DELETE", "PATCH"])("oculta empresas e permite salvar somente %s mesmo sem empresas cadastradas", metodo => {
+    const onSalvar = vi.fn();
+    const gravacao: OperacaoIntegracao = { codigo: `tecnico.${metodo}`, modulo: "TECNICO", metodo, caminho: "/tecnico/tarefas/1", descricao: "Gravar tarefa de teste", payloadExemplo: "", respostaExemplo: "{}" };
+    render(<IntegracaoForm {...props} empresas={[]} erroEmpresas catalogo={[catalogo[0], gravacao]} onSalvar={onSalvar} />);
+    fireEvent.click(screen.getByLabelText("GET")); fireEvent.click(screen.getByLabelText(metodo));
+    expect(screen.queryByLabelText("Buscar empresa autorizada")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Não foi possível carregar as empresas/)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText(/Gravar tarefa de teste/));
+    expect(screen.getByRole("button", { name: "Criar integração" })).toBeEnabled();
+    fireEvent.submit(screen.getByRole("form", { name: "Nova integração" }));
+    expect(onSalvar).toHaveBeenCalledWith(expect.objectContaining({ metodos: [metodo], empresaIds: [], operacoes: [gravacao.codigo] }));
+  });
+  it("exige empresas ao combinar GET com POST e volta a dispensá-las ao remover GET", () => {
+    const onSalvar = vi.fn(); render(<IntegracaoForm {...props} onSalvar={onSalvar} />);
+    fireEvent.click(screen.getByLabelText("POST"));
+    fireEvent.click(screen.getByLabelText(/Consultar contratos$/)); fireEvent.click(screen.getByLabelText(/Criar tarefa/));
+    fireEvent.submit(screen.getByRole("form", { name: "Nova integração" }));
+    expect(screen.getByRole("alert")).toHaveTextContent("Selecione ao menos uma empresa autorizada para GET");
+    expect(onSalvar).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByLabelText("GET"));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    fireEvent.submit(screen.getByRole("form", { name: "Nova integração" }));
+    expect(onSalvar).toHaveBeenCalledWith(expect.objectContaining({ metodos: ["POST"], empresaIds: [] }));
+    fireEvent.click(screen.getByLabelText("GET"));
+    expect(screen.getByLabelText("Buscar empresa autorizada")).toBeInTheDocument();
+  });
+  it("não envia seleções antigas de empresas ao salvar sem GET", () => {
+    const onSalvar = vi.fn(); render(<IntegracaoForm {...props} onSalvar={onSalvar} />);
+    fireEvent.click(screen.getByLabelText(/Empresa autorizada/));
+    fireEvent.click(screen.getByLabelText("POST")); fireEvent.click(screen.getByLabelText("GET"));
+    fireEvent.click(screen.getByLabelText(/Criar tarefa/));
+    fireEvent.submit(screen.getByRole("form", { name: "Nova integração" }));
+    expect(onSalvar).toHaveBeenCalledWith(expect.objectContaining({ empresaIds: [] }));
+  });
 });
