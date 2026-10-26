@@ -26,7 +26,7 @@ const commercialPaths = new Set([
   "/pipeline-pre-vendas",
 ]);
 
-const settingsPaths = new Set(["/permissoes", "/integracoes", "/cargos", "/cargos/hierarquia"]);
+const settingsPaths = new Set(["/permissoes", "/integracoes", "/cargos", "/cargos/hierarquia", "/configuracoes/convite"]);
 
 function routeIsActive(currentPath: string, itemPath: string) {
   if (itemPath === "/dashboard") return currentPath === itemPath;

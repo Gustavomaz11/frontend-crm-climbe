@@ -36,6 +36,8 @@ import {
   Perfil,
   Pessoas,
   Permissoes,
+  Convites,
+  ConviteGoogle,
   PipelineCampanhas,
   PipelineDashboard,
   PipelineFunisAdmin,
@@ -67,6 +69,8 @@ const App = () => (
           <AppTelemetry />
           <Suspense fallback={<RouteLoading />}>
             <Routes>
+            <Route path="/convite" element={<ConviteGoogle />} />
+            <Route path="/configuracoes/convite" element={<PrivateRoute><Convites /></PrivateRoute>} />
             <Route path="/integracoes/ativar" element={<AtivarIntegracao />} />
             <Route path="/integracoes" element={<PrivateRoute><Integracoes /></PrivateRoute>} />
             {/* Rotas Públicas */}

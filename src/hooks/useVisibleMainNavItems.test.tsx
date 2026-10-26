@@ -25,6 +25,7 @@ describe("consulta leve de acesso ao menu Kanban", () => {
     const { result } = renderNav();
     expect(result.current.map(item => item.path)).not.toContain("/propostas");
     expect(result.current.map(item => item.path)).not.toContain("/documentos");
+    expect(result.current.map(item => item.path)).not.toContain("/configuracoes/convite");
     expect(result.current.map(item => item.path)).toContain("/empresas");
   });
 
@@ -33,6 +34,7 @@ describe("consulta leve de acesso ao menu Kanban", () => {
     const { result } = renderNav();
     expect(result.current.map(item => item.path)).toContain("/propostas");
     expect(result.current.map(item => item.path)).toContain("/documentos");
+    expect(result.current.map(item => item.path)).toContain("/configuracoes/convite");
   });
 
   it("mostra o menu para membros usando somente uma resposta booleana", async () => {

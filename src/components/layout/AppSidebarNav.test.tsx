@@ -9,11 +9,17 @@ vi.mock("@/hooks/useVisibleMainNavItems", () => ({ useVisibleMainNavItems: () =>
   { path: "/pipeline-pre-vendas", label: "Pré-vendas", icon: TrendingUp },
   { path: "/pipeline-vendas/cadastros", label: "Tags e campos", icon: Settings },
   { path: "/cargos", label: "Cargos", icon: Settings },
+  { path: "/configuracoes/convite", label: "Convite", icon: Settings },
   { path: "/cargos/hierarquia", label: "Hierarquia de cargos", icon: Settings },
 ] }));
 vi.mock("@/routes/lazyPages", () => ({ preloadRoute: vi.fn() }));
 
 describe("navegação do sistema", () => {
+  it("inclui Convite em Configurações e abre o grupo na rota atual", () => {
+    render(<MemoryRouter initialEntries={["/configuracoes/convite"]}><AppSidebarNav collapsed={false} /></MemoryRouter>);
+    expect(screen.getByRole("button", { name: "Configurações" })).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("link", { name: "Convite" })).toHaveAttribute("aria-current", "page");
+  });
   it("retira os links da navegação por teclado assim que um grupo começa a fechar", () => {
     render(<MemoryRouter initialEntries={["/pipeline-vendas/cadastros"]}><AppSidebarNav collapsed={false} /></MemoryRouter>);
     const link = screen.getByRole("link", { name: "Tags e campos" });
