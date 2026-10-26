@@ -11,6 +11,7 @@ export interface Notificacao {
   dataEnvio: string;
 }
 export const getNotificacaoDestino = (mensagem: string, destino?: string | null) => {
+  if (destino === "/aprovar-acesso") return destino;
   const rota = destino || mensagem.match(/\/(?:contratos\/kanban|pipeline-vendas|pipeline-pre-vendas|agenda)\?[A-Za-z0-9=&_-]+/)?.[0];
   if (!rota || (!/^\/(?:contratos\/kanban|pipeline-vendas|pipeline-pre-vendas|agenda)\?[A-Za-z0-9=&_-]+$/.test(rota)
     && !/^\/contratos\?contrato=[1-9]\d*$/.test(rota) && !/^\/propostas\?proposta=[1-9]\d*$/.test(rota))) return undefined;

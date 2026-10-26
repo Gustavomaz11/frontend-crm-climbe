@@ -1,6 +1,7 @@
 import type { Notificacao } from "./useNotificacoes";
 
 const titulos: Record<string, string> = {
+  SOLICITACAO_ACESSO: "Nova solicitação de acesso ao CRM",
   TAREFA_VENCIMENTO: "Atenção ao prazo da tarefa",
   TAREFA_ATRASADA: "Esta tarefa está atrasada",
   REUNIAO_AGENDADA: "Você tem um convite para reunião",

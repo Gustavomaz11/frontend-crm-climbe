@@ -111,6 +111,7 @@ describe("avisos discretos de notificações", () => {
 
   it.each([
     ["REUNIAO_AGENDADA", "Você tem um convite para reunião", "/agenda?reuniaoId=3"],
+    ["SOLICITACAO_ACESSO", "Nova solicitação de acesso ao CRM", "/aprovar-acesso"],
     ["REUNIAO_CANCELADA", "Uma reunião da sua agenda foi cancelada", "/agenda?reuniaoId=3"],
     ["TAREFA_ATRIBUIDA", "Uma nova tarefa para você", "/contratos/kanban?contrato=12&tarefaId=34&servico=CFO"],
     ["PROPOSTA_ACEITA", "Boa notícia: proposta aceita!", "/propostas?proposta=12"],

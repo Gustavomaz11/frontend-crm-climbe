@@ -3,6 +3,15 @@ import { getNotificacaoApresentacao, notificacaoUsaDialogoPrazo } from "./notifi
 import { getNotificacaoDestino } from "./useNotificacoes";
 
 describe("apresentação das notificações existentes", () => {
+  it("identifica novas solicitações e mantém o link para o administrador analisar", () => {
+    const mensagem = "Ana (ana@example.com) solicitou acesso ao CRM da Climbe.";
+    expect(getNotificacaoApresentacao({ tipo: "SOLICITACAO_ACESSO", mensagem })).toEqual({
+      titulo: "Nova solicitação de acesso ao CRM", mensagem,
+    });
+    expect(getNotificacaoDestino(mensagem, "/aprovar-acesso")).toBe("/aprovar-acesso");
+    expect(getNotificacaoDestino(mensagem, "https://externo.example/aprovar-acesso")).toBeUndefined();
+    expect(getNotificacaoDestino(mensagem, "/aprovar-acesso/../../outra-rota")).toBeUndefined();
+  });
   it("apresenta o cancelamento com título claro e preserva a mensagem pessoal e o acesso à reunião", () => {
     const mensagem = 'Olá, Ana! A reunião "Planejamento", marcada para 15/11/2026 às 14:30, foi cancelada. Você pode liberar esse horário na sua agenda.';
     expect(getNotificacaoApresentacao({ tipo: "REUNIAO_CANCELADA", mensagem })).toEqual({

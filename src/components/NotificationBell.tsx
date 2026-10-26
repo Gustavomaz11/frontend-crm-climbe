@@ -33,7 +33,7 @@ export function NotificationBell() {
     <Dialog.Content className="fixed right-3 top-[72px] z-50 w-[min(420px,calc(100vw-24px))] overflow-hidden rounded-xl border border-border/40 bg-card shadow-2xl sm:right-6" aria-label="Notificações">
       <div className="flex items-center justify-between gap-3 border-b border-border/25 p-4">
         <Dialog.Title className="text-sm font-semibold">Notificações</Dialog.Title>
-        <Dialog.Description className="sr-only">Avisos de tarefas, reuniões e contratos.</Dialog.Description>
+        <Dialog.Description className="sr-only">Avisos de tarefas, reuniões, contratos e solicitações de acesso.</Dialog.Description>
         {naoLidas > 0 && <button type="button" disabled={lerTodas.isPending} onClick={() => lerTodas.mutate(undefined, { onError: () => toast.error("Não foi possível marcar as notificações como lidas.") })} className="flex items-center gap-1 text-xs text-accent disabled:opacity-50"><CheckCheck className="h-4 w-4" />Marcar todas como lidas</button>}
         <Dialog.Cancel aria-label="Fechar notificações" className="shrink-0 rounded p-1 hover:bg-muted/30"><X className="h-4 w-4" /></Dialog.Cancel>
       </div>
